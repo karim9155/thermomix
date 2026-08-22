@@ -1,0 +1,258 @@
+'use client'
+
+import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, ArrowRight, Banknote, CreditCard } from 'lucide-react'
+import { useCart } from '@/lib/cart-context'
+import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
+import { formatPrice, governorates } from '@/lib/product-format'
+
+export function CheckoutForm() {
+  const router = useRouter()
+  const { items, subtotalHT, totalTVA, totalTTC } = useCart()
+  const [hydrated, setHydrated] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
+  const [submitting, setSubmitting] = useState(false)
+
+  const {
+    register,
+    handleSubmit,
+    watch,
+    formState: { errors },
+  } = useForm<CheckoutFormValues>({
+    resolver: zodResolver(checkoutFormSchema),
+    defaultValues: { paymentMethod: 'cash' },
+  })
+
+  const paymentMethod = watch('paymentMethod')
+
+  useEffect(() => {
+    setHydrated(true)
+  }, [])
+
+  useEffect(() => {
+    if (hydrated && items.length === 0) {
+      router.replace('/boutique')
+    }
+  }, [hydrated, items.length, router])
+
+  async function onSubmit(values: CheckoutFormValues) {
+    setSubmitError(null)
+    setSubmitting(true)
+
+    try {
+      const response = await fetch('/api/commande', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          customer: values,
+          items: items.map((item) => ({
+            sku: item.sku,
+            slug: item.slug,
+            quantity: item.quantity,
+          })),
+        }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        setSubmitError(data.error ?? 'Une erreur est survenue. Merci de réessayer.')
+        setSubmitting(false)
+        return
+      }
+
+      if (data.redirectTo) {
+        router.push(data.redirectTo)
+        return
+      }
+
+      if (data.paymentUrl) {
+        window.location.href = data.paymentUrl
+        return
+      }
+
+      setSubmitError('Réponse inattendue du serveur. Merci de réessayer.')
+      setSubmitting(false)
+    } catch {
+      setSubmitError('Impossible de contacter le serveur. Vérifiez votre connexion et réessayez.')
+      setSubmitting(false)
+    }
+  }
+
+  if (!hydrated || items.length === 0) {
+    return <section className="checkout-page" />
+  }
+
+  return (
+    <section className="checkout-page">
+      <Link href="/panier" className="back-link">
+        <ArrowLeft size={16} /> Retour au panier
+      </Link>
+      <p className="eyebrow">FINALISER VOTRE COMMANDE</p>
+      <h1>On s&apos;occupe du reste.</h1>
+
+      <div className="cart-layout">
+        <form className="checkout-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <h2>Vos coordonnées</h2>
+          <div className="form-grid">
+            <label>
+              Prénom
+              <input
+                placeholder="Votre prénom"
+                {...register('prenom')}
+                aria-invalid={!!errors.prenom}
+              />
+              {errors.prenom ? <span className="field-error">{errors.prenom.message}</span> : null}
+            </label>
+            <label>
+              Nom
+              <input placeholder="Votre nom" {...register('nom')} aria-invalid={!!errors.nom} />
+              {errors.nom ? <span className="field-error">{errors.nom.message}</span> : null}
+            </label>
+            <label>
+              Email
+              <input
+                type="email"
+                placeholder="vous@exemple.com"
+                {...register('email')}
+                aria-invalid={!!errors.email}
+              />
+              {errors.email ? <span className="field-error">{errors.email.message}</span> : null}
+            </label>
+            <label>
+              Téléphone
+              <input
+                placeholder="+216 00 000 000"
+                {...register('telephone')}
+                aria-invalid={!!errors.telephone}
+              />
+              {errors.telephone ? (
+                <span className="field-error">{errors.telephone.message}</span>
+              ) : null}
+            </label>
+            <label className="wide">
+              Adresse
+              <input
+                placeholder="Rue, numéro, appartement"
+                {...register('adresse')}
+                aria-invalid={!!errors.adresse}
+              />
+              {errors.adresse ? (
+                <span className="field-error">{errors.adresse.message}</span>
+              ) : null}
+            </label>
+            <label>
+              Ville
+              <input
+                placeholder="Votre ville"
+                {...register('ville')}
+                aria-invalid={!!errors.ville}
+              />
+              {errors.ville ? <span className="field-error">{errors.ville.message}</span> : null}
+            </label>
+            <label>
+              Gouvernorat
+              <select
+                defaultValue=""
+                {...register('gouvernorat')}
+                aria-invalid={!!errors.gouvernorat}
+              >
+                <option value="" disabled>
+                  Sélectionner
+                </option>
+                {governorates.map((g) => (
+                  <option key={g} value={g}>
+                    {g}
+                  </option>
+                ))}
+              </select>
+              {errors.gouvernorat ? (
+                <span className="field-error">{errors.gouvernorat.message}</span>
+              ) : null}
+            </label>
+            <label className="wide">
+              Notes de commande
+              <textarea
+                rows={3}
+                placeholder="Précisions pour la livraison (optionnel)"
+                {...register('notes')}
+              />
+            </label>
+          </div>
+
+          <h2>Mode de paiement</h2>
+          <div className="payment-options">
+            <label className={paymentMethod === 'cash' ? 'payment-card active' : 'payment-card'}>
+              <input type="radio" value="cash" {...register('paymentMethod')} />
+              <span className="payment-card-icon">
+                <Banknote size={18} />
+              </span>
+              <span>
+                <strong>Paiement à la livraison</strong>
+                <small>Payez en espèces à la réception de votre commande.</small>
+              </span>
+            </label>
+            {/* Online payment is not implemented yet: shown as disabled so the
+                option stays visible without being selectable. */}
+            <label className="payment-card disabled" aria-disabled="true">
+              <input type="radio" value="online" disabled {...register('paymentMethod')} />
+              <span className="payment-card-icon">
+                <CreditCard size={18} />
+              </span>
+              <span>
+                <strong>
+                  Paiement en ligne <em className="soon-badge">Bientôt disponible</em>
+                </strong>
+                <small>Le paiement par carte bancaire sera disponible prochainement.</small>
+              </span>
+            </label>
+          </div>
+          {errors.paymentMethod ? (
+            <span className="field-error">{errors.paymentMethod.message}</span>
+          ) : null}
+
+          {submitError ? <p className="form-error">{submitError}</p> : null}
+
+          <button className="primary-button" type="submit" disabled={submitting}>
+            {submitting
+              ? 'Traitement en cours…'
+              : paymentMethod === 'online'
+                ? 'Procéder au paiement'
+                : 'Confirmer la commande'}{' '}
+            <ArrowRight size={17} />
+          </button>
+        </form>
+
+        <aside className="summary">
+          <h2>Votre commande</h2>
+          {items.map((item) => (
+            <div key={item.slug}>
+              <span>
+                {item.name} × {item.quantity}
+              </span>
+              <strong>{formatPrice(item.priceTTC * item.quantity)}</strong>
+            </div>
+          ))}
+          <hr />
+          <div>
+            <span>Sous-total HT</span>
+            <strong>{formatPrice(subtotalHT)}</strong>
+          </div>
+          <div>
+            <span>TVA (19%)</span>
+            <strong>{formatPrice(totalTVA)}</strong>
+          </div>
+          <hr />
+          <div className="summary-total">
+            <span>Total TTC</span>
+            <strong>{formatPrice(totalTTC)}</strong>
+          </div>
+        </aside>
+      </div>
+    </section>
+  )
+}
