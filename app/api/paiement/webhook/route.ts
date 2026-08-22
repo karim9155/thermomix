@@ -4,7 +4,7 @@ import { updateOrderStatus, getOrder } from '@/lib/orders'
 /**
  * Receives the payment provider's callback and flips the order status.
  * - stub provider: trusted locally, no external caller can reach it in dev.
- * - paymee: verified via a shared-secret token compared against PAYMEE_API_KEY,
+ * - paymee: vrified via a shared-secret token compared against PAYMEE_API_KEY,
  *   since sandbox payloads don't expose a signature to recompute here.
  */
 export async function POST(request: NextRequest) {
