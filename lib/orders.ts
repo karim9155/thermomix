@@ -117,6 +117,10 @@ export async function createOrder(input: {
   totalTVA: number
   totalTTC: number
   paymentMethod: OrderPaymentMethod
+  // The owning auth.users id, resolved from the session server-side by the
+  // caller. Required for new orders; the column stays nullable only so
+  // pre-account guest orders survive (see migration 0006).
+  userId: string
 }): Promise<Order> {
   const supabase = createAdminClient()
 
@@ -142,6 +146,7 @@ export async function createOrder(input: {
         subtotal_ht: input.subtotalHT,
         total_tva: input.totalTVA,
         total_ttc: input.totalTTC,
+        user_id: input.userId,
       })
       .select('id, reference, created_at')
       .single()

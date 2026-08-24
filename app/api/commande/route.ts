@@ -4,6 +4,7 @@ import { getProductBySku } from '@/lib/products'
 import { createOrder, type OrderLine } from '@/lib/orders'
 import { createPayment } from '@/lib/payment'
 import { sendOrderEmails } from '@/lib/email'
+import { getCustomer } from '@/lib/compte/guard'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -11,6 +12,18 @@ export async function POST(request: NextRequest) {
     body = await request.json()
   } catch {
     return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 })
+  }
+
+  // An account is required to order. This is the enforcement point, not
+  // the checkout page's redirect — the page can be bypassed by posting
+  // here directly, so ownership is established from the session cookie
+  // and never from anything the client sends.
+  const customerUser = await getCustomer()
+  if (!customerUser) {
+    return NextResponse.json(
+      { error: 'Vous devez être connecté pour passer commande.', requiresAuth: true },
+      { status: 401 },
+    )
   }
 
   const parsed = createOrderSchema.safeParse(body)
@@ -52,6 +65,7 @@ export async function POST(request: NextRequest) {
     totalTVA,
     totalTTC,
     paymentMethod: customer.paymentMethod,
+    userId: customerUser.id,
   })
 
   sendOrderEmails(order).catch((error) => {

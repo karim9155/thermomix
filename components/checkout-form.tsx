@@ -10,7 +10,7 @@ import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
 import { formatPrice, governorates } from '@/lib/product-format'
 
-export function CheckoutForm() {
+export function CheckoutForm({ customerEmail }: { customerEmail?: string }) {
   const router = useRouter()
   const { items, subtotalHT, totalTVA, totalTTC } = useCart()
   const [hydrated, setHydrated] = useState(false)
@@ -24,7 +24,9 @@ export function CheckoutForm() {
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
-    defaultValues: { paymentMethod: 'cash' },
+    // Ordering requires an account, so the signed-in address is the one we
+    // already know — prefill it rather than making them retype it.
+    defaultValues: { paymentMethod: 'cash', email: customerEmail ?? '' },
   })
 
   const paymentMethod = watch('paymentMethod')
@@ -60,6 +62,13 @@ export function CheckoutForm() {
       const data = await response.json()
 
       if (!response.ok) {
+        // The session can lapse between loading this page and submitting it.
+        // Send them to sign in and back here; the cart is in localStorage,
+        // so nothing is lost.
+        if (response.status === 401 || data.requiresAuth) {
+          router.push(`/compte/connexion?next=${encodeURIComponent('/commande')}`)
+          return
+        }
         setSubmitError(data.error ?? 'Une erreur est survenue. Merci de réessayer.')
         setSubmitting(false)
         return
