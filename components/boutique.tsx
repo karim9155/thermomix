@@ -2,7 +2,7 @@
 
 import Image from 'next/image'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   ArrowRight,
@@ -19,8 +19,8 @@ import { formatPrice, isPlaceholderImage, type Product } from '@/lib/product-for
 import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/components/ui/toast'
 import { CartDrawer } from '@/components/cart-drawer'
+import { SiteNav } from '@/components/site-nav'
 
-const NAV_ITEMS = ['Produits']
 const LANGUAGES = ['FR', 'EN', 'AR']
 
 export function BrandLockup({ dark = false }: { dark?: boolean }) {
@@ -165,7 +165,6 @@ function SearchOverlay({ products, onClose }: { products: Product[]; onClose: ()
 }
 
 export function Header({ products }: { products: Product[] }) {
-  const pathname = usePathname()
   const [search, setSearch] = useState(false)
   const [cartOpen, setCartOpen] = useState(false)
   const { itemCount } = useCart()
@@ -177,17 +176,7 @@ export function Header({ products }: { products: Product[] }) {
           <BrandLockup />
         </Link>
 
-        <nav>
-          {NAV_ITEMS.map((item) => {
-            const href = item === 'Produits' ? '/boutique' : '#'
-            const isActive = item === 'Produits' && pathname.startsWith('/boutique')
-            return (
-              <Link className={isActive ? 'active' : ''} href={href} key={item}>
-                {item}
-              </Link>
-            )
-          })}
-        </nav>
+        <SiteNav />
 
         <div className="header-actions">
           <LanguageMenu />

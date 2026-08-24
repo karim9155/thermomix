@@ -109,17 +109,181 @@ h3 {
 .brand-dark {
   filter: invert(1) hue-rotate(180deg);
 }
-.site-header nav {
+.site-nav {
   display: flex;
   align-items: center;
-  gap: 22px;
+  gap: 18px;
   font-size: 13px;
   font-weight: 500;
   color: #4b5563;
+  flex: 1 1 auto;
+  min-width: 0;
 }
-.site-header nav a.active {
+.site-nav > a.active,
+.nav-dropdown-trigger.active {
   color: var(--brand-green);
   font-weight: 700;
+}
+.site-nav > a:hover,
+.nav-dropdown-trigger:hover {
+  color: var(--brand-green);
+}
+
+/* Mega-menu. The panel is positioned against the header rather than the
+   trigger so a four-tile menu near the right edge doesn't overflow the
+   viewport. */
+.nav-dropdown {
+  position: relative;
+}
+.nav-dropdown-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-dropdown-panel {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  min-width: 210px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
+  padding: 8px;
+  display: grid;
+  gap: 2px;
+  z-index: 40;
+}
+/* Bridges the gap between trigger and panel so the pointer can cross it
+   without passing over a non-hovered area. */
+.nav-dropdown-panel::before {
+  content: '';
+  position: absolute;
+  top: -14px;
+  left: 0;
+  right: 0;
+  height: 14px;
+}
+.nav-dropdown-link {
+  display: block;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 13px;
+  color: var(--ink);
+  white-space: nowrap;
+}
+.nav-dropdown-link:hover {
+  background: var(--surface);
+  color: var(--brand-green);
+}
+
+.site-nav-ctas {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  margin-left: 4px;
+}
+.nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1.5px solid var(--brand-green);
+  color: var(--brand-green);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+.nav-cta:hover {
+  background: var(--brand-green);
+  color: var(--white);
+}
+.nav-cta.full {
+  width: 100%;
+  padding: 13px 16px;
+}
+
+/* Burger + drawer are desktop-hidden; the responsive block swaps them in. */
+.nav-burger {
+  display: none;
+}
+.nav-drawer {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: var(--white);
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+.nav-drawer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 18px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: var(--muted);
+}
+.nav-drawer-body {
+  padding: 12px 18px 32px;
+  display: grid;
+  gap: 2px;
+}
+.nav-drawer-link,
+.nav-drawer-trigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 15px 4px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: none;
+  font: inherit;
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--ink);
+  text-align: left;
+  cursor: pointer;
+}
+.nav-drawer-link.active {
+  color: var(--brand-green);
+}
+.nav-drawer-trigger .rotated {
+  transform: rotate(180deg);
+}
+.nav-drawer-children {
+  display: grid;
+  gap: 2px;
+  padding: 4px 0 8px 14px;
+}
+.nav-drawer-child {
+  display: block;
+  padding: 11px 4px;
+  font-size: 14px;
+  color: #4b5563;
+}
+.nav-drawer-child:hover {
+  color: var(--brand-green);
+}
+.nav-drawer-ctas {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
 }
 .header-actions {
   display: flex;
@@ -2450,6 +2614,24 @@ footer {
 }
 
 @media (max-width: 1100px) {
+  /* Nine links plus two CTAs stop fitting well before phone width, so the
+     drawer takes over here rather than at 760px. The old rule wrapped the
+     nav onto its own scrollable row, which worked for a single link and
+     would be unusable with this many. */
+  .site-nav {
+    display: none;
+  }
+  /* The burger lives inside SiteNav, which sits before .header-actions in
+     the markup — order pushes it past the icon row so it lands at the
+     right edge where a menu button is expected. */
+  .nav-burger {
+    display: inline-flex;
+    order: 3;
+    margin-left: 2px;
+  }
+  .header-brand {
+    margin-right: auto;
+  }
   .hero {
     padding: 72px 6vw 40px;
     min-height: 0;
@@ -2507,13 +2689,12 @@ footer {
 }
 
 @media (max-width: 760px) {
-  /* Header: the brand lockup and icon row stay, the nav tucks under them so
-     nothing is hidden behind a menu the user has to discover. */
+  /* Header stays a single row at every width now: brand on the left, icons
+     and burger on the right, with the links themselves in the drawer. */
   .site-header {
-    height: auto;
-    flex-wrap: wrap;
-    padding: 12px 18px;
-    gap: 10px 12px;
+    height: 68px;
+    padding: 0 18px;
+    gap: 8px;
   }
   .header-brand {
     min-width: 0;
@@ -2521,14 +2702,6 @@ footer {
   }
   .brand-lockup {
     height: 30px;
-  }
-  .site-header nav {
-    order: 3;
-    flex: 1 0 100%;
-    gap: 18px;
-    padding-top: 4px;
-    overflow-x: auto;
-    white-space: nowrap;
   }
   .header-actions {
     gap: 4px;
