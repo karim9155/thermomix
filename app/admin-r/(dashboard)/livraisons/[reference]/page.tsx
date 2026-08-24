@@ -4,6 +4,8 @@ import { ArrowLeft, Phone } from 'lucide-react'
 import { getOrderDetail } from '@/lib/admin/orders'
 import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
+import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
+import { parseEstimatedDeliveryEvent } from '@/lib/admin/order-format'
 import { formatPrice } from '@/lib/product-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
@@ -26,6 +28,25 @@ const HISTORY_LABELS: Record<string, string> = {
   annulee: 'Annulée',
 }
 
+/**
+ * The history table carries two kinds of row: delivery_status transitions
+ * and delivery-estimate changes (tagged with ESTIMATED_DELIVERY_EVENT).
+ * Estimates are free text, so they never match HISTORY_LABELS — read them
+ * back through the parser instead of showing the raw stored string.
+ */
+function historyLabel(fromStatus: string | null, toStatus: string): string {
+  const toEstimate = parseEstimatedDeliveryEvent(toStatus)
+  if (toEstimate !== null) {
+    return toEstimate === ''
+      ? 'Délai estimé retiré'
+      : `Délai estimé : ${toEstimate}`
+  }
+
+  const to = HISTORY_LABELS[toStatus] ?? toStatus
+  if (!fromStatus) return to
+  return `${HISTORY_LABELS[fromStatus] ?? fromStatus} → ${to}`
+}
+
 export default async function LivraisonDetailPage({
   params,
 }: {
@@ -46,7 +67,13 @@ export default async function LivraisonDetailPage({
 
       <div className="admin-detail-heading">
         <h1>{order.reference}</h1>
-        <DeliveryStatusControl reference={order.reference} currentStatus={order.deliveryStatus} />
+        <div className="admin-detail-controls">
+          <DeliveryStatusControl reference={order.reference} currentStatus={order.deliveryStatus} />
+          <EstimatedDeliveryControl
+            reference={order.reference}
+            currentValue={order.estimatedDelivery}
+          />
+        </div>
       </div>
 
       <div className="admin-detail-grid">
@@ -89,6 +116,10 @@ export default async function LivraisonDetailPage({
               <div>
                 <dt>Passée le</dt>
                 <dd>{dateTimeFormatter.format(new Date(order.createdAt))}</dd>
+              </div>
+              <div>
+                <dt>Délai estimé</dt>
+                <dd>{order.estimatedDelivery ?? '—'}</dd>
               </div>
             </dl>
           </section>
@@ -144,11 +175,7 @@ export default async function LivraisonDetailPage({
                   <li key={entry.id}>
                     <div className="admin-timeline-dot" />
                     <div>
-                      <strong>
-                        {entry.fromStatus
-                          ? `${HISTORY_LABELS[entry.fromStatus] ?? entry.fromStatus} → ${HISTORY_LABELS[entry.toStatus] ?? entry.toStatus}`
-                          : (HISTORY_LABELS[entry.toStatus] ?? entry.toStatus)}
-                      </strong>
+                      <strong>{historyLabel(entry.fromStatus, entry.toStatus)}</strong>
                       <span>
                         {dateTimeFormatter.format(new Date(entry.changedAt))}
                         {entry.changedByEmail ? ` · ${entry.changedByEmail}` : ''}

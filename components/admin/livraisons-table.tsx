@@ -97,6 +97,7 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
               <th>Total TTC</th>
               <th>Paiement</th>
               <th>Livraison</th>
+              <th>Délai estimé</th>
               <th>Actions</th>
             </tr>
           </thead>
@@ -126,6 +127,13 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
                 </td>
                 <td>
                   <DeliveryStatusBadge status={order.deliveryStatus} />
+                </td>
+                <td>
+                  {order.estimatedDelivery ? (
+                    order.estimatedDelivery
+                  ) : (
+                    <span className="admin-muted">—</span>
+                  )}
                 </td>
                 <td>
                   <Link href={`/admin-r/livraisons/${order.reference}`} className="admin-table-link">
