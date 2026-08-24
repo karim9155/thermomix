@@ -40,8 +40,8 @@ export default async function LivraisonDetailPage({
 
   return (
     <div className="admin-page">
-      <Link href="/admin-r/livraisons" className="back-link">
-        <ArrowLeft size={16} /> Retour aux livraisons
+      <Link href="/admin-r" className="back-link">
+        <ArrowLeft size={16} /> Retour aux commandes
       </Link>
 
       <div className="admin-detail-heading">

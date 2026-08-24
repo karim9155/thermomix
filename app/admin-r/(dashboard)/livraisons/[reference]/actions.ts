@@ -18,7 +18,6 @@ export async function updateDeliveryStatusAction(
   }
 
   revalidatePath(`/admin-r/livraisons/${reference}`)
-  revalidatePath('/admin-r/livraisons')
   revalidatePath('/admin-r')
 
   return { success: true }

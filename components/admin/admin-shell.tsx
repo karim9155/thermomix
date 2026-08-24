@@ -1,10 +1,9 @@
 import Link from 'next/link'
-import { LayoutDashboard, LogOut, Package, Truck } from 'lucide-react'
+import { LogOut, Package, Truck } from 'lucide-react'
 import { logout } from '@/app/admin-r/(dashboard)/actions'
 
 const NAV_ITEMS = [
-  { href: '/admin-r', label: 'Tableau de bord', Icon: LayoutDashboard },
-  { href: '/admin-r/livraisons', label: 'Livraisons', Icon: Truck },
+  { href: '/admin-r', label: 'Commandes', Icon: Truck },
   { href: '/admin-r/produits', label: 'Produits', Icon: Package },
 ]
 

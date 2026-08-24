@@ -1,16 +1,20 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { listOrders, DELIVERY_STATUSES, type DeliveryStatus, type AdminOrderListItem } from '@/lib/admin/orders'
+import { DELIVERY_STATUSES, type DeliveryStatus, type AdminOrderListItem } from '@/lib/admin/orders'
 
 export type DashboardStats = {
   countsByDeliveryStatus: Record<DeliveryStatus, number>
   totalTTCThisMonth: number
   outOfStockCount: number
-  recentOrders: AdminOrderListItem[]
 }
 
-export async function getDashboardStats(): Promise<DashboardStats> {
-  const orders = await listOrders()
+/**
+ * Derives the dashboard's stat cards from an already-loaded order list.
+ * The Commandes page renders the cards and the full order table together,
+ * so it loads the orders once and passes them in rather than having this
+ * re-query them.
+ */
+export async function getDashboardStats(orders: AdminOrderListItem[]): Promise<DashboardStats> {
 
   const countsByDeliveryStatus = Object.fromEntries(
     DELIVERY_STATUSES.map((status) => [
@@ -42,6 +46,5 @@ export async function getDashboardStats(): Promise<DashboardStats> {
     countsByDeliveryStatus,
     totalTTCThisMonth,
     outOfStockCount: outOfStockCount ?? 0,
-    recentOrders: orders.slice(0, 5),
   }
 }
