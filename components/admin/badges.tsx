@@ -1,4 +1,7 @@
-import type { DeliveryStatus, PaymentMethod, PaymentStatus } from '@/lib/admin/orders'
+// Types come from the client-safe module, not lib/admin/orders, so these
+// presentational badges can be reused in the customer area (/compte)
+// without pulling the service-role client anywhere near it.
+import type { DeliveryStatus, PaymentMethod, PaymentStatus } from '@/lib/admin/order-format'
 
 const DELIVERY_LABELS: Record<DeliveryStatus, string> = {
   en_preparation: 'En préparation',

@@ -11,6 +11,7 @@ import {
   ShieldCheck,
   ShoppingBag,
   Truck,
+  User,
   Headphones,
   X,
 } from 'lucide-react'
@@ -193,6 +194,12 @@ export function Header({ products }: { products: Product[] }) {
           <button className="icon-button" aria-label="Rechercher" onClick={() => setSearch(true)}>
             <Search size={20} />
           </button>
+          {/* Always a plain link: the header is a client component and
+              this avoids threading session state through it. /compte
+              redirects to login on its own when there's no session. */}
+          <Link href="/compte" className="icon-button" aria-label="Mon compte">
+            <User size={20} />
+          </Link>
           <button
             className="icon-button bag"
             aria-label="Ouvrir le panier"
