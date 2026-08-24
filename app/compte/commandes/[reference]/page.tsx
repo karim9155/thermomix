@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, FileText } from 'lucide-react'
 import { requireCustomer } from '@/lib/compte/guard'
 import { getCustomerOrder } from '@/lib/compte/orders'
 import { DeliveryStatusBadge, PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
@@ -122,6 +122,18 @@ export default async function CompteCommandePage({
               </dd>
             </div>
           </dl>
+
+          {/* Invoices exist only once the order has actually been
+              delivered. The route re-checks this server-side — hiding the
+              button is a courtesy, not the rule. */}
+          {order.deliveryStatus === 'livree' ? (
+            <a
+              className="primary-button full center compte-invoice-button"
+              href={`/compte/commandes/${order.reference}/facture`}
+            >
+              <FileText size={16} /> Télécharger la facture
+            </a>
+          ) : null}
 
           <h2 className="compte-card-subheading">Paiement</h2>
           <dl className="compte-def-list">
