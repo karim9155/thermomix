@@ -1,0 +1,54 @@
+import 'server-only'
+import { redirect } from 'next/navigation'
+import { createClient } from '@/lib/supabase/customer-auth'
+
+export type CustomerUser = {
+  id: string
+  email: string
+}
+
+/**
+ * Re-verifies a customer session inside a Server Component, Server Action
+ * or Route Handler. The proxy is an optimistic pre-filter, NOT the security
+ * boundary (see the Next.js proxy guide and lib/admin/guard.ts's note) —
+ * anything that reads or returns customer data calls this itself.
+ *
+ * getUser() re-validates the JWT against Supabase Auth rather than trusting
+ * a decoded cookie.
+ *
+ * Note what this deliberately does NOT check: admin_users. Being signed in
+ * is all /compte requires, and that is the whole difference between the two
+ * areas — requireAdmin() additionally demands an admin_users row. Keeping
+ * them apart is what stops a customer account from reaching /admin-r.
+ */
+export async function requireCustomer(returnTo?: string): Promise<CustomerUser> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) {
+    const next = returnTo ? `?next=${encodeURIComponent(returnTo)}` : ''
+    redirect(`/compte/connexion${next}`)
+  }
+
+  return { id: user.id, email: user.email ?? '' }
+}
+
+/**
+ * Session lookup that returns null instead of redirecting — for callers
+ * that need to branch on being signed in (the checkout page, the header)
+ * rather than demand it.
+ */
+export async function getCustomer(): Promise<CustomerUser | null> {
+  const supabase = await createClient()
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+
+  if (!user) return null
+
+  return { id: user.id, email: user.email ?? '' }
+}

@@ -2160,6 +2160,127 @@ footer {
    so it steps down to fixed values.
    ========================================================================== */
 
+/* ---------- CUSTOMER ACCOUNT (/compte) ---------- */
+/* Storefront styling, not the admin console's: this area sits inside
+   BoutiqueShell and should read as part of the shop. */
+.compte-auth-page {
+  display: grid;
+  place-items: center;
+  padding: 64px 5vw 96px;
+  background: var(--surface);
+  min-height: 60vh;
+}
+.compte-auth-card {
+  width: 440px;
+  max-width: 100%;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 44px;
+}
+.compte-auth-card h1 {
+  font-size: 26px;
+  margin: 0 0 10px;
+  letter-spacing: -0.02em;
+}
+.compte-auth-intro {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 24px;
+}
+.compte-auth-form {
+  display: grid;
+  gap: 16px;
+}
+.compte-auth-form label {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.compte-auth-form input {
+  border: 1px solid #d7dcda;
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ink);
+  background: var(--white);
+  text-transform: none;
+  letter-spacing: 0;
+}
+.compte-auth-form input:focus-visible {
+  outline: 2px solid var(--brand-green);
+  outline-offset: 1px;
+}
+.compte-auth-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+.compte-auth-switch {
+  font-size: 13px;
+  color: var(--muted);
+  text-align: center;
+  margin: 4px 0 0;
+}
+.compte-auth-switch a {
+  color: var(--brand-green);
+  font-weight: 700;
+}
+/* Shown after signup while the account still needs email confirmation. */
+.compte-auth-confirm {
+  display: grid;
+  gap: 12px;
+  justify-items: center;
+  text-align: center;
+  color: var(--brand-green);
+}
+.compte-auth-confirm h2 {
+  font-size: 19px;
+  margin: 0;
+  color: var(--ink);
+}
+.compte-auth-confirm p {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0 0 8px;
+}
+
+.compte-page {
+  padding: 56px 5vw 96px;
+  max-width: 1080px;
+  margin: 0 auto;
+}
+.compte-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 36px;
+}
+.compte-heading h1 {
+  font-size: 32px;
+  margin: 0 0 6px;
+  letter-spacing: -0.02em;
+}
+.compte-email {
+  color: var(--muted);
+  font-size: 14px;
+  margin: 0;
+}
+.compte-section h2 {
+  font-size: 18px;
+  margin: 0 0 18px;
+}
+.compte-empty {
+  color: var(--muted);
+  font-size: 14px;
+}
+
 @media (max-width: 1100px) {
   .hero {
     padding: 72px 6vw 40px;
@@ -2314,6 +2435,20 @@ footer {
   .detail-copy h1 {
     font-size: 30px;
   }
+  .compte-auth-card {
+    padding: 28px 22px;
+  }
+  .compte-auth-row {
+    grid-template-columns: 1fr;
+  }
+  .compte-heading {
+    flex-direction: column;
+    gap: 16px;
+  }
+  .compte-heading h1 {
+    font-size: 28px;
+  }
+
   .admin-estimate-control {
     width: 100%;
   }
