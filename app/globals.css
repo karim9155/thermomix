@@ -773,18 +773,44 @@ h3 {
   grid-template-columns: 1.05fr 0.95fr;
   gap: 80px;
 }
+/* Gallery track. Every image is in the DOM at all times; what changes
+   between desktop and touch is whether the track scrolls.
+
+   DESKTOP: no overflow, all slides stacked in one grid cell, and only the
+   selected one is visible. Clicking a thumbnail swaps the picture exactly
+   as it did before the carousel existed — no scrolling involved. */
 .detail-image {
   background: var(--surface);
   border-radius: 14px;
   aspect-ratio: 1;
+  overflow: hidden;
+  display: grid;
+  grid-template-areas: 'slide';
+}
+.detail-slide {
+  grid-area: slide;
+  width: 100%;
+  height: 100%;
   display: grid;
   place-items: center;
-  overflow: hidden;
+  opacity: 0;
+  visibility: hidden;
+}
+.detail-slide.selected {
+  opacity: 1;
+  visibility: visible;
 }
 .detail-image img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+}
+.detail-image-count {
+  display: none;
+  text-align: center;
+  font-size: 12px;
+  color: var(--muted);
+  margin: 10px 0 0;
 }
 .thumbs {
   display: flex;
@@ -2817,6 +2843,38 @@ footer {
   .admin-estimate-control input {
     min-width: 0;
     width: 100%;
+  }
+
+  /* TOUCH: the same track becomes a scroll-snap carousel. Slides sit in a
+     row instead of stacked, all of them visible, and the browser does the
+     swiping — no drag library, no JS animation. selectedIndex is synced
+     from the scroll position so the thumbnails follow the image.
+
+     overflow-x lives on the track itself, never on the page, so a swipe
+     can't leak a horizontal scrollbar onto the body. */
+  .detail-image {
+    grid-template-areas: none;
+    grid-auto-flow: column;
+    grid-auto-columns: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+    overscroll-behavior-x: contain;
+  }
+  .detail-image::-webkit-scrollbar {
+    display: none;
+  }
+  .detail-slide {
+    grid-area: auto;
+    scroll-snap-align: center;
+    scroll-snap-stop: always;
+    opacity: 1;
+    visibility: visible;
+  }
+  .detail-image-count {
+    display: block;
   }
 
   .thumbs button {
