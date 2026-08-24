@@ -15,7 +15,7 @@ import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/components/ui/toast'
 import { formatPrice, isPlaceholderImage, type Product } from '@/lib/product-format'
 
-const MAX_THUMBNAILS = 6
+const MAX_THUMBNAILS = 12
 
 export function ProductDetail({ product, related }: { product: Product; related: Product[] }) {
   const [quantity, setQuantity] = useState(1)
@@ -51,9 +51,11 @@ export function ProductDetail({ product, related }: { product: Product; related:
               key={selected.url}
               src={selected.url}
               alt={selected.alt ?? product.name}
-              width={800}
-              height={800}
+              width={1000}
+              height={1000}
+              sizes="(max-width: 900px) 100vw, 620px"
               priority
+              data-placeholder={isPlaceholderImage(selected.url) ? '' : undefined}
               unoptimized={isPlaceholderImage(selected.url)}
             />
           </div>
@@ -137,16 +139,18 @@ export function ProductDetail({ product, related }: { product: Product; related:
               </AccordionPanel>
             </AccordionItem>
 
-            <AccordionItem value="caracteristiques">
-              <AccordionTrigger>Caractéristiques</AccordionTrigger>
-              <AccordionPanel>
-                <ul>
-                  {product.features.map((feature) => (
-                    <li key={feature}>{feature}</li>
-                  ))}
-                </ul>
-              </AccordionPanel>
-            </AccordionItem>
+            {product.features.length > 0 ? (
+              <AccordionItem value="caracteristiques">
+                <AccordionTrigger>Caractéristiques</AccordionTrigger>
+                <AccordionPanel>
+                  <ul>
+                    {product.features.map((feature) => (
+                      <li key={feature}>{feature}</li>
+                    ))}
+                  </ul>
+                </AccordionPanel>
+              </AccordionItem>
+            ) : null}
 
             {product.included ? (
               <AccordionItem value="inclus">

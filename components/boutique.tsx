@@ -232,6 +232,7 @@ export function ProductCard({ product }: { product: Product }) {
             width={480}
             height={480}
             sizes="(max-width: 1100px) 45vw, 400px"
+            data-placeholder={isPlaceholderImage(product.image) ? '' : undefined}
             unoptimized={isPlaceholderImage(product.image)}
           />
         </div>
