@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
-import { ChevronDown, Menu, X } from 'lucide-react'
+import { ChevronDown, Menu, Search, X } from 'lucide-react'
 import { NAV_ITEMS, NAV_CTAS, isExternal, type NavChild, type NavItem } from '@/lib/nav-items'
 
 /** Internal hrefs route through next/link; external ones open in a new tab. */
@@ -119,7 +119,7 @@ function DesktopItem({ item, pathname }: { item: NavItem; pathname: string }) {
   )
 }
 
-export function SiteNav() {
+export function SiteNav({ onSearch }: { onSearch?: () => void }) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
@@ -186,6 +186,21 @@ export function SiteNav() {
           </div>
 
           <div className="nav-drawer-body">
+            {/* The header hides its search button at this width to give the
+                brand lockup room, so the drawer carries it instead. */}
+            {onSearch ? (
+              <button
+                type="button"
+                className="nav-drawer-search"
+                onClick={() => {
+                  setDrawerOpen(false)
+                  onSearch()
+                }}
+              >
+                <Search size={17} /> Rechercher un produit
+              </button>
+            ) : null}
+
             {NAV_ITEMS.map((item) =>
               item.children ? (
                 <div key={item.label} className="nav-drawer-group">

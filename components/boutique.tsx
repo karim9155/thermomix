@@ -176,7 +176,7 @@ export function Header({ products }: { products: Product[] }) {
           <BrandLockup />
         </Link>
 
-        <SiteNav />
+        <SiteNav onSearch={() => setSearch(true)} />
 
         <div className="header-actions">
           <LanguageMenu />

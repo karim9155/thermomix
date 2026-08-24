@@ -285,6 +285,23 @@ h3 {
   gap: 10px;
   margin-top: 24px;
 }
+/* Search lives here on mobile because the header hides its own button to
+   leave the brand lockup room. */
+.nav-drawer-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 13px 14px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--surface);
+  font: inherit;
+  font-size: 14px;
+  color: var(--muted);
+  cursor: pointer;
+}
 .header-actions {
   display: flex;
   align-items: center;
@@ -2655,6 +2672,43 @@ footer {
     order: 3;
     margin-left: 2px;
   }
+
+  /* Tap targets. Anything a finger has to hit gets at least ~40px of
+     touchable area — padding where the visual size should stay small
+     (footer links, socials), real size where it shouldn't (quantity). */
+  .quantity {
+    gap: 22px;
+    padding: 8px 12px;
+  }
+  .quantity button {
+    width: 38px;
+    height: 38px;
+  }
+  .socials {
+    gap: 14px;
+  }
+  /* The icon is 24px; the link gets a 40px box around it so the finger
+     target matches the guidance without changing how the icon looks. */
+  .socials a {
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+  }
+  .footer-bottom > span {
+    gap: 8px 24px;
+  }
+  .footer-bottom a,
+  .footer-main a {
+    display: inline-block;
+    padding: 7px 0;
+  }
+  .back-link {
+    display: inline-flex;
+    padding: 9px 0;
+  }
+
   .header-brand {
     margin-right: auto;
   }
@@ -2716,11 +2770,38 @@ footer {
 
 @media (max-width: 760px) {
   /* Header stays a single row at every width now: brand on the left, icons
-     and burger on the right, with the links themselves in the drawer. */
+     and burger on the right, with the links themselves in the drawer.
+
+     The action row is a fixed ~227px regardless of viewport, which at
+     320px left the brand lockup 1px wide — the wordmark vanished. The
+     language switcher and the search button move into the drawer here so
+     the logo keeps a readable width; cart and account stay, since those
+     are the two a shopper reaches for mid-task. */
   .site-header {
     height: 68px;
-    padding: 0 18px;
-    gap: 8px;
+    padding: 0 14px;
+    gap: 6px;
+  }
+  .header-actions .language-menu,
+  .header-actions .icon-button[aria-label='Rechercher'] {
+    display: none;
+  }
+  .header-actions {
+    gap: 2px;
+  }
+  .header-brand {
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+  /* A wordmark narrower than this is unreadable; better to shrink the
+     height than to keep squeezing the width. */
+  .brand-lockup {
+    height: 28px;
+    min-width: 132px;
+  }
+  .ic-mark {
+    width: 36px;
+    height: 36px;
   }
   .header-brand {
     min-width: 0;
@@ -2789,9 +2870,22 @@ footer {
   .product-meta h3 {
     font-size: 14px;
   }
-  /* The hover-reveal add button never gets a hover on touch, so pin it open. */
+  /* The add button is a hover-reveal overlay on desktop, absolutely
+     positioned over the card. Touch has no hover, so pinning it visible
+     left it sitting on top of the product name. Put it back in flow as a
+     full-width button under the price instead — where a thumb expects it
+     and where it covers nothing. */
   .add-button {
     opacity: 1;
+    position: static;
+    width: 100%;
+    justify-content: center;
+    margin-top: 4px;
+    padding: 13px 16px;
+    font-size: 12px;
+  }
+  .product-meta {
+    padding: 14px 2px 0;
   }
 
   /* Product detail */
@@ -2818,6 +2912,26 @@ footer {
   }
   .compte-card {
     padding: 22px 18px;
+  }
+  /* Four money columns in ~300px: drop the label size and kill the letter
+     spacing so "Prix TTC" stops wrapping mid-header, and let the numbers
+     sit tight against their column. */
+  .compte-table {
+    font-size: 13px;
+  }
+  .compte-table th {
+    font-size: 10px;
+    letter-spacing: 0;
+    white-space: nowrap;
+  }
+  .compte-table th:not(:first-child),
+  .compte-table td:not(:first-child) {
+    text-align: right;
+    padding-left: 8px;
+    white-space: nowrap;
+  }
+  .compte-table td:first-child {
+    padding-right: 6px;
   }
 
   .compte-auth-card {
