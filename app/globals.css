@@ -1009,7 +1009,10 @@ h3 {
 }
 .cart-layout {
   display: grid;
-  grid-template-columns: 1.5fr 0.8fr;
+  /* minmax(0, …) rather than a bare fr: an fr track floors at its
+     min-content width, so the item row's intrinsic width was forcing the
+     grid wider than its container and pushing the summary off-screen. */
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 0.8fr);
   gap: 60px;
   align-items: start;
 }
@@ -1035,6 +1038,9 @@ h3 {
 }
 .cart-item-copy {
   flex: 1;
+  /* Without this a flex item refuses to shrink past its content, which
+     pushed the line total past the right edge on narrow screens. */
+  min-width: 0;
 }
 .cart-item-copy h3 {
   font-size: 15px;
@@ -1052,6 +1058,8 @@ h3 {
   min-width: 90px;
   text-align: right;
   font-size: 13px;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .cart-empty {
   padding: 60px 0;
@@ -1558,12 +1566,19 @@ footer {
   display: flex;
   align-items: center;
   gap: 22px;
+  /* The lockup is width:auto off a fixed height, so on a narrow footer
+     column the pair overflowed and pushed the INOCASA mark outside. Let
+     the row wrap and the lockup shrink rather than escape. */
+  flex-wrap: wrap;
+  min-width: 0;
 }
 /* The footer lockup shows the full "Official Distributor" artwork stacked,
    so it needs more height than the compact header instance. */
 .footer-brand .brand-lockup {
   height: 62px;
   width: auto;
+  max-width: 100%;
+  min-width: 0;
 }
 /* Boxed INOCASA mark, matching the bordered treatment in the footer. */
 .footer-brand .ic-mark {
@@ -2418,6 +2433,14 @@ footer {
   background: var(--white);
   text-transform: none;
   letter-spacing: 0;
+  /* An <input> sizes itself from its `size` attribute, not its container,
+     so it needs both of these to stay inside the grid track. */
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+.compte-auth-form label {
+  min-width: 0;
 }
 .compte-auth-form input:focus-visible {
   outline: 2px solid var(--brand-green);
@@ -2425,7 +2448,10 @@ footer {
 }
 .compte-auth-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  /* minmax(0, 1fr), not 1fr: an input carries a default intrinsic width
+     (~170px + padding) that a bare fr track will not shrink below, which
+     pushed this row 17px past the card's right edge at every width. */
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 12px;
 }
 .compte-auth-switch {
@@ -2741,6 +2767,13 @@ footer {
   .store-page {
     gap: 44px;
   }
+  /* One column from here down. The two-column cart stopped fitting well
+     before 760px — at 761px its tracks needed 828px inside a 609px
+     container and the summary was pushed off the right edge. */
+  .cart-layout {
+    grid-template-columns: 1fr;
+    gap: 32px;
+  }
   .store-page {
     padding: 72px 6vw 80px;
   }
@@ -2794,10 +2827,12 @@ footer {
     flex: 0 1 auto;
   }
   /* A wordmark narrower than this is unreadable; better to shrink the
-     height than to keep squeezing the width. */
+     height than to keep squeezing the width. Capped at 100% so the floor
+     can never push the image out of its own anchor at 320px. */
   .brand-lockup {
     height: 28px;
-    min-width: 132px;
+    min-width: min(132px, 100%);
+    max-width: 100%;
   }
   .ic-mark {
     width: 36px;
@@ -3007,8 +3042,40 @@ footer {
   .form-grid {
     grid-template-columns: 1fr;
   }
+  /* Thumbnail + copy + stepper + total + remove cannot share one row on a
+     phone: together they need ~495px, so the row was overflowing its
+     container and the price was cut off mid-number. Reflow into a grid —
+     image on the left spanning both rows, copy beside it, then the
+     stepper and total on their own line underneath. */
   .cart-item {
-    gap: 14px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    grid-template-areas:
+      'visual copy remove'
+      'visual controls controls';
+    align-items: center;
+    gap: 8px 14px;
+  }
+  .cart-item > .mini-visual {
+    grid-area: visual;
+    align-self: start;
+  }
+  .cart-item > .cart-item-copy {
+    grid-area: copy;
+  }
+  .cart-item > .quantity {
+    grid-area: controls;
+    justify-self: start;
+    margin: 0;
+  }
+  .cart-item > .cart-item-line-total {
+    grid-area: controls;
+    justify-self: end;
+    align-self: center;
+  }
+  .cart-item > .icon-button {
+    grid-area: remove;
+    align-self: start;
   }
   .mini-visual {
     width: 72px;
