@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import { redirect } from 'next/navigation'
 import type { Metadata } from 'next'
 import { createClient } from '@/lib/supabase/admin-auth'
@@ -31,6 +32,15 @@ export default async function AdminLoginPage() {
   return (
     <div className="admin-login-page">
       <div className="admin-login-card">
+        <Image
+          className="admin-login-mark"
+          src="/official.png"
+          alt="INOCASA"
+          width={300}
+          height={300}
+          sizes="64px"
+          priority
+        />
         <p className="eyebrow">INOCASA · ADMINISTRATION</p>
         <h1>Connexion</h1>
         <LoginForm />

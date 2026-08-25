@@ -1,3 +1,4 @@
+import Image from 'next/image'
 import Link from 'next/link'
 import { LogOut, Package, Truck } from 'lucide-react'
 import { logout } from '@/app/admin-r/(dashboard)/actions'
@@ -18,7 +19,15 @@ export function AdminShell({
     <div className="admin-shell">
       <header className="admin-header">
         <Link href="/admin-r" className="admin-brand">
-          <span className="admin-brand-mark">IC</span>
+          <Image
+            className="admin-brand-mark"
+            src="/official.png"
+            alt=""
+            width={300}
+            height={300}
+            sizes="32px"
+            priority
+          />
           INOCASA <small>Admin</small>
         </Link>
 

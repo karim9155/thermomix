@@ -1736,17 +1736,23 @@ footer {
   color: var(--white);
   flex-shrink: 0;
 }
+/* The real INOCASA mark, replacing the "IC" text placeholder. The artwork
+   already carries its own dark ground and padding, so it needs no
+   background or centring of its own — just the rounded corner. */
 .admin-brand-mark {
   width: 32px;
   height: 32px;
   border-radius: 8px;
-  background: var(--brand-green);
-  color: var(--white);
-  display: grid;
-  place-items: center;
-  font:
-    700 12px Georgia,
-    serif;
+  object-fit: cover;
+  flex-shrink: 0;
+}
+.admin-login-mark {
+  width: 64px;
+  height: 64px;
+  border-radius: 12px;
+  object-fit: cover;
+  display: block;
+  margin-bottom: 20px;
 }
 .admin-brand small {
   color: #9aa3a7;
