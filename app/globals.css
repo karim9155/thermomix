@@ -119,8 +119,8 @@ h3 {
   flex: 1 1 auto;
   min-width: 0;
   /* Six links plus two pill CTAs need ~870px and only get ~670px at
-     1280px, so without this the CTAs ran straight over the language
-     switcher and the icon row. Wrapping is not an option in a fixed-height
+     1280px, so without this the CTAs ran straight over the icon row.
+     Wrapping is not an option in a fixed-height
      header, and a hamburger on a 1280px laptop would be wrong, so the row
      tightens instead: it may shrink, and the links give up their spacing
      before the CTAs give up their padding. */
@@ -229,7 +229,34 @@ h3 {
 .nav-burger.nav-burger {
   display: none;
 }
+/* Fades in on open and out on close.
+   Animations, not a transition: an animation runs from its keyframes as
+   soon as the element is inserted, so the opening fade cannot be skipped
+   the way a transition can when the browser never paints the initial
+   state. The component keeps the drawer mounted for DRAWER_FADE_MS while
+   .closing runs — that constant must match the 420ms here. */
+@keyframes nav-drawer-in {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes nav-drawer-out {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
 .nav-drawer {
+  animation: nav-drawer-in 420ms ease both;
   position: fixed;
   inset: 0;
   z-index: 60;
@@ -237,6 +264,19 @@ h3 {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+}
+.nav-drawer.closing {
+  animation: nav-drawer-out 420ms ease both;
+}
+/* Anyone who has asked for reduced motion gets the drawer with no
+   movement or fade — it simply appears and disappears. */
+@media (prefers-reduced-motion: reduce) {
+  .nav-drawer,
+  .nav-drawer.closing {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
 }
 .nav-drawer-head {
   display: flex;
@@ -357,54 +397,6 @@ h3 {
 .outline-button:disabled {
   opacity: 0.55;
   cursor: not-allowed;
-}
-.language,
-.icon-button {
-  border: 0;
-  background: transparent;
-  color: var(--ink);
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 8px;
-  border-radius: 8px;
-}
-.icon-button:hover,
-.language:hover {
-  background: var(--surface);
-}
-.language-menu {
-  position: relative;
-}
-.language-options {
-  position: absolute;
-  top: calc(100% + 6px);
-  right: 0;
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.1);
-  list-style: none;
-  margin: 0;
-  padding: 6px;
-  min-width: 90px;
-  z-index: 30;
-}
-.language-options button {
-  width: 100%;
-  text-align: left;
-  border: 0;
-  background: transparent;
-  padding: 8px 10px;
-  border-radius: 6px;
-  font-size: 12px;
-  font-weight: 600;
-}
-.language-options button:hover {
-  background: var(--surface);
-}
-.language-options button.active {
-  color: var(--brand-green);
 }
 .bag {
   position: relative;
@@ -3244,15 +3236,14 @@ footer {
 
      The action row is a fixed ~227px regardless of viewport, which at
      320px left the brand lockup 1px wide — the wordmark vanished. The
-     language switcher and the search button move into the drawer here so
-     the logo keeps a readable width; cart and account stay, since those
-     are the two a shopper reaches for mid-task. */
+     search button moves into the drawer here so the logo keeps a readable
+     width; cart and account stay, since those are the two a shopper
+     reaches for mid-task. */
   .site-header {
     height: 68px;
     padding: 0 14px;
     gap: 6px;
   }
-  .header-actions .language-menu,
   .header-actions .icon-button[aria-label='Rechercher'] {
     display: none;
   }

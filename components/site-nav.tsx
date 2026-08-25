@@ -120,10 +120,40 @@ function DesktopItem({ item, pathname }: { item: NavItem; pathname: string }) {
   )
 }
 
+/** Must match the fade duration in .nav-drawer's CSS transition. */
+const DRAWER_FADE_MS = 420
+
 export function SiteNav({ onSearch }: { onSearch?: () => void }) {
   const pathname = usePathname()
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [expanded, setExpanded] = useState<string | null>(null)
+  // The drawer must stay in the DOM while it fades OUT, so `mounted`
+  // tracks presence and `closing` picks the animation. A CSS animation
+  // rather than a transition: an animation runs from its own keyframes
+  // the moment the element appears, so the fade-in cannot be skipped by
+  // the browser collapsing the initial paint — which is exactly what a
+  // transition plus requestAnimationFrame is vulnerable to.
+  const [mounted, setMounted] = useState(false)
+  const [closing, setClosing] = useState(false)
+
+  useEffect(() => {
+    if (drawerOpen) {
+      setClosing(false)
+      setMounted(true)
+      return
+    }
+
+    // Not open. If it was never mounted there is nothing to fade out.
+    if (!mounted) return
+
+    setClosing(true)
+    const timer = setTimeout(() => {
+      setMounted(false)
+      setClosing(false)
+    }, DRAWER_FADE_MS)
+    return () => clearTimeout(timer)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [drawerOpen])
 
   // Close the drawer on navigation, otherwise it stays open over the new page.
   useEffect(() => {
@@ -172,8 +202,13 @@ export function SiteNav({ onSearch }: { onSearch?: () => void }) {
         <Menu size={22} />
       </button>
 
-      {drawerOpen ? (
-        <div className="nav-drawer" role="dialog" aria-modal="true" aria-label="Menu">
+      {mounted ? (
+        <div
+          className={closing ? 'nav-drawer closing' : 'nav-drawer'}
+          role="dialog"
+          aria-modal="true"
+          aria-label="Menu"
+        >
           <div className="nav-drawer-head">
             {/* The lockup rather than the word "Menu": the drawer covers
                 the header, so this keeps the brand on screen and gives a
