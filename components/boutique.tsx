@@ -20,6 +20,7 @@ import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/components/ui/toast'
 import { CartDrawer } from '@/components/cart-drawer'
 import { SiteNav } from '@/components/site-nav'
+import { AccountButton } from '@/components/account-button'
 
 const LANGUAGES = ['FR', 'EN', 'AR']
 
@@ -183,12 +184,7 @@ export function Header({ products }: { products: Product[] }) {
           <button className="icon-button" aria-label="Rechercher" onClick={() => setSearch(true)}>
             <Search size={20} />
           </button>
-          {/* Always a plain link: the header is a client component and
-              this avoids threading session state through it. /compte
-              redirects to login on its own when there's no session. */}
-          <Link href="/compte" className="icon-button" aria-label="Mon compte">
-            <User size={20} />
-          </Link>
+          <AccountButton />
           <button
             className="icon-button bag"
             aria-label="Ouvrir le panier"

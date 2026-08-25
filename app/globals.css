@@ -424,6 +424,28 @@ h3 {
   flex-shrink: 0;
 }
 
+/* Signed-in account control: initials in place of the person icon. Sized
+   to match .icon-button's 36px footprint so swapping between the two
+   doesn't shift the header's icon row. */
+.account-initials {
+  width: 36px;
+  height: 36px;
+  border-radius: 999px;
+  background: var(--brand-green);
+  color: var(--white);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  flex-shrink: 0;
+  transition: opacity 0.18s ease;
+}
+.account-initials:hover {
+  opacity: 0.85;
+}
+
 /* Hero */
 .hero {
   min-height: 535px;
