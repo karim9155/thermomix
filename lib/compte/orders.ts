@@ -123,3 +123,43 @@ export async function getCustomerOrder(
     })),
   }
 }
+
+export type CheckoutPrefill = {
+  prenom: string
+  nom: string
+  email: string
+  telephone: string
+  adresse: string
+  ville: string
+  gouvernorat: string
+}
+
+/**
+ * Delivery details from the customer's most recent order, used to prefill
+ * checkout so a returning buyer doesn't retype an address we already have.
+ * Reads through their own session, so RLS guarantees it can only ever be
+ * their own order. Returns undefined on a first purchase.
+ */
+export async function getLastOrderDetails(): Promise<CheckoutPrefill | undefined> {
+  const supabase = await createClient()
+
+  const { data, error } = await supabase
+    .from('orders')
+    .select('prenom, nom, email, telephone, adresse, ville, gouvernorat')
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle()
+
+  if (error || !data) return undefined
+
+  const row = data as any
+  return {
+    prenom: row.prenom ?? '',
+    nom: row.nom ?? '',
+    email: row.email ?? '',
+    telephone: row.telephone ?? '',
+    adresse: row.adresse ?? '',
+    ville: row.ville ?? '',
+    gouvernorat: row.gouvernorat ?? '',
+  }
+}

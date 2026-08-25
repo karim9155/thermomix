@@ -5,6 +5,10 @@ import { createClient } from '@/lib/supabase/customer-auth'
 export type CustomerUser = {
   id: string
   email: string
+  /** Captured at signup and stored in user_metadata; may be absent for
+      accounts created before that field existed. */
+  prenom: string
+  nom: string
 }
 
 /**
@@ -33,7 +37,7 @@ export async function requireCustomer(returnTo?: string): Promise<CustomerUser> 
     redirect(`/compte/connexion${next}`)
   }
 
-  return { id: user.id, email: user.email ?? '' }
+  return toCustomer(user)
 }
 
 /**
@@ -50,5 +54,17 @@ export async function getCustomer(): Promise<CustomerUser | null> {
 
   if (!user) return null
 
-  return { id: user.id, email: user.email ?? '' }
+  return toCustomer(user)
+}
+
+type AuthUser = { id: string; email?: string; user_metadata?: Record<string, unknown> }
+
+function toCustomer(user: AuthUser): CustomerUser {
+  const meta = user.user_metadata ?? {}
+  return {
+    id: user.id,
+    email: user.email ?? '',
+    prenom: typeof meta.prenom === 'string' ? meta.prenom : '',
+    nom: typeof meta.nom === 'string' ? meta.nom : '',
+  }
 }

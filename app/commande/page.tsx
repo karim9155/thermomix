@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { BoutiqueShell } from '@/components/boutique-shell'
 import { CheckoutForm } from '@/components/checkout-form'
 import { getCustomer } from '@/lib/compte/guard'
+import { getLastOrderDetails } from '@/lib/compte/orders'
 
 // Checkout needs a session: /api/commande rejects a sessionless order, so
 // send the user to sign in first rather than letting them fill the whole
@@ -19,9 +20,23 @@ export default async function CheckoutPage() {
     redirect(`/compte/connexion?next=${encodeURIComponent('/commande')}`)
   }
 
+  // Prefer the last order's details — they are a real delivery address the
+  // customer already used — and fall back to what signup captured.
+  const last = await getLastOrderDetails()
+
   return (
     <BoutiqueShell>
-      <CheckoutForm customerEmail={customer.email} />
+      <CheckoutForm
+        prefill={{
+          prenom: last?.prenom || customer.prenom,
+          nom: last?.nom || customer.nom,
+          email: customer.email,
+          telephone: last?.telephone ?? '',
+          adresse: last?.adresse ?? '',
+          ville: last?.ville ?? '',
+          gouvernorat: last?.gouvernorat ?? '',
+        }}
+      />
     </BoutiqueShell>
   )
 }

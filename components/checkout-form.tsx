@@ -10,7 +10,17 @@ import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
 import { formatPrice, governorates } from '@/lib/product-format'
 
-export function CheckoutForm({ customerEmail }: { customerEmail?: string }) {
+type CheckoutPrefill = {
+  prenom: string
+  nom: string
+  email: string
+  telephone: string
+  adresse: string
+  ville: string
+  gouvernorat: string
+}
+
+export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
   const router = useRouter()
   const { items, subtotalHT, totalTVA, totalTTC } = useCart()
   const [hydrated, setHydrated] = useState(false)
@@ -24,9 +34,19 @@ export function CheckoutForm({ customerEmail }: { customerEmail?: string }) {
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
-    // Ordering requires an account, so the signed-in address is the one we
-    // already know — prefill it rather than making them retype it.
-    defaultValues: { paymentMethod: 'cash', email: customerEmail ?? '' },
+    // Ordering requires an account, so we already know who this is: the
+    // name from signup and, for a returning buyer, the delivery details
+    // from their last order. Every field stays editable.
+    defaultValues: {
+      paymentMethod: 'cash',
+      prenom: prefill?.prenom ?? '',
+      nom: prefill?.nom ?? '',
+      email: prefill?.email ?? '',
+      telephone: prefill?.telephone ?? '',
+      adresse: prefill?.adresse ?? '',
+      ville: prefill?.ville ?? '',
+      gouvernorat: prefill?.gouvernorat ?? '',
+    },
   })
 
   const paymentMethod = watch('paymentMethod')
@@ -165,11 +185,10 @@ export function CheckoutForm({ customerEmail }: { customerEmail?: string }) {
             </label>
             <label>
               Gouvernorat
-              <select
-                defaultValue=""
-                {...register('gouvernorat')}
-                aria-invalid={!!errors.gouvernorat}
-              >
+              {/* No defaultValue here: it would override the value
+                  react-hook-form was given, leaving a returning customer's
+                  saved gouvernorat showing "Sélectionner". */}
+              <select {...register('gouvernorat')} aria-invalid={!!errors.gouvernorat}>
                 <option value="" disabled>
                   Sélectionner
                 </option>
