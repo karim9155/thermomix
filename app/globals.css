@@ -118,6 +118,13 @@ h3 {
   color: #4b5563;
   flex: 1 1 auto;
   min-width: 0;
+  /* Six links plus two pill CTAs need ~870px and only get ~670px at
+     1280px, so without this the CTAs ran straight over the language
+     switcher and the icon row. Wrapping is not an option in a fixed-height
+     header, and a hamburger on a 1280px laptop would be wrong, so the row
+     tightens instead: it may shrink, and the links give up their spacing
+     before the CTAs give up their padding. */
+  overflow: hidden;
 }
 .site-nav > a.active,
 .nav-dropdown-trigger.active {
@@ -213,8 +220,13 @@ h3 {
   padding: 13px 16px;
 }
 
-/* Burger + drawer are desktop-hidden; the responsive block swaps them in. */
-.nav-burger {
+/* Burger + drawer are desktop-hidden; the responsive block swaps them in.
+   The element carries `icon-button nav-burger`, and .icon-button sets
+   display:inline-flex further down this file — equal specificity, so
+   source order was winning and the burger showed on desktop, overlapping
+   the "Rejoignez-nous" CTA. Doubling the class outranks it without
+   needing !important. */
+.nav-burger.nav-burger {
   display: none;
 }
 .nav-drawer {
@@ -2687,7 +2699,75 @@ footer {
   margin-top: 24px;
 }
 
-@media (max-width: 1100px) {
+/* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
+   than hand a 1280px laptop a hamburger, tighten the row until it fits —
+   smaller gaps, tighter CTA padding, slightly smaller type. Everything
+   stays visible and clickable; only the breathing room shrinks. */
+@media (max-width: 1500px) and (min-width: 1151px) {
+  .site-nav {
+    gap: 12px;
+    font-size: 12.5px;
+  }
+  .site-nav-ctas {
+    gap: 7px;
+    margin-left: 0;
+  }
+  .nav-cta {
+    padding: 8px 11px;
+    font-size: 11.5px;
+  }
+  .site-header {
+    gap: 14px;
+    padding: 0 3vw;
+  }
+  .header-actions {
+    gap: 4px;
+  }
+  .header-brand {
+    min-width: 0;
+  }
+}
+
+@media (max-width: 1280px) and (min-width: 1151px) {
+  /* Tighter still: at this width the two CTAs are what overflows, so drop
+     their label size a touch more and pull the link gaps in. */
+  .site-nav {
+    gap: 9px;
+    font-size: 12px;
+  }
+  .nav-cta {
+    padding: 7px 9px;
+    font-size: 11px;
+  }
+  .brand-lockup {
+    height: 32px;
+  }
+}
+
+@media (max-width: 1240px) and (min-width: 1151px) {
+  /* The last stretch before the burger takes over. "Réserver une
+     démonstration" is the longest label on the bar, so it shortens to
+     "Réserver une démo" here — still unambiguous next to
+     "Rejoignez-nous", and it buys the ~90px that keeps the whole row
+     from colliding with the icons. */
+  .site-nav {
+    gap: 7px;
+    font-size: 11.5px;
+  }
+  .nav-cta {
+    padding: 6px 8px;
+    font-size: 10.5px;
+  }
+  .site-nav-ctas .nav-cta:first-child {
+    font-size: 0;
+  }
+  .site-nav-ctas .nav-cta:first-child::after {
+    content: 'Réserver une démo';
+    font-size: 10.5px;
+  }
+}
+
+@media (max-width: 1150px) {
   /* Nine links plus two CTAs stop fitting well before phone width, so the
      drawer takes over here rather than at 760px. The old rule wrapped the
      nav onto its own scrollable row, which worked for a single link and
@@ -2698,7 +2778,7 @@ footer {
   /* The burger lives inside SiteNav, which sits before .header-actions in
      the markup — order pushes it past the icon row so it lands at the
      right edge where a menu button is expected. */
-  .nav-burger {
+  .nav-burger.nav-burger {
     display: inline-flex;
     order: 3;
     margin-left: 2px;
