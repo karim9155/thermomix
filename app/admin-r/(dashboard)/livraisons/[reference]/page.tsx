@@ -5,7 +5,7 @@ import { getOrderDetail } from '@/lib/admin/orders'
 import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
 import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
-import { parseEstimatedDeliveryEvent } from '@/lib/admin/order-format'
+import { parseEstimatedDeliveryEvent, formatEstimatedDelivery } from '@/lib/admin/order-format'
 import { formatPrice } from '@/lib/product-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
@@ -119,7 +119,7 @@ export default async function LivraisonDetailPage({
               </div>
               <div>
                 <dt>Délai estimé</dt>
-                <dd>{order.estimatedDelivery ?? '—'}</dd>
+                <dd>{formatEstimatedDelivery(order.estimatedDelivery) ?? '—'}</dd>
               </div>
             </dl>
           </section>

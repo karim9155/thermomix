@@ -52,7 +52,7 @@ export function EstimatedDeliveryControl({
         <input
           type="text"
           value={value}
-          placeholder="ex. 2–3 jours"
+          placeholder="ex. 7 ou « Lundi 15 »"
           disabled={pending}
           maxLength={80}
           onChange={(event) => {

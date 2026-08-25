@@ -7,6 +7,7 @@ import { getProfile, EMPTY_PROFILE } from '@/lib/compte/profile'
 import { signout } from '@/app/compte/actions'
 import { ProfileForm } from '@/components/compte/profile-form'
 import { DeliveryStatusBadge } from '@/components/admin/badges'
+import { formatEstimatedDelivery } from '@/lib/admin/order-format'
 import { formatPrice } from '@/lib/product-format'
 
 export const metadata: Metadata = {
@@ -105,9 +106,9 @@ export default async function ComptePage({
 
                   <div className="compte-order-status">
                     <DeliveryStatusBadge status={order.deliveryStatus} />
-                    {order.estimatedDelivery ? (
+                    {formatEstimatedDelivery(order.estimatedDelivery) ? (
                       <span className="compte-order-estimate">
-                        Livraison estimée : {order.estimatedDelivery}
+                        Livraison estimée : {formatEstimatedDelivery(order.estimatedDelivery)}
                       </span>
                     ) : null}
                   </div>

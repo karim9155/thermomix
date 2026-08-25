@@ -4,7 +4,11 @@ import { useMemo, useState } from 'react'
 import Link from 'next/link'
 import { Search } from 'lucide-react'
 import type { AdminOrderListItem } from '@/lib/admin/orders'
-import { DELIVERY_STATUSES, type DeliveryStatus } from '@/lib/admin/order-format'
+import {
+  DELIVERY_STATUSES,
+  formatEstimatedDelivery,
+  type DeliveryStatus,
+} from '@/lib/admin/order-format'
 import { DeliveryStatusBadge, PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { formatPrice } from '@/lib/product-format'
 
@@ -129,9 +133,7 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
                   <DeliveryStatusBadge status={order.deliveryStatus} />
                 </td>
                 <td>
-                  {order.estimatedDelivery ? (
-                    order.estimatedDelivery
-                  ) : (
+                  {formatEstimatedDelivery(order.estimatedDelivery) ?? (
                     <span className="admin-muted">—</span>
                   )}
                 </td>

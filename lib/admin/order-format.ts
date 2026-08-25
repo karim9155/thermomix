@@ -30,3 +30,28 @@ export function parseEstimatedDeliveryEvent(status: string): string | null {
   }
   return null
 }
+
+/**
+ * Renders a delivery estimate for display.
+ *
+ * The column is free text on purpose (see migration 0005) — an admin may
+ * write "2–3 jours", "Lundi 15" or just "7". Only the bare-number case
+ * needs a unit appended; appending unconditionally would produce
+ * "2-3 jours jours". Anything that already contains a letter is passed
+ * through untouched.
+ */
+export function formatEstimatedDelivery(value: string | null | undefined): string | null {
+  if (!value) return null
+
+  const trimmed = value.trim()
+  if (trimmed === '') return null
+
+  // A plain count of days: "7", "10". Ranges written with digits only
+  // ("2-3", "2–3") get the unit too, since they read as days as well.
+  if (/^\d+(\s*[-–]\s*\d+)?$/.test(trimmed)) {
+    const isOne = trimmed === '1'
+    return `${trimmed} ${isOne ? 'jour' : 'jours'}`
+  }
+
+  return trimmed
+}
