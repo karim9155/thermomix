@@ -1,5 +1,6 @@
 'use client'
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
@@ -174,7 +175,21 @@ export function SiteNav({ onSearch }: { onSearch?: () => void }) {
       {drawerOpen ? (
         <div className="nav-drawer" role="dialog" aria-modal="true" aria-label="Menu">
           <div className="nav-drawer-head">
-            <span>Menu</span>
+            {/* The lockup rather than the word "Menu": the drawer covers
+                the header, so this keeps the brand on screen and gives a
+                way back to the shop. Rendered directly instead of reusing
+                BrandLockup, which lives in boutique.tsx — that module
+                imports this one, so the reverse would be circular. */}
+            <Link href="/boutique" onClick={() => setDrawerOpen(false)}>
+              <Image
+                className="nav-drawer-logo"
+                src="/Vorwerk_TM_OD_horizontal_M_RGB.png"
+                alt="Thermomix by Vorwerk — Official Distributor"
+                width={3911}
+                height={757}
+                sizes="180px"
+              />
+            </Link>
             <button
               type="button"
               className="icon-button"

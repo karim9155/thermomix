@@ -78,7 +78,7 @@ export default async function ComptePage({
           <h2>Mes informations</h2>
           <p className="compte-profile-intro">
             Ces informations préremplissent votre prochaine commande. Vos commandes déjà passées
-            gardent l&apos;adresse utilisée à l&apos;époque.
+            gardent l&apos;adresse utilisée dans le passé.
           </p>
           <ProfileForm profile={profile} email={customer.email} />
         </section>

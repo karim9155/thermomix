@@ -74,10 +74,18 @@ export default async function ConfirmationPage({
               <span>Total TTC</span>
               <strong>{formatPrice(order.totalTTC)}</strong>
             </div>
-            <Link href="/boutique" className="outline-button full center">
-              Continuer mes achats
-            </Link>
           </aside>
+        </div>
+
+        {/* Outside the summary card: these act on the order as a whole,
+            not on the totals above them. */}
+        <div className="confirmation-actions">
+          <Link href="/compte" className="primary-button full center">
+            Voir mes commandes <ArrowRight size={16} />
+          </Link>
+          <Link href="/boutique" className="outline-button full center">
+            Continuer mes achats
+          </Link>
         </div>
       </section>
     </BoutiqueShell>

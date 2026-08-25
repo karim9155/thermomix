@@ -242,13 +242,18 @@ h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 18px;
+  gap: 12px;
+  padding: 14px 18px;
   border-bottom: 1px solid var(--border);
-  font-size: 12px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  color: var(--muted);
+}
+/* Matches the header lockup's height so opening the drawer doesn't make
+   the brand jump. */
+.nav-drawer-logo {
+  width: auto;
+  height: 28px;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
 }
 .nav-drawer-body {
   padding: 12px 18px 32px;
@@ -267,7 +272,7 @@ h3 {
   background: none;
   font: inherit;
   font-size: 16px;
-  font-weight: 600;
+  font-weight: 400;
   color: var(--ink);
   text-align: left;
   cursor: pointer;
@@ -450,9 +455,15 @@ h3 {
 /* Scroll-snap, like the product gallery: the browser does the swiping, so
    there is no drag library and no JS animation loop. The arrows and dots
    drive scrollTo(); the scroll position drives the active dot back. */
+/* Large rounded bottom-right corner on the image itself, matching the
+   Vorwerk treatment. border-radius on the carousel with overflow:hidden,
+   so the slides are clipped to the shape — the page ground shows through
+   outside the curve. */
 .home-carousel {
   position: relative;
   background: var(--surface);
+  border-bottom-right-radius: clamp(48px, 7vw, 110px);
+  overflow: hidden;
 }
 .home-carousel-track {
   display: grid;
@@ -488,6 +499,7 @@ h3 {
 }
 .home-carousel-arrow {
   position: absolute;
+  z-index: 3;
   top: 50%;
   transform: translateY(-50%);
   width: 44px;
@@ -513,6 +525,7 @@ h3 {
 }
 .home-carousel-dots {
   position: absolute;
+  z-index: 3;
   bottom: 18px;
   left: 0;
   right: 0;
@@ -2768,6 +2781,23 @@ footer {
 
 /* Order list + detail under /compte. Reuses .admin-badge for statuses so
    the customer and the admin read the same vocabulary. */
+/* Order-confirmation actions. They sit under the summary card rather than
+   inside it, because they act on the order as a whole rather than on the
+   totals — and the card's grey ground made an outline button hard to
+   read. Constrained to the summary's column so they don't stretch the
+   full page width on desktop. */
+.confirmation-actions {
+  display: grid;
+  gap: 10px;
+  margin-top: 24px;
+  margin-left: auto;
+  width: min(100%, 360px);
+}
+.confirmation-actions .primary-button,
+.confirmation-actions .outline-button {
+  margin-bottom: 0;
+}
+
 .compte-empty-state {
   display: grid;
   justify-items: start;
@@ -3338,6 +3368,11 @@ footer {
   .detail-copy h1 {
     font-size: 30px;
   }
+  .confirmation-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
   .compte-order-card {
     grid-template-columns: 1fr;
     gap: 12px;
