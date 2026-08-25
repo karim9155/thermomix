@@ -29,6 +29,8 @@ export type Product = {
   images: ProductImage[]
   sourceUrl: string
   inStock: boolean
+  /** Units on hand. Decremented when an order is marked delivered. */
+  stockQuantity: number
   isFeatured: boolean
   sortOrder: number
 }

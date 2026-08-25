@@ -186,6 +186,52 @@ export async function updateDeliveryStatus(
   if (historyError) {
     throw new Error(`Impossible d'enregistrer l'historique : ${historyError.message}`)
   }
+
+  // Stock leaves the shop when the order is handed over, so the deduction
+  // happens on the transition INTO 'livree' and only from a status that
+  // was not already 'livree'. The early return above guarantees that:
+  // re-selecting the same status never reaches here, so an admin toggling
+  // the dropdown cannot deduct twice for one order.
+  if (newStatus === 'livree') {
+    await decrementStockForOrder(order.id)
+  }
+}
+
+/**
+ * Takes each line's quantity off the corresponding product's stock.
+ *
+ * Deliberately does NOT throw on failure. The order has already been
+ * marked delivered and that is the fact of record; refusing the whole
+ * operation because a stock row would go negative would leave the admin
+ * unable to close out a real delivery. A shortfall is clamped at zero and
+ * the discrepancy is visible in the admin, which is the right place to
+ * resolve it.
+ */
+async function decrementStockForOrder(orderId: string): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: items, error: itemsError } = await supabase
+    .from('order_items')
+    .select('sku, quantity')
+    .eq('order_id', orderId)
+
+  if (itemsError || !items?.length) return
+
+  for (const item of items) {
+    const { data: product } = await supabase
+      .from('products')
+      .select('id, stock_quantity')
+      .eq('sku', item.sku)
+      .maybeSingle()
+
+    // The SKU may no longer exist — order_items snapshot the sku at
+    // purchase time precisely so history survives a product being removed.
+    if (!product) continue
+
+    const next = Math.max(0, (product.stock_quantity ?? 0) - item.quantity)
+
+    await supabase.from('products').update({ stock_quantity: next }).eq('id', product.id)
+  }
 }
 
 /**

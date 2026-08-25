@@ -17,6 +17,7 @@ type ProductRow = {
   included: string[] | null
   source_url: string | null
   in_stock: boolean
+  stock_quantity: number | null
   is_featured: boolean
   sort_order: number
   product_images: { url: string; alt: string | null; position: number }[] | null
@@ -25,7 +26,7 @@ type ProductRow = {
 const PRODUCT_SELECT = `
   sku, slug, name, category, price_ht, tva, price_ttc,
   short_description, description, features, included,
-  source_url, in_stock, is_featured, sort_order,
+  source_url, in_stock, stock_quantity, is_featured, sort_order,
   product_images ( url, alt, position )
 `
 
@@ -48,6 +49,7 @@ function mapRow(row: ProductRow): Product {
     images,
     sourceUrl: row.source_url ?? '',
     inStock: row.in_stock,
+    stockQuantity: row.stock_quantity ?? 0,
     isFeatured: row.is_featured,
     sortOrder: row.sort_order,
   }

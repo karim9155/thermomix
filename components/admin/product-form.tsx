@@ -234,9 +234,23 @@ export function ProductForm({
             {errors.sourceUrl ? <span className="field-error">{errors.sourceUrl.message}</span> : null}
           </label>
 
-          <label className="admin-checkbox">
-            <input type="checkbox" {...register('inStock')} />
-            En stock
+          <label>
+            Quantité en stock
+            <input
+              type="number"
+              min={0}
+              step={1}
+              inputMode="numeric"
+              {...register('stockQuantity', { valueAsNumber: true })}
+              aria-invalid={!!errors.stockQuantity}
+            />
+            <small>
+              Diminue automatiquement d&apos;une unité par article lorsqu&apos;une commande passe
+              à « Livrée ». À 0, le produit est affiché en rupture et ne peut plus être commandé.
+            </small>
+            {errors.stockQuantity ? (
+              <span className="field-error">{errors.stockQuantity.message}</span>
+            ) : null}
           </label>
           <label className="admin-checkbox">
             <input type="checkbox" {...register('isFeatured')} />

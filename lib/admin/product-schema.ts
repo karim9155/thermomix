@@ -26,7 +26,17 @@ export const productFormSchema = z.object({
     z.object({ value: z.string().trim().min(1, "Un élément inclus ne peut pas être vide.") }),
   ),
   sourceUrl: z.union([z.url('URL invalide.'), z.literal('')]),
-  inStock: z.boolean(),
+  // Replaces the old in_stock checkbox: a real count, which the delivery
+  // flow decrements. in_stock is derived from it by a DB trigger.
+  //
+  // Plain number, not z.coerce: coercion makes zod's input and output
+  // types differ, which breaks react-hook-form's resolver generic. The
+  // field registers with valueAsNumber instead.
+  stockQuantity: z
+    .number({ message: 'Quantité invalide.' })
+    .int('La quantité doit être un nombre entier.')
+    .min(0, 'La quantité ne peut pas être négative.')
+    .max(100000),
   isFeatured: z.boolean(),
   sortOrder: z.number({ message: 'Ordre invalide.' }).int(),
 })
@@ -46,7 +56,7 @@ export const emptyProductFormValues: ProductFormValues = {
   features: [{ value: '' }],
   included: [],
   sourceUrl: '',
-  inStock: true,
+  stockQuantity: 0,
   isFeatured: false,
   sortOrder: 0,
 }

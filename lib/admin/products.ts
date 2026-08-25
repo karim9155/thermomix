@@ -20,6 +20,7 @@ export type AdminProductListItem = {
   category: ProductCategory
   priceTTC: number
   inStock: boolean
+  stockQuantity: number
   isArchived: boolean
   imageCount: number
   heroImage: string | null
@@ -41,6 +42,7 @@ export type AdminProductDetail = {
   included: string[]
   sourceUrl: string
   inStock: boolean
+  stockQuantity: number
   isFeatured: boolean
   isArchived: boolean
   sortOrder: number
@@ -61,7 +63,7 @@ export async function listProductsAdmin(): Promise<AdminProductListItem[]> {
   const { data, error } = await supabase
     .from('products')
     .select(
-      'id, sku, slug, name, category, price_ttc, in_stock, is_archived, sort_order, product_images ( url, position )',
+      'id, sku, slug, name, category, price_ttc, in_stock, stock_quantity, is_archived, sort_order, product_images ( url, position )',
     )
     .order('sort_order', { ascending: true })
 
@@ -79,6 +81,7 @@ export async function listProductsAdmin(): Promise<AdminProductListItem[]> {
       category: row.category,
       priceTTC: Number(row.price_ttc),
       inStock: row.in_stock,
+      stockQuantity: row.stock_quantity ?? 0,
       isArchived: row.is_archived,
       imageCount: images.length,
       heroImage: images[0]?.url ?? null,
@@ -93,7 +96,7 @@ export async function getProductAdminBySku(sku: string): Promise<AdminProductDet
     .from('products')
     .select(
       `id, sku, slug, name, category, price_ht, tva, price_ttc, short_description, description,
-       features, included, source_url, in_stock, is_featured, is_archived, sort_order,
+       features, included, source_url, in_stock, stock_quantity, is_featured, is_archived, sort_order,
        product_images ( id, url, alt, position )`,
     )
     .eq('sku', sku)
@@ -123,6 +126,7 @@ export async function getProductAdminBySku(sku: string): Promise<AdminProductDet
     included: data.included ?? [],
     sourceUrl: data.source_url ?? '',
     inStock: data.in_stock,
+    stockQuantity: data.stock_quantity ?? 0,
     isFeatured: data.is_featured,
     isArchived: data.is_archived,
     sortOrder: data.sort_order,
@@ -144,7 +148,9 @@ function toRow(values: ProductFormValues) {
     features: values.features.map((f) => f.value),
     included: values.included.map((f) => f.value),
     source_url: values.sourceUrl || null,
-    in_stock: values.inStock,
+    // in_stock is maintained by a DB trigger from stock_quantity, so it
+    // is deliberately not written here — writing both invites drift.
+    stock_quantity: values.stockQuantity,
     is_featured: values.isFeatured,
     sort_order: values.sortOrder,
   }

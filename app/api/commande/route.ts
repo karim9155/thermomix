@@ -45,6 +45,20 @@ export async function POST(request: NextRequest) {
     if (!product.inStock) {
       return NextResponse.json({ error: `${product.name} n'est plus en stock.` }, { status: 400 })
     }
+    // Blocking only on inStock would let someone order 50 units when 3
+    // remain. Stock is checked here, server-side, against the live row
+    // rather than anything the client sent.
+    if (line.quantity > product.stockQuantity) {
+      return NextResponse.json(
+        {
+          error:
+            product.stockQuantity === 1
+              ? `Il ne reste qu'une unité de ${product.name}.`
+              : `Il ne reste que ${product.stockQuantity} unités de ${product.name}.`,
+        },
+        { status: 400 },
+      )
+    }
     lines.push({
       sku: product.sku,
       name: product.name,

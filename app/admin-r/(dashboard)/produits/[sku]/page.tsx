@@ -30,7 +30,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ sk
       product.features.length > 0 ? product.features.map((v) => ({ value: v })) : [{ value: '' }],
     included: product.included.map((v) => ({ value: v })),
     sourceUrl: product.sourceUrl,
-    inStock: product.inStock,
+    stockQuantity: product.stockQuantity,
     isFeatured: product.isFeatured,
     sortOrder: product.sortOrder,
   }
