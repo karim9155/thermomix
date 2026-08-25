@@ -51,7 +51,26 @@ export async function signup(_prevState: AuthState, formData: FormData): Promise
   })
 
   if (error) {
-    return { error: "Impossible de créer le compte. Cet email est peut-être déjà utilisé." }
+    // Don't collapse every failure into "email already used" — that
+    // sends people hunting for an account that doesn't exist. The rate
+    // limit in particular is hit easily while testing, because Supabase's
+    // built-in mailer allows only a few messages per hour.
+    if (error.status === 429 || error.code === 'over_email_send_rate_limit') {
+      return {
+        error:
+          "Trop de tentatives d'inscription. Merci de réessayer dans une heure, ou connectez-vous si vous avez déjà un compte.",
+      }
+    }
+
+    if (error.code === 'user_already_exists' || error.code === 'email_exists') {
+      return { error: 'Un compte existe déjà avec cet email. Connectez-vous.' }
+    }
+
+    if (error.code === 'weak_password') {
+      return { error: 'Mot de passe trop faible. Utilisez au moins 8 caractères.' }
+    }
+
+    return { error: "Impossible de créer le compte. Merci de réessayer." }
   }
 
   // This project has email confirmation ON (auth settings:
