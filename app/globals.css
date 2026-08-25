@@ -1942,8 +1942,14 @@ footer {
 
 .admin-stat-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* minmax(0, 1fr): a bare fr floors at the card's min-content width, so
+     the stat cards refused to share a row on a phone and stacked one per
+     line — six cards of scrolling before the orders table. */
+  grid-template-columns: repeat(6, minmax(0, 1fr));
   gap: 16px;
+  /* The stat cards and the order table below are separate things; without
+     this the filter tabs sat flush against the last card. */
+  margin-bottom: 32px;
 }
 .admin-stat-card {
   background: var(--white);
@@ -1965,6 +1971,16 @@ footer {
   font-size: 12px;
 }
 
+/* Admin tables carry up to nine columns and cannot be usefully stacked,
+   so below the desktop layout they scroll inside this wrapper instead of
+   pushing the page sideways. The rounded border lives here rather than on
+   the table, so the corners stay put while the content scrolls. */
+.admin-table-scroll {
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+  border-radius: 12px;
+}
 .admin-table {
   width: 100%;
   border-collapse: collapse;
@@ -2112,19 +2128,32 @@ footer {
 }
 .admin-detail-grid {
   display: grid;
-  grid-template-columns: 1.6fr 0.9fr;
+  /* minmax(0, …): bare fr tracks floor at their content's min-content
+     width, so the articles table inside forced this grid 87px wider than
+     a 375px viewport. */
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr);
   gap: 28px;
   align-items: start;
 }
 .admin-detail-main {
   display: grid;
   gap: 24px;
+  min-width: 0;
+}
+.admin-detail-side {
+  min-width: 0;
 }
 .admin-card {
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 12px;
   padding: 28px;
+  /* A long unbroken string — an email address, a URL — has no wrap
+     opportunity, so it stretched the card past its grid track and the
+     page scrolled. Cards hold user-supplied text, so they must be able
+     to break it. */
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .admin-card h2 {
   font-size: 16px;
@@ -2983,6 +3012,84 @@ footer {
 }
 
 @media (max-width: 1150px) {
+  /* ---------- ADMIN ---------- */
+  /* The header was a fixed-height row that could not wrap, so the nav and
+     the email/logout group ran straight off the right edge — the page
+     scrolled to 950px inside a 320px viewport. It wraps here, with the
+     nav dropping onto its own line under the brand. */
+  .admin-header {
+    height: auto;
+    flex-wrap: wrap;
+    padding: 12px 18px;
+    gap: 10px 18px;
+  }
+  .admin-brand {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  .admin-nav {
+    order: 3;
+    flex: 1 0 100%;
+    gap: 4px;
+  }
+  .admin-header-actions {
+    gap: 10px;
+    min-width: 0;
+  }
+  .admin-user-email {
+    max-width: 40vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .admin-main {
+    padding: 28px 18px 64px;
+  }
+  /* The wrapper is edge-to-edge on narrow screens so a wide table can use
+     the full width, with the page padding restored as inner spacing. */
+  .admin-table-scroll {
+    margin: 0 -18px;
+    padding: 0 18px;
+    border-radius: 0;
+  }
+
+  /* Touch targets. These sit here rather than in the 760px block because
+     768px is a touch device too and was missing them entirely. */
+  .admin-table-link {
+    padding: 10px 0;
+  }
+  .admin-def-list dd a {
+    display: inline-block;
+    padding: 8px 0;
+  }
+  /* Scoped to the image reorder controls: applying a 40px floor to every
+     .admin-card .icon-button pushed the repeatable-row delete button past
+     the right edge, because that row is a flex that then could not shrink
+     to fit. */
+  .admin-image-actions .icon-button {
+    min-width: 40px;
+    min-height: 40px;
+  }
+  .admin-repeatable-row {
+    min-width: 0;
+  }
+  .admin-repeatable-row input {
+    min-width: 0;
+  }
+  .admin-repeatable-row .icon-button {
+    min-height: 40px;
+    flex-shrink: 0;
+  }
+  /* A 16px checkbox is hard to hit; the label already sits beside it, so
+     enlarging the box and padding the label gives the whole pair a
+     comfortable target without changing the layout. */
+  .admin-checkbox {
+    padding: 6px 0;
+  }
+  .admin-checkbox input {
+    width: 22px;
+    height: 22px;
+  }
   /* Nine links plus two CTAs stop fitting well before phone width, so the
      drawer takes over here rather than at 760px. The old rule wrapped the
      nav onto its own scrollable row, which worked for a single link and
@@ -3083,7 +3190,7 @@ footer {
     font-size: 30px;
   }
   .admin-stat-grid {
-    grid-template-columns: repeat(3, 1fr);
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
   .admin-detail-grid {
     grid-template-columns: 1fr;
@@ -3288,6 +3395,56 @@ footer {
     font-size: 28px;
   }
 
+  /* ---------- ADMIN, PHONE ---------- */
+  .admin-table th,
+  .admin-table td {
+    padding: 12px 12px;
+    white-space: nowrap;
+  }
+  .admin-section-heading {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  .admin-section-heading .primary-button,
+  .admin-section-heading .outline-button {
+    width: 100%;
+    justify-content: center;
+  }
+  /* Search sat beside the status tabs and squeezed both. */
+  .admin-filter-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .admin-search {
+    width: 100%;
+  }
+  .admin-search input {
+    width: 100%;
+    min-width: 0;
+  }
+  .admin-page h1 {
+    font-size: 26px;
+  }
+  .admin-card {
+    padding: 20px 16px;
+  }
+  .admin-def-list {
+    gap: 14px;
+  }
+  .admin-totals {
+    font-size: 13px;
+  }
+  .admin-status-confirm {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+  .admin-status-control select {
+    width: 100%;
+  }
+
   .admin-estimate-control {
     width: 100%;
   }
@@ -3434,7 +3591,11 @@ footer {
     min-width: 0;
   }
   .admin-stat-grid {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+  .admin-stat-card {
+    padding: 16px 14px;
   }
 
   /* The decorative hero art shrinks rather than forcing a scrollbar. */
@@ -3465,6 +3626,6 @@ footer {
     padding: 11px 15px;
   }
   .admin-stat-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }

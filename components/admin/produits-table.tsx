@@ -51,6 +51,7 @@ export function ProduitsTable({ products }: { products: AdminProductListItem[] }
         />
       </div>
 
+      <div className="admin-table-scroll">
       <table className="admin-table">
         <thead>
           <tr>
@@ -116,6 +117,7 @@ export function ProduitsTable({ products }: { products: AdminProductListItem[] }
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   )
 }

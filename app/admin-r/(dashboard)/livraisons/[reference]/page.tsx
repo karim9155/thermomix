@@ -126,7 +126,8 @@ export default async function LivraisonDetailPage({
 
           <section className="admin-card">
             <h2>Articles</h2>
-            <table className="admin-table">
+            <div className="admin-table-scroll">
+              <table className="admin-table">
               <thead>
                 <tr>
                   <th>Produit</th>
@@ -148,6 +149,7 @@ export default async function LivraisonDetailPage({
                 ))}
               </tbody>
             </table>
+            </div>
 
             <div className="admin-totals">
               <div>

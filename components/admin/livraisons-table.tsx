@@ -90,7 +90,11 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
       {visible.length === 0 ? (
         <p className="admin-empty">Aucune commande ne correspond.</p>
       ) : (
-        <table className="admin-table">
+        /* Wrapper, not the table itself: a table cannot scroll on its own,
+           so on a narrow screen nine columns simply overflowed the page.
+           The wrapper scrolls and the table keeps its layout. */
+        <div className="admin-table-scroll">
+          <table className="admin-table">
           <thead>
             <tr>
               <th>Référence</th>
@@ -146,6 +150,7 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
             ))}
           </tbody>
         </table>
+        </div>
       )}
     </div>
   )
