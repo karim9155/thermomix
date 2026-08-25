@@ -62,6 +62,13 @@ export async function updateProductAction(
   return { success: true }
 }
 
+/**
+ * No longer wired to a button — the Archiver action was removed from the
+ * products table. Kept because is_archived still hides a product from the
+ * storefront (lib/products.ts filters on it), so this is what a future
+ * control would call, and deleting it would leave a product archived by
+ * hand with no way back other than SQL.
+ */
 export async function setArchivedAction(
   sku: string,
   slug: string,

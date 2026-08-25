@@ -1,35 +1,15 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { ExternalLink, Pencil } from 'lucide-react'
 import type { AdminProductListItem } from '@/lib/admin/products'
-import { setArchivedAction } from '@/app/admin-r/(dashboard)/produits/actions'
 import { formatPrice, isPlaceholderImage } from '@/lib/product-format'
 
 const CATEGORY_LABELS: Record<string, string> = {
   robot: 'Thermomix® TM7',
   accessoire: 'Accessoire',
-}
-
-function ArchiveButton({ product }: { product: AdminProductListItem }) {
-  const router = useRouter()
-  const [pending, startTransition] = useTransition()
-
-  function toggle() {
-    startTransition(async () => {
-      await setArchivedAction(product.sku, product.slug, !product.isArchived)
-      router.refresh()
-    })
-  }
-
-  return (
-    <button type="button" className="admin-table-link" onClick={toggle} disabled={pending}>
-      {pending ? '…' : product.isArchived ? 'Désarchiver' : 'Archiver'}
-    </button>
-  )
 }
 
 export function ProduitsTable({ products }: { products: AdminProductListItem[] }) {
@@ -86,7 +66,7 @@ export function ProduitsTable({ products }: { products: AdminProductListItem[] }
               <td>{formatPrice(product.priceTTC)}</td>
               <td>
                 <span className={`admin-badge ${product.inStock ? 'badge-green' : 'badge-red'}`}>
-                  {product.inStock ? 'En stock' : 'Rupture'}
+                  {product.inStock ? `En stock · ${product.stockQuantity}` : 'Rupture'}
                 </span>
               </td>
               <td>{product.imageCount}</td>
@@ -110,7 +90,6 @@ export function ProduitsTable({ products }: { products: AdminProductListItem[] }
                   <Link href={`/admin-r/produits/${product.sku}`} className="admin-table-link">
                     <Pencil size={14} /> Modifier
                   </Link>
-                  <ArchiveButton product={product} />
                 </div>
               </td>
             </tr>
