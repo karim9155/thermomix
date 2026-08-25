@@ -5,6 +5,7 @@ import { requireCustomer } from '@/lib/compte/guard'
 import { getCustomerOrder } from '@/lib/compte/orders'
 import { DeliveryStatusBadge, PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { formatPrice } from '@/lib/product-format'
+import { formatEstimatedDelivery } from '@/lib/admin/order-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
   const { reference } = await params
@@ -103,11 +104,23 @@ export default async function CompteCommandePage({
               <dt>Statut</dt>
               <dd>
                 <DeliveryStatusBadge status={order.deliveryStatus} />
+                {/* Sits with the status it depends on: the invoice only
+                    exists once the order is delivered. The route re-checks
+                    that server-side — hiding the button is a courtesy, not
+                    the rule. */}
+                {order.deliveryStatus === 'livree' ? (
+                  <a
+                    className="primary-button full center compte-invoice-button"
+                    href={`/compte/commandes/${order.reference}/facture`}
+                  >
+                    <FileText size={16} /> Télécharger la facture
+                  </a>
+                ) : null}
               </dd>
             </div>
             <div>
               <dt>Délai estimé</dt>
-              <dd>{order.estimatedDelivery ?? 'À confirmer'}</dd>
+              <dd>{formatEstimatedDelivery(order.estimatedDelivery) ?? 'À confirmer'}</dd>
             </div>
             <div>
               <dt>Adresse</dt>
@@ -123,17 +136,6 @@ export default async function CompteCommandePage({
             </div>
           </dl>
 
-          {/* Invoices exist only once the order has actually been
-              delivered. The route re-checks this server-side — hiding the
-              button is a courtesy, not the rule. */}
-          {order.deliveryStatus === 'livree' ? (
-            <a
-              className="primary-button full center compte-invoice-button"
-              href={`/compte/commandes/${order.reference}/facture`}
-            >
-              <FileText size={16} /> Télécharger la facture
-            </a>
-          ) : null}
 
           <h2 className="compte-card-subheading">Paiement</h2>
           <dl className="compte-def-list">
