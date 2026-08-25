@@ -45,8 +45,8 @@ export function SignupForm({ next }: { next: string }) {
         <MailCheck size={28} />
         <h2>Vérifiez votre email</h2>
         <p>
-          Votre compte a été créé. Cliquez sur le lien que nous venons de vous envoyer pour
-          l&apos;activer, puis connectez-vous.
+          Votre compte a été créé. Cliquez sur le lien que nous venons de vous envoyer : vous
+          serez connecté automatiquement.
         </p>
         <Link className="primary-button full center" href={`/compte/connexion?next=${encodeURIComponent(next)}`}>
           Aller à la connexion <ArrowRight size={17} />

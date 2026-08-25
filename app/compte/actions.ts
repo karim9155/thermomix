@@ -32,10 +32,20 @@ export async function signup(_prevState: AuthState, formData: FormData): Promise
   }
 
   const supabase = await createClient()
+
+  // Send the confirmation link back through our own callback, which
+  // exchanges the code for a session and then forwards to `next`. Without
+  // emailRedirectTo the link goes to Supabase's default SITE_URL and the
+  // user arrives confirmed but still signed out.
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+  const callback = new URL('/auth/callback', siteUrl)
+  callback.searchParams.set('next', safeNext(formData.get('next') as string | null))
+
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
+      emailRedirectTo: callback.toString(),
       data: { prenom: parsed.data.prenom, nom: parsed.data.nom },
     },
   })

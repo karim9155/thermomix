@@ -12,9 +12,9 @@ export const metadata: Metadata = {
 export default async function ConnexionPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>
+  searchParams: Promise<{ next?: string; erreur?: string }>
 }) {
-  const { next } = await searchParams
+  const { next, erreur } = await searchParams
   const target = safeNext(next)
 
   // Already signed in — nothing to do here.
@@ -31,6 +31,12 @@ export default async function ConnexionPage({
         <p className="compte-auth-intro">
           Connectez-vous pour suivre vos commandes et télécharger vos factures.
         </p>
+        {erreur === 'lien' ? (
+          <p className="form-error">
+            Ce lien de confirmation a expiré ou a déjà été utilisé. Connectez-vous, ou créez à
+            nouveau votre compte.
+          </p>
+        ) : null}
         <SigninForm next={target} />
       </div>
     </div>
