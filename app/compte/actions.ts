@@ -1,9 +1,12 @@
 'use server'
 
 import { redirect } from 'next/navigation'
+import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { createClient } from '@/lib/supabase/customer-auth'
 import { safeNext } from '@/lib/compte/safe-next'
+import { requireCustomer } from '@/lib/compte/guard'
+import { saveProfile } from '@/lib/compte/profile'
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -112,4 +115,53 @@ export async function signout() {
   const supabase = await createClient()
   await supabase.auth.signOut()
   redirect('/')
+}
+
+const profileSchema = z.object({
+  prenom: z.string().trim().min(1, 'Prénom requis.').max(80),
+  nom: z.string().trim().min(1, 'Nom requis.').max(80),
+  telephone: z.string().trim().max(30),
+  adresse: z.string().trim().max(200),
+  ville: z.string().trim().max(80),
+  gouvernorat: z.string().trim().max(80),
+})
+
+export type ProfileState = { error?: string; success?: boolean }
+
+export async function updateProfile(
+  _prevState: ProfileState,
+  formData: FormData,
+): Promise<ProfileState> {
+  const parsed = profileSchema.safeParse({
+    prenom: formData.get('prenom'),
+    nom: formData.get('nom'),
+    telephone: formData.get('telephone'),
+    adresse: formData.get('adresse'),
+    ville: formData.get('ville'),
+    gouvernorat: formData.get('gouvernorat'),
+  })
+
+  if (!parsed.success) {
+    return { error: parsed.error.issues[0]?.message ?? 'Données invalides.' }
+  }
+
+  try {
+    // Identity comes from the verified session, never from the form.
+    const customer = await requireCustomer('/compte')
+    await saveProfile(customer.id, parsed.data)
+
+    // Keep the auth metadata in step, since the header's initials and the
+    // signup-time fallback both read from there.
+    const supabase = await createClient()
+    await supabase.auth.updateUser({
+      data: { prenom: parsed.data.prenom, nom: parsed.data.nom },
+    })
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Une erreur est survenue.' }
+  }
+
+  revalidatePath('/compte')
+  revalidatePath('/commande')
+
+  return { success: true }
 }

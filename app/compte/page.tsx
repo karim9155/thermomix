@@ -3,7 +3,9 @@ import Link from 'next/link'
 import { ArrowRight, LogOut, Package } from 'lucide-react'
 import { requireCustomer } from '@/lib/compte/guard'
 import { listCustomerOrders } from '@/lib/compte/orders'
+import { getProfile, EMPTY_PROFILE } from '@/lib/compte/profile'
 import { signout } from '@/app/compte/actions'
+import { ProfileForm } from '@/components/compte/profile-form'
 import { DeliveryStatusBadge } from '@/components/admin/badges'
 import { formatPrice } from '@/lib/product-format'
 
@@ -18,9 +20,27 @@ const dateFormatter = new Intl.DateTimeFormat('fr-TN', {
   year: 'numeric',
 })
 
-export default async function ComptePage() {
+export default async function ComptePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ onglet?: string }>
+}) {
+  const { onglet } = await searchParams
   const customer = await requireCustomer('/compte')
-  const orders = await listCustomerOrders()
+
+  // Tab state lives in the URL so it survives a reload and can be linked
+  // to — and so the server only loads the data the active tab needs.
+  const tab = onglet === 'profil' ? 'profil' : 'commandes'
+
+  const orders = tab === 'commandes' ? await listCustomerOrders() : []
+  const profile =
+    tab === 'profil'
+      ? ((await getProfile()) ?? {
+          ...EMPTY_PROFILE,
+          prenom: customer.prenom,
+          nom: customer.nom,
+        })
+      : EMPTY_PROFILE
 
   return (
     <div className="compte-page">
@@ -37,6 +57,31 @@ export default async function ComptePage() {
         </form>
       </div>
 
+      <nav className="compte-tabs">
+        <Link
+          href="/compte"
+          className={tab === 'commandes' ? 'compte-tab active' : 'compte-tab'}
+        >
+          Mes commandes
+        </Link>
+        <Link
+          href="/compte?onglet=profil"
+          className={tab === 'profil' ? 'compte-tab active' : 'compte-tab'}
+        >
+          Profil
+        </Link>
+      </nav>
+
+      {tab === 'profil' ? (
+        <section className="compte-section">
+          <h2>Mes informations</h2>
+          <p className="compte-profile-intro">
+            Ces informations préremplissent votre prochaine commande. Vos commandes déjà passées
+            gardent l&apos;adresse utilisée à l&apos;époque.
+          </p>
+          <ProfileForm profile={profile} email={customer.email} />
+        </section>
+      ) : (
       <section className="compte-section">
         <h2>Mes commandes</h2>
 
@@ -77,6 +122,7 @@ export default async function ComptePage() {
           </ul>
         )}
       </section>
+      )}
     </div>
   )
 }

@@ -3,6 +3,7 @@ import { BoutiqueShell } from '@/components/boutique-shell'
 import { CheckoutForm } from '@/components/checkout-form'
 import { getCustomer } from '@/lib/compte/guard'
 import { getLastOrderDetails } from '@/lib/compte/orders'
+import { getProfile } from '@/lib/compte/profile'
 
 // Checkout needs a session: /api/commande rejects a sessionless order, so
 // send the user to sign in first rather than letting them fill the whole
@@ -20,21 +21,21 @@ export default async function CheckoutPage() {
     redirect(`/compte/connexion?next=${encodeURIComponent('/commande')}`)
   }
 
-  // Prefer the last order's details — they are a real delivery address the
-  // customer already used — and fall back to what signup captured.
-  const last = await getLastOrderDetails()
+  // Saved profile first — it is what the customer explicitly chose to keep
+  // — then the last order's address, then whatever signup captured.
+  const [profile, last] = await Promise.all([getProfile(), getLastOrderDetails()])
 
   return (
     <BoutiqueShell>
       <CheckoutForm
         prefill={{
-          prenom: last?.prenom || customer.prenom,
-          nom: last?.nom || customer.nom,
+          prenom: profile?.prenom || last?.prenom || customer.prenom,
+          nom: profile?.nom || last?.nom || customer.nom,
           email: customer.email,
-          telephone: last?.telephone ?? '',
-          adresse: last?.adresse ?? '',
-          ville: last?.ville ?? '',
-          gouvernorat: last?.gouvernorat ?? '',
+          telephone: profile?.telephone || last?.telephone || '',
+          adresse: profile?.adresse || last?.adresse || '',
+          ville: profile?.ville || last?.ville || '',
+          gouvernorat: profile?.gouvernorat || last?.gouvernorat || '',
         }}
       />
     </BoutiqueShell>
