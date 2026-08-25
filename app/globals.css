@@ -2387,14 +2387,19 @@ footer {
    BoutiqueShell and should read as part of the shop. */
 .compte-auth-page {
   display: grid;
-  place-items: center;
+  /* justify-items rather than place-items:center, plus an explicit track:
+     a centered grid item sizes its own track to its content, so the
+     card's max-width:100% resolved against that 440px track instead of
+     the padded page and the card hung off BOTH edges on a phone. */
+  grid-template-columns: minmax(0, 440px);
+  justify-content: center;
+  align-items: start;
   padding: 64px 5vw 96px;
   background: var(--surface);
   min-height: 60vh;
 }
 .compte-auth-card {
-  width: 440px;
-  max-width: 100%;
+  width: 100%;
   background: var(--white);
   border: 1px solid var(--border);
   border-radius: 14px;
