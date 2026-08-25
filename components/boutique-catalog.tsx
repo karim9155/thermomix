@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react'
 import { ProductCard } from '@/components/boutique'
 import type { Product, ProductCategory } from '@/lib/product-format'
 
-type Filter = 'Tous' | 'Thermomix® TM7' | 'Accessoires'
+type Filter = 'Tous' | 'Thermomix®' | 'Accessoires'
 
-const FILTERS: Filter[] = ['Tous', 'Thermomix® TM7', 'Accessoires']
+const FILTERS: Filter[] = ['Tous', 'Thermomix®', 'Accessoires']
 
 function matchesFilter(category: ProductCategory, filter: Filter): boolean {
   if (filter === 'Tous') return true
-  if (filter === 'Thermomix® TM7') return category === 'robot'
+  if (filter === 'Thermomix®') return category === 'robot'
   return category === 'accessoire'
 }
 

@@ -172,7 +172,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
 
         <div className="detail-copy">
           <p className="eyebrow">
-            {product.category === 'robot' ? 'Thermomix® TM7' : 'Accessoires'}
+            {product.category === 'robot' ? 'Thermomix®' : 'Accessoires'}
           </p>
           <h1>{product.name}</h1>
           <p className="detail-subtitle">Réf. {product.sku}</p>

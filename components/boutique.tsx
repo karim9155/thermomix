@@ -229,7 +229,7 @@ export function ProductCard({ product }: { product: Product }) {
           />
         </div>
         <div className="product-meta">
-          <span>{product.category === 'robot' ? 'Thermomix® TM7' : 'Accessoires'}</span>
+          <span>{product.category === 'robot' ? 'Thermomix®' : 'Accessoires'}</span>
           <h3>{product.name}</h3>
           <p>Réf. {product.sku}</p>
           <strong>{formatPrice(product.priceTTC)}</strong>
