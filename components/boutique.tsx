@@ -3,10 +3,9 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useMemo, useState } from 'react'
 import {
   ArrowRight,
-  ChevronDown,
   Search,
   ShieldCheck,
   ShoppingBag,
@@ -22,7 +21,6 @@ import { CartDrawer } from '@/components/cart-drawer'
 import { SiteNav } from '@/components/site-nav'
 import { AccountButton } from '@/components/account-button'
 
-const LANGUAGES = ['FR', 'EN', 'AR']
 
 export function BrandLockup({ dark = false }: { dark?: boolean }) {
   return (
@@ -49,56 +47,6 @@ export function ICMark() {
       sizes="48px"
       priority
     />
-  )
-}
-
-function LanguageMenu() {
-  const [open, setOpen] = useState(false)
-  const [language, setLanguage] = useState('FR')
-  const ref = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    function handleClick(event: MouseEvent) {
-      if (ref.current && !ref.current.contains(event.target as Node)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener('mousedown', handleClick)
-    return () => document.removeEventListener('mousedown', handleClick)
-  }, [])
-
-  return (
-    <div className="language-menu" ref={ref}>
-      <button
-        type="button"
-        className="language"
-        aria-haspopup="listbox"
-        aria-expanded={open}
-        onClick={() => setOpen((value) => !value)}
-      >
-        {language} <ChevronDown size={14} />
-      </button>
-      {open ? (
-        <ul className="language-options" role="listbox">
-          {LANGUAGES.map((code) => (
-            <li key={code}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={code === language}
-                className={code === language ? 'active' : ''}
-                onClick={() => {
-                  setLanguage(code)
-                  setOpen(false)
-                }}
-              >
-                {code}
-              </button>
-            </li>
-          ))}
-        </ul>
-      ) : null}
-    </div>
   )
 }
 
@@ -180,7 +128,6 @@ export function Header({ products }: { products: Product[] }) {
         <SiteNav onSearch={() => setSearch(true)} />
 
         <div className="header-actions">
-          <LanguageMenu />
           <button className="icon-button" aria-label="Rechercher" onClick={() => setSearch(true)}>
             <Search size={20} />
           </button>
