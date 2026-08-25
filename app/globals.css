@@ -446,6 +446,96 @@ h3 {
   opacity: 0.85;
 }
 
+/* ---------- HOME CAROUSEL ---------- */
+/* Scroll-snap, like the product gallery: the browser does the swiping, so
+   there is no drag library and no JS animation loop. The arrows and dots
+   drive scrollTo(); the scroll position drives the active dot back. */
+.home-carousel {
+  position: relative;
+  background: var(--surface);
+}
+.home-carousel-track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-x: contain;
+}
+.home-carousel-track::-webkit-scrollbar {
+  display: none;
+}
+.home-slide {
+  scroll-snap-align: center;
+  scroll-snap-stop: always;
+  position: relative;
+}
+.home-slide-link {
+  display: block;
+}
+/* The artwork is 16:9. Full ratio on wide screens shows it as shot; on a
+   phone that would be a 210px letterbox, so a minimum height crops in
+   rather than shrinking the subject away. object-fit keeps the centre. */
+.home-slide img {
+  width: 100%;
+  height: clamp(320px, 48vw, 620px);
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+.home-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.9);
+  color: var(--ink);
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.14);
+  transition: background 0.18s ease;
+}
+.home-carousel-arrow:hover {
+  background: var(--white);
+}
+.home-carousel-arrow.prev {
+  left: 18px;
+}
+.home-carousel-arrow.next {
+  right: 18px;
+}
+.home-carousel-dots {
+  position: absolute;
+  bottom: 18px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+}
+.home-carousel-dots button {
+  width: 9px;
+  height: 9px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: background 0.18s ease, width 0.18s ease;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
+}
+.home-carousel-dots button.active {
+  width: 24px;
+  background: var(--white);
+}
+
 /* Hero */
 .hero {
   min-height: 535px;
@@ -2745,8 +2835,14 @@ footer {
   font-size: 16px;
   margin: 0 0 20px;
 }
-.compte-card-subheading {
-  margin-top: 28px;
+/* Needs the element in the selector to match `.compte-card h2` above:
+   that rule's `margin: 0 0 20px` shorthand resets margin-top, and its
+   higher specificity (element + class) was overriding a bare
+   .compte-card-subheading, so "Paiement" sat flush against the address. */
+.compte-card h2.compte-card-subheading {
+  margin-top: 36px;
+  padding-top: 28px;
+  border-top: 1px solid var(--border);
 }
 .compte-table {
   width: 100%;
@@ -2811,8 +2907,11 @@ footer {
   margin: 0;
   line-height: 1.5;
 }
+/* Now sits inside the Statut row, right under the badge, so it needs far
+   less clearance than when it hung below the whole address block. */
 .compte-invoice-button {
-  margin-top: 24px;
+  margin-top: 14px;
+  margin-bottom: 0;
 }
 
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
@@ -3207,6 +3306,20 @@ footer {
 
      overflow-x lives on the track itself, never on the page, so a swipe
      can't leak a horizontal scrollbar onto the body. */
+  .home-carousel-arrow {
+    width: 34px;
+    height: 34px;
+  }
+  .home-carousel-arrow.prev {
+    left: 8px;
+  }
+  .home-carousel-arrow.next {
+    right: 8px;
+  }
+  .home-carousel-dots {
+    bottom: 12px;
+  }
+
   .detail-image {
     grid-template-areas: none;
     grid-auto-flow: column;
