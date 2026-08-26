@@ -3,7 +3,7 @@
 -- Run this AFTER 0009_timbre_fiscal.sql.
 -- ============================================================
 
--- Path of the admin-uploaded invoice PDF inside the private
+-- Path of the admn-uploaded invoice PDF inside the private
 -- 'order-invoices' bucket, e.g. 'INO-AB12CD.pdf'. Null until the admin
 -- uploads one, at which point it replaces the auto-generated PDF as what
 -- the customer downloads from /compte.
