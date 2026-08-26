@@ -9,7 +9,8 @@ import {
   formatEstimatedDelivery,
   type DeliveryStatus,
 } from '@/lib/admin/order-format'
-import { DeliveryStatusBadge, PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
+import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
+import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
 import { formatPrice } from '@/lib/product-format'
 
 type Tab = 'toutes' | DeliveryStatus
@@ -134,7 +135,11 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
                   </div>
                 </td>
                 <td>
-                  <DeliveryStatusBadge status={order.deliveryStatus} />
+                  <DeliveryStatusControl
+                    reference={order.reference}
+                    currentStatus={order.deliveryStatus}
+                    hideLabel
+                  />
                 </td>
                 <td>
                   {formatEstimatedDelivery(order.estimatedDelivery) ?? (

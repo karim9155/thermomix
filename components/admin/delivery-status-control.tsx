@@ -15,9 +15,14 @@ const LABELS: Record<DeliveryStatus, string> = {
 export function DeliveryStatusControl({
   reference,
   currentStatus,
+  hideLabel = false,
 }: {
   reference: string
   currentStatus: DeliveryStatus
+  // Used inline in the orders table, where the column header ("Livraison")
+  // already says what the select is for — repeating "Statut de livraison"
+  // on every row would be redundant.
+  hideLabel?: boolean
 }) {
   const router = useRouter()
   const [pending, startTransition] = useTransition()
@@ -72,22 +77,23 @@ export function DeliveryStatusControl({
     )
   }
 
+  const select = (
+    <select
+      value={currentStatus}
+      disabled={pending}
+      onChange={(event) => handleChange(event.target.value as DeliveryStatus)}
+    >
+      {DELIVERY_STATUSES.map((status) => (
+        <option key={status} value={status}>
+          {LABELS[status]}
+        </option>
+      ))}
+    </select>
+  )
+
   return (
     <div className="admin-status-control">
-      <label>
-        Statut de livraison
-        <select
-          value={currentStatus}
-          disabled={pending}
-          onChange={(event) => handleChange(event.target.value as DeliveryStatus)}
-        >
-          {DELIVERY_STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {LABELS[status]}
-            </option>
-          ))}
-        </select>
-      </label>
+      {hideLabel ? select : <label>Statut de livraison{select}</label>}
       {error ? <p className="field-error">{error}</p> : null}
     </div>
   )
