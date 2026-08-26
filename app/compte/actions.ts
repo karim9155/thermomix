@@ -7,6 +7,7 @@ import { createClient } from '@/lib/supabase/customer-auth'
 import { safeNext } from '@/lib/compte/safe-next'
 import { requireCustomer } from '@/lib/compte/guard'
 import { saveProfile } from '@/lib/compte/profile'
+import { phoneRegex } from '@/lib/checkout-schema'
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -120,7 +121,11 @@ export async function signout() {
 const profileSchema = z.object({
   prenom: z.string().trim().min(1, 'Prénom requis.').max(80),
   nom: z.string().trim().min(1, 'Nom requis.').max(80),
-  telephone: z.string().trim().max(30),
+  telephone: z
+    .string()
+    .trim()
+    .min(1, 'Le téléphone est obligatoire.')
+    .regex(phoneRegex, 'Numéro tunisien invalide (8 chiffres, préfixe +216 optionnel).'),
   adresse: z.string().trim().max(200),
   ville: z.string().trim().max(80),
   gouvernorat: z.string().trim().max(80),

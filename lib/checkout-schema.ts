@@ -1,7 +1,7 @@
 import { z } from 'zod'
 import { governorates } from '@/lib/product-format'
 
-const phoneRegex = /^(\+216[\s]?)?\d{2}[\s]?\d{3}[\s]?\d{3}$/
+export const phoneRegex = /^(\+216[\s]?)?\d{2}[\s]?\d{3}[\s]?\d{3}$/
 
 export const checkoutFormSchema = z
   .object({

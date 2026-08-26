@@ -34,7 +34,13 @@ export function ProfileForm({ profile, email }: { profile: Profile; email: strin
 
       <label>
         Téléphone
-        <input name="telephone" defaultValue={profile.telephone} placeholder="+216 00 000 000" maxLength={30} />
+        <input
+          name="telephone"
+          defaultValue={profile.telephone}
+          placeholder="+216 00 000 000"
+          required
+          maxLength={30}
+        />
       </label>
 
       <label>
