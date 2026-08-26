@@ -38,4 +38,4 @@ export const HOME_SLIDES: HomeSlide[] = [
 ]
 
 /** How long each slide holds before advancing, in milliseconds. */
-export const SLIDE_INTERVAL = 6000
+export const SLIDE_INTERVAL = 2000

@@ -489,56 +489,76 @@ h3 {
   object-position: center;
   display: block;
 }
-.home-carousel-arrow {
+/* Scroll hint: a "swipe/scroll" cue (mouse-wheel icon + "Défiler" label +
+   pagination dots) in place of prev/next arrows — the track already
+   scrolls and snaps on its own, so the arrows were redundant with that and
+   with the dots below them. */
+.home-carousel-hint {
   position: absolute;
   z-index: 3;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 44px;
-  height: 44px;
-  border: 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.9);
-  color: var(--ink);
-  display: grid;
-  place-items: center;
-  cursor: pointer;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.14);
-  transition: background 0.18s ease;
-}
-.home-carousel-arrow:hover {
-  background: var(--white);
-}
-.home-carousel-arrow.prev {
-  left: 18px;
-}
-.home-carousel-arrow.next {
-  right: 18px;
-}
-.home-carousel-dots {
-  position: absolute;
-  z-index: 3;
-  bottom: 18px;
+  bottom: 22px;
   left: 0;
   right: 0;
-  display: flex;
-  justify-content: center;
+  display: grid;
+  justify-items: center;
   gap: 8px;
+  color: var(--white);
+  pointer-events: none;
+}
+.home-carousel-scroll-icon {
+  position: relative;
+  width: 22px;
+  height: 36px;
+  border: 2px solid rgba(255, 255, 255, 0.85);
+  border-radius: 999px;
+  box-sizing: border-box;
+}
+.home-carousel-scroll-icon::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 50%;
+  width: 4px;
+  height: 8px;
+  margin-left: -2px;
+  border-radius: 999px;
+  background: var(--white);
+  animation: home-carousel-scroll-dot 1.6s ease-in-out infinite;
+}
+@keyframes home-carousel-scroll-dot {
+  0%, 15% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  85%, 100% {
+    transform: translateY(9px);
+    opacity: 0;
+  }
+}
+.home-carousel-scroll-label {
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-shadow: 0 1px 6px rgba(0, 0, 0, 0.4);
+}
+.home-carousel-dots {
+  display: flex;
+  gap: 8px;
+  pointer-events: auto;
 }
 .home-carousel-dots button {
-  width: 9px;
-  height: 9px;
+  width: 8px;
+  height: 8px;
   padding: 0;
   border: 0;
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(255, 255, 255, 0.45);
   cursor: pointer;
-  transition: background 0.18s ease, width 0.18s ease;
+  transition: background 0.18s ease;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25);
 }
 .home-carousel-dots button.active {
-  width: 24px;
-  background: var(--white);
+  background: var(--brand-green);
 }
 
 /* Hero */
@@ -3489,18 +3509,8 @@ footer {
 
      overflow-x lives on the track itself, never on the page, so a swipe
      can't leak a horizontal scrollbar onto the body. */
-  .home-carousel-arrow {
-    width: 34px;
-    height: 34px;
-  }
-  .home-carousel-arrow.prev {
-    left: 8px;
-  }
-  .home-carousel-arrow.next {
-    right: 8px;
-  }
-  .home-carousel-dots {
-    bottom: 12px;
+  .home-carousel-hint {
+    bottom: 14px;
   }
 
   .detail-image {

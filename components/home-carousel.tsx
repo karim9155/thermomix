@@ -3,7 +3,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { HOME_SLIDES, SLIDE_INTERVAL, type HomeSlide } from '@/lib/home-slides'
 
 function SlideLink({ slide, children }: { slide: HomeSlide; children: React.ReactNode }) {
@@ -141,24 +140,9 @@ export function HomeCarousel() {
       </div>
 
       {slides.length > 1 ? (
-        <>
-          <button
-            type="button"
-            className="home-carousel-arrow prev"
-            aria-label="Diapositive précédente"
-            onClick={() => goTo(active - 1)}
-          >
-            <ChevronLeft size={22} />
-          </button>
-          <button
-            type="button"
-            className="home-carousel-arrow next"
-            aria-label="Diapositive suivante"
-            onClick={() => goTo(active + 1)}
-          >
-            <ChevronRight size={22} />
-          </button>
-
+        <div className="home-carousel-hint">
+          <span className="home-carousel-scroll-icon" aria-hidden="true" />
+          <span className="home-carousel-scroll-label">Défiler</span>
           <div className="home-carousel-dots">
             {slides.map((slide, i) => (
               <button
@@ -171,7 +155,7 @@ export function HomeCarousel() {
               />
             ))}
           </div>
-        </>
+        </div>
       ) : null}
     </section>
   )
