@@ -193,7 +193,7 @@ export function TrustStrip() {
   const items: [typeof ShieldCheck, string][] = [
     [ShieldCheck, 'Distributeur officiel Vorwerk'],
     [Truck, 'Livraison partout en Tunisie'],
-    [ShieldCheck, '3 ans de garantie'],
+    [ShieldCheck, '2 ans de garantie'],
     [Headphones, 'Service client local'],
   ]
   return (

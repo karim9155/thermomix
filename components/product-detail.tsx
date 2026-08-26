@@ -267,7 +267,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
               <AccordionPanel>
                 <p>
                   {product.category === 'robot'
-                    ? 'Le Thermomix® TM7 bénéficie de 3 ans de garantie officielle Vorwerk, assurée par INOCASA en Tunisie.'
+                    ? 'Le Thermomix® TM7 bénéficie de 2 ans de garantie officielle Vorwerk, assurée par INOCASA en Tunisie.'
                     : "Pièce d'origine Vorwerk, couverte par la garantie légale en vigueur en Tunisie."}
                 </p>
               </AccordionPanel>

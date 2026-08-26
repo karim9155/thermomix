@@ -15,14 +15,14 @@ values
     'Le robot multifonction connecté qui remplace à lui seul plus de vingt appareils.',
     'Le Thermomix® TM7 est un robot multifonction connecté qui remplace à lui seul plus de vingt appareils de cuisine. Il réunit 12 fonctions et 25 modes intégrés — moudre, hacher, mijoter, fouetter, peser, émulsionner, cuire à la vapeur, mixer, réchauffer, cuire, pétrir, mélanger — pour vous accompagner à chaque étape de vos recettes.' || E'\n\n' ||
     'Son grand écran tactile guide chaque préparation pas à pas, tandis que son moteur et sa coque isolante particulièrement silencieux rendent la cuisine plus sereine, même en pleine soirée. Connecté à Cookidoo®, il propose des milliers de recettes guidées directement pilotées depuis l''appareil.' || E'\n\n' ||
-    'Chaque Thermomix® TM7 vendu par INOCASA est livré avec 3 mois d''abonnement Cookidoo® offerts et bénéficie de 3 ans de garantie officielle Vorwerk.',
+    'Chaque Thermomix® TM7 vendu par INOCASA est livré avec 3 mois d''abonnement Cookidoo® offerts et bénéficie de 2 ans de garantie officielle Vorwerk.',
     ARRAY[
       '12 fonctions et 25 modes intégrés',
       'Grand écran tactile couleur',
       'Moteur et coque isolante silencieux',
       'Cuisson guidée pas à pas via Cookidoo®',
       '3 mois d''abonnement Cookidoo® offerts',
-      '3 ans de garantie officielle Vorwerk'
+      '2 ans de garantie officielle Vorwerk'
     ],
     ARRAY[
       'Le Thermomix® TM7',
