@@ -3,6 +3,8 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import type { DeliveryStatus, PaymentStatus, PaymentMethod } from '@/lib/admin/order-format'
 import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT } from '@/lib/admin/order-format'
 
+const INVOICE_BUCKET = 'order-invoices'
+
 export type { DeliveryStatus, PaymentStatus, PaymentMethod } from '@/lib/admin/order-format'
 // Re-exported for server-side convenience only — client components must
 // import DELIVERY_STATUSES from '@/lib/admin/order-format' directly, never
@@ -46,6 +48,10 @@ export type AdminOrderDetail = AdminOrderListItem & {
   notes: string | null
   subtotalHT: number
   totalTVA: number
+  timbreFiscal: number
+  // Storage path of the admin-uploaded invoice PDF, null until one is
+  // uploaded. See INVOICE_BUCKET and uploadOrderInvoice() below.
+  invoicePath: string | null
   items: AdminOrderItem[]
   history: AdminOrderHistoryEntry[]
 }
@@ -89,7 +95,7 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      `${LIST_SELECT}, id, email, adresse, gouvernorat, notes, subtotal_ht, total_tva,
+      `${LIST_SELECT}, id, email, adresse, gouvernorat, notes, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
        order_items ( sku, name, quantity, price_ht, price_ttc )`,
     )
     .eq('reference', reference)
@@ -129,6 +135,8 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
     notes: order.notes,
     subtotalHT: Number(order.subtotal_ht),
     totalTVA: Number(order.total_tva),
+    timbreFiscal: Number(order.timbre_fiscal),
+    invoicePath: order.invoice_path ?? null,
     items: (order.order_items ?? []).map((item: any) => ({
       sku: item.sku,
       name: item.name,
@@ -155,7 +163,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status')
+    .select('id, delivery_status, invoice_path')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -165,6 +173,15 @@ export async function updateDeliveryStatus(
 
   if (order.delivery_status === newStatus) {
     return
+  }
+
+  // The admin-uploaded PDF is what the customer downloads as their
+  // invoice (see app/compte/commandes/[reference]/facture) — an order
+  // cannot be marked delivered without one already in place.
+  if (newStatus === 'livree' && !order.invoice_path) {
+    throw new Error(
+      'Uploadez la facture PDF de cette commande avant de la marquer comme livrée.',
+    )
   }
 
   const { error: updateError } = await supabase
@@ -290,5 +307,46 @@ export async function updateEstimatedDelivery(
 
   if (historyError) {
     throw new Error(`Impossible d'enregistrer l'historique : ${historyError.message}`)
+  }
+}
+
+/**
+ * Uploads (or replaces) the invoice PDF for one order into the private
+ * order-invoices bucket, and records its path on the order row. One file
+ * per order — reusing the reference as the object path means a re-upload
+ * naturally overwrites the previous file (upsert: true) instead of
+ * leaving orphaned objects behind.
+ */
+export async function uploadOrderInvoice(reference: string, file: File): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('id')
+    .eq('reference', reference)
+    .maybeSingle()
+
+  if (fetchError || !order) {
+    throw new Error('Commande introuvable.')
+  }
+
+  const path = `${reference}.pdf`
+
+  const { error: uploadError } = await supabase.storage.from(INVOICE_BUCKET).upload(path, file, {
+    contentType: 'application/pdf',
+    upsert: true,
+  })
+
+  if (uploadError) {
+    throw new Error(`Échec de l'envoi de la facture : ${uploadError.message}`)
+  }
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({ invoice_path: path })
+    .eq('id', order.id)
+
+  if (updateError) {
+    throw new Error(`Impossible d'enregistrer la facture : ${updateError.message}`)
   }
 }

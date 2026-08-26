@@ -90,9 +90,19 @@ export default async function CompteCommandePage({
               <span>TVA 19%</span>
               <strong>{formatPrice(order.totalTVA)}</strong>
             </div>
-            <div className="compte-totals-final">
+            <div>
               <span>Total TTC</span>
               <strong>{formatPrice(order.totalTTC)}</strong>
+            </div>
+            {order.timbreFiscal > 0 ? (
+              <div>
+                <span>Timbre fiscal</span>
+                <strong>{formatPrice(order.timbreFiscal)}</strong>
+              </div>
+            ) : null}
+            <div className="compte-totals-final">
+              <span>Total à payer</span>
+              <strong>{formatPrice(order.totalTTC + order.timbreFiscal)}</strong>
             </div>
           </div>
         </section>
@@ -105,10 +115,10 @@ export default async function CompteCommandePage({
               <dd>
                 <DeliveryStatusBadge status={order.deliveryStatus} />
                 {/* Sits with the status it depends on: the invoice only
-                    exists once the order is delivered. The route re-checks
-                    that server-side — hiding the button is a courtesy, not
-                    the rule. */}
-                {order.deliveryStatus === 'livree' ? (
+                    exists once the admin has uploaded one for a delivered
+                    order. The route re-checks that server-side — hiding
+                    the button is a courtesy, not the rule. */}
+                {order.deliveryStatus === 'livree' && order.invoicePath ? (
                   <a
                     className="primary-button full center compte-invoice-button"
                     href={`/compte/commandes/${order.reference}/facture`}

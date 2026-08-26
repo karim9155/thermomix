@@ -20,6 +20,9 @@ export type Order = {
   subtotalHT: number
   totalTVA: number
   totalTTC: number
+  // Fiscal stamp fee added at payment time, on top of totalTTC. Not part
+  // of the product price — see lib/product-format.ts's TIMBRE_FISCAL.
+  timbreFiscal: number
   paymentMethod: OrderPaymentMethod
   status: OrderStatus
   createdAt: string
@@ -62,6 +65,7 @@ type OrderRow = {
   subtotal_ht: number
   total_tva: number
   total_ttc: number
+  timbre_fiscal: number
   created_at: string
   order_items: {
     sku: string
@@ -74,7 +78,7 @@ type OrderRow = {
 
 const ORDER_SELECT = `
   reference, nom, prenom, telephone, email, adresse, ville, gouvernorat, notes,
-  payment_method, status, subtotal_ht, total_tva, total_ttc, created_at,
+  payment_method, status, subtotal_ht, total_tva, total_ttc, timbre_fiscal, created_at,
   order_items ( sku, name, quantity, price_ht, price_ttc )
 `
 
@@ -104,6 +108,7 @@ function mapRow(row: OrderRow): Order {
     subtotalHT: Number(row.subtotal_ht),
     totalTVA: Number(row.total_tva),
     totalTTC: Number(row.total_ttc),
+    timbreFiscal: Number(row.timbre_fiscal),
     paymentMethod,
     status: row.status,
     createdAt: row.created_at,
@@ -116,6 +121,7 @@ export async function createOrder(input: {
   subtotalHT: number
   totalTVA: number
   totalTTC: number
+  timbreFiscal: number
   paymentMethod: OrderPaymentMethod
   // The owning auth.users id, resolved from the session server-side by the
   // caller. Required for new orders; the column stays nullable only so
@@ -146,6 +152,7 @@ export async function createOrder(input: {
         subtotal_ht: input.subtotalHT,
         total_tva: input.totalTVA,
         total_ttc: input.totalTTC,
+        timbre_fiscal: input.timbreFiscal,
         user_id: input.userId,
       })
       .select('id, reference, created_at')
@@ -186,6 +193,7 @@ export async function createOrder(input: {
       subtotalHT: input.subtotalHT,
       totalTVA: input.totalTVA,
       totalTTC: input.totalTTC,
+      timbreFiscal: input.timbreFiscal,
       paymentMethod: input.paymentMethod,
       status: 'en_attente',
       createdAt: inserted.created_at,

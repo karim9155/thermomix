@@ -29,7 +29,9 @@ function renderOrderHtml(order: Order): string {
     </table>
     <p>Sous-total HT : ${formatPrice(order.subtotalHT)}<br/>
     TVA (19%) : ${formatPrice(order.totalTVA)}<br/>
-    <strong>Total TTC : ${formatPrice(order.totalTTC)}</strong></p>
+    Total TTC : ${formatPrice(order.totalTTC)}<br/>
+    ${order.timbreFiscal > 0 ? `Timbre fiscal : ${formatPrice(order.timbreFiscal)}<br/>` : ''}
+    <strong>Total à payer : ${formatPrice(order.totalTTC + order.timbreFiscal)}</strong></p>
   `
 }
 

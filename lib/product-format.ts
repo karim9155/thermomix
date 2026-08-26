@@ -35,6 +35,10 @@ export type Product = {
   sortOrder: number
 }
 
+// Fiscal stamp duty charged on cash-on-delivery orders, in TND. It is a
+// flat fee added at payment time — never part of a product's price.
+export const TIMBRE_FISCAL = 1
+
 export const PLACEHOLDER_IMAGE = '/placeholder.svg'
 
 // next/image blocks SVG optimization by default (XSS surface) — the local

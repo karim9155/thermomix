@@ -5,6 +5,7 @@ import { createOrder, type OrderLine } from '@/lib/orders'
 import { createPayment } from '@/lib/payment'
 import { sendOrderEmails } from '@/lib/email'
 import { getCustomer } from '@/lib/compte/guard'
+import { TIMBRE_FISCAL } from '@/lib/product-format'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -71,6 +72,9 @@ export async function POST(request: NextRequest) {
   const subtotalHT = lines.reduce((sum, line) => sum + line.priceHT * line.quantity, 0)
   const totalTTC = lines.reduce((sum, line) => sum + line.priceTTC * line.quantity, 0)
   const totalTVA = totalTTC - subtotalHT
+  // The fiscal stamp only applies to cash-on-delivery: it's the postal/COD
+  // stamp duty, not a fee on the online card payment.
+  const timbreFiscal = customer.paymentMethod === 'cash' ? TIMBRE_FISCAL : 0
 
   const order = await createOrder({
     customer,
@@ -78,6 +82,7 @@ export async function POST(request: NextRequest) {
     subtotalHT,
     totalTVA,
     totalTTC,
+    timbreFiscal,
     paymentMethod: customer.paymentMethod,
     userId: customerUser.id,
   })

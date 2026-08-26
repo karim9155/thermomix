@@ -2510,6 +2510,13 @@ footer {
   display: inline-flex;
   cursor: pointer;
 }
+.admin-invoice-control {
+  display: grid;
+  gap: 10px;
+}
+.admin-invoice-upload {
+  cursor: pointer;
+}
 
 .admin-dialog {
   position: fixed;

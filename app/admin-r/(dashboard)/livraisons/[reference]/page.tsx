@@ -5,6 +5,7 @@ import { getOrderDetail } from '@/lib/admin/orders'
 import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
 import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
+import { InvoiceUploadControl } from '@/components/admin/invoice-upload-control'
 import { parseEstimatedDeliveryEvent, formatEstimatedDelivery } from '@/lib/admin/order-format'
 import { formatPrice } from '@/lib/product-format'
 
@@ -160,9 +161,19 @@ export default async function LivraisonDetailPage({
                 <span>TVA</span>
                 <strong>{formatPrice(order.totalTVA)}</strong>
               </div>
-              <div className="admin-totals-final">
+              <div>
                 <span>Total TTC</span>
                 <strong>{formatPrice(order.totalTTC)}</strong>
+              </div>
+              {order.timbreFiscal > 0 ? (
+                <div>
+                  <span>Timbre fiscal</span>
+                  <strong>{formatPrice(order.timbreFiscal)}</strong>
+                </div>
+              ) : null}
+              <div className="admin-totals-final">
+                <span>Total à payer</span>
+                <strong>{formatPrice(order.totalTTC + order.timbreFiscal)}</strong>
               </div>
             </div>
           </section>
@@ -191,6 +202,9 @@ export default async function LivraisonDetailPage({
         </div>
 
         <aside className="admin-card admin-detail-side">
+          <h2>Facture</h2>
+          <InvoiceUploadControl reference={order.reference} hasInvoice={order.invoicePath !== null} />
+
           <h2>Paiement</h2>
           <dl className="admin-def-list">
             <div>

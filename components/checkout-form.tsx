@@ -8,7 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Banknote, CreditCard } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
-import { formatPrice, governorates } from '@/lib/product-format'
+import { formatPrice, governorates, TIMBRE_FISCAL } from '@/lib/product-format'
 
 type CheckoutPrefill = {
   prenom: string
@@ -274,10 +274,22 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
             <span>TVA (19%)</span>
             <strong>{formatPrice(totalTVA)}</strong>
           </div>
-          <hr />
-          <div className="summary-total">
+          <div>
             <span>Total TTC</span>
             <strong>{formatPrice(totalTTC)}</strong>
+          </div>
+          {paymentMethod === 'cash' ? (
+            <div>
+              <span>Timbre fiscal</span>
+              <strong>{formatPrice(TIMBRE_FISCAL)}</strong>
+            </div>
+          ) : null}
+          <hr />
+          <div className="summary-total">
+            <span>Total à payer</span>
+            <strong>
+              {formatPrice(paymentMethod === 'cash' ? totalTTC + TIMBRE_FISCAL : totalTTC)}
+            </strong>
           </div>
         </aside>
       </div>

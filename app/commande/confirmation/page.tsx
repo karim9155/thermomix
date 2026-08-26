@@ -69,10 +69,20 @@ export default async function ConfirmationPage({
               <span>TVA (19%)</span>
               <strong>{formatPrice(order.totalTVA)}</strong>
             </div>
-            <hr />
-            <div className="summary-total">
+            <div>
               <span>Total TTC</span>
               <strong>{formatPrice(order.totalTTC)}</strong>
+            </div>
+            {order.timbreFiscal > 0 ? (
+              <div>
+                <span>Timbre fiscal</span>
+                <strong>{formatPrice(order.timbreFiscal)}</strong>
+              </div>
+            ) : null}
+            <hr />
+            <div className="summary-total">
+              <span>Total à payer</span>
+              <strong>{formatPrice(order.totalTTC + order.timbreFiscal)}</strong>
             </div>
           </aside>
         </div>
