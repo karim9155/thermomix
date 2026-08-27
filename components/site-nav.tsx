@@ -5,7 +5,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { ChevronDown, Menu, Search, X } from 'lucide-react'
-import { NAV_ITEMS, NAV_CTAS, isExternal, type NavChild, type NavItem } from '@/lib/nav-items'
+import {
+  NAV_ITEMS,
+  NAV_CTAS,
+  isExternal,
+  type NavChild,
+  type NavItem,
+  type NavTile,
+} from '@/lib/nav-items'
 
 /** Internal hrefs route through next/link; external ones open in a new tab. */
 function NavLink({
@@ -37,13 +44,53 @@ function NavLink({
   )
 }
 
+/** A mega-menu tile: image card with its label underneath. */
+function DropdownTile({ item, onClick }: { item: NavTile; onClick?: () => void }) {
+  const content = (
+    <>
+      <span className="nav-dropdown-tile-image">
+        <Image src={item.image} alt="" width={120} height={120} />
+      </span>
+      <span className="nav-dropdown-tile-label">{item.label}</span>
+    </>
+  )
+
+  if (isExternal(item.href)) {
+    return (
+      <a
+        href={item.href}
+        className="nav-dropdown-tile"
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={onClick}
+      >
+        {content}
+      </a>
+    )
+  }
+  return (
+    <Link href={item.href} className="nav-dropdown-tile" onClick={onClick}>
+      {content}
+    </Link>
+  )
+}
+
 function isActive(item: NavItem, pathname: string): boolean {
   return !isExternal(item.href) && pathname.startsWith(item.href)
 }
 
 function DesktopItem({ item, pathname }: { item: NavItem; pathname: string }) {
   const [open, setOpen] = useState(false)
+  // .site-nav clips overflow so a wide "six links + two CTAs" row can
+  // shrink instead of wrapping (see its own comment) — an absolutely
+  // positioned panel nested inside it would get clipped the moment it
+  // extends past the row's height. Measuring the trigger and painting the
+  // panel with position:fixed escapes that ancestor's overflow:hidden
+  // entirely, since fixed-position elements are placed against the
+  // viewport rather than the clipping box.
+  const [panelPos, setPanelPos] = useState<{ top: number; left: number } | null>(null)
   const ref = useRef<HTMLDivElement>(null)
+  const triggerRef = useRef<HTMLButtonElement>(null)
   const closeTimer = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   useEffect(() => {
@@ -79,14 +126,18 @@ function DesktopItem({ item, pathname }: { item: NavItem; pathname: string }) {
     }
   }
 
+  function openPanel() {
+    cancelClose()
+    const rect = triggerRef.current?.getBoundingClientRect()
+    if (rect) setPanelPos({ top: rect.bottom + 14, left: rect.left })
+    setOpen(true)
+  }
+
   return (
     <div
       className="nav-dropdown"
       ref={ref}
-      onMouseEnter={() => {
-        cancelClose()
-        setOpen(true)
-      }}
+      onMouseEnter={openPanel}
       // A small delay stops the panel snapping shut while the pointer
       // crosses the gap between the trigger and the panel below it.
       onMouseLeave={() => {
@@ -95,24 +146,20 @@ function DesktopItem({ item, pathname }: { item: NavItem; pathname: string }) {
       }}
     >
       <button
+        ref={triggerRef}
         type="button"
         className={`nav-dropdown-trigger ${isActive(item, pathname) ? 'active' : ''}`}
         aria-expanded={open}
         aria-haspopup="true"
-        onClick={() => setOpen((v) => !v)}
+        onClick={() => (open ? setOpen(false) : openPanel())}
       >
-        {item.label} <ChevronDown size={14} />
+        {item.label}
       </button>
 
-      {open ? (
-        <div className="nav-dropdown-panel">
+      {open && panelPos ? (
+        <div className="nav-dropdown-panel" style={{ top: panelPos.top, left: panelPos.left }}>
           {item.children.map((child) => (
-            <NavLink
-              key={child.label}
-              item={child}
-              className="nav-dropdown-link"
-              onClick={() => setOpen(false)}
-            />
+            <DropdownTile key={child.label} item={child} onClick={() => setOpen(false)} />
           ))}
         </div>
       ) : null}
