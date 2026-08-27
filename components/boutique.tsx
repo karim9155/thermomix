@@ -140,8 +140,12 @@ export function Header({ products }: { products: Product[] }) {
             <ShoppingBag size={20} />
             {itemCount > 0 ? <b>{itemCount}</b> : null}
           </button>
-          <ICMark />
         </div>
+
+        {/* Outside .header-actions so it can be ordered against the burger,
+            which SiteNav renders as a sibling of that group: on mobile the
+            mark sits at the far right, past the menu button. */}
+        <ICMark />
       </header>
 
       {search ? <SearchOverlay products={products} onClose={() => setSearch(false)} /> : null}

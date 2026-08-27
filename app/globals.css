@@ -455,6 +455,11 @@ h3 {
   height: 48px;
   object-fit: cover;
   flex-shrink: 0;
+  /* A direct child of .site-header rather than of .header-actions, so it
+     can be ordered past the burger on mobile. The negative margin cancels
+     the header's own 24px gap and restores the 8px it had inside the
+     icon row. */
+  margin-left: -16px;
 }
 
 /* Signed-in account control: initials in place of the person icon. Sized
@@ -3218,6 +3223,12 @@ footer {
     order: 3;
     margin-left: 2px;
   }
+  /* The mark trades places with the burger here: brand, icons, menu, then
+     the INOCASA mark hard against the right edge. */
+  .ic-mark {
+    order: 4;
+    margin-left: 0;
+  }
 
   /* Tap targets. Anything a finger has to hit gets at least ~40px of
      touchable area — padding where the visual size should stay small
@@ -3351,8 +3362,8 @@ footer {
     max-width: 100%;
   }
   .ic-mark {
-    width: 36px;
-    height: 36px;
+    width: 42px;
+    height: 42px;
   }
   .header-brand {
     min-width: 0;
