@@ -1,10 +1,10 @@
 import 'server-only'
-import nodemailer from 'nodemailer'
+import { Resend } from 'resend'
 import { formatPrice } from '@/lib/product-format'
 import type { Order } from '@/lib/orders'
 
 /**
- * Order emails, sent through the OVH Email Pro mailbox on inocasa.tn.
+ * Order emails, sent through Resend.
  *
  * Two different messages go out, and they are deliberately not the same
  * text: the customer gets a confirmation with a link to track the order,
@@ -91,6 +91,11 @@ function tableHead(): string {
 function renderCustomerHtml(order: Order): string {
   const paymentLabel =
     order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 'Paiement en ligne'
+  const deliveryLabel =
+    order.customer.deliveryMethod === 'boutique'
+      ? 'Récupération en boutique'
+      : 'Livraison à domicile'
+  const addressLabel = order.customer.deliveryMethod === 'boutique' ? 'Adresse de retrait' : 'Adresse'
 
   return shell(`
     <h1 style="font-size:22px;margin:0 0 6px">Merci pour votre commande</h1>
@@ -106,8 +111,9 @@ function renderCustomerHtml(order: Order): string {
     ${totalsBlock(order)}
 
     <p style="font-size:14px;margin:22px 0 6px"><strong>Mode de paiement :</strong> ${paymentLabel}</p>
+    <p style="font-size:14px;margin:0 0 6px"><strong>Mode de livraison :</strong> ${deliveryLabel}</p>
     <p style="font-size:14px;margin:0 0 22px">
-      <strong>Livraison :</strong> ${esc(order.customer.adresse)}, ${esc(order.customer.ville)},
+      <strong>${addressLabel} :</strong> ${esc(order.customer.adresse)}, ${esc(order.customer.ville)},
       ${esc(order.customer.gouvernorat)}
     </p>
 
@@ -129,6 +135,11 @@ function renderCustomerHtml(order: Order): string {
 function renderAdminHtml(order: Order): string {
   const paymentLabel =
     order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 'Paiement en ligne'
+  const deliveryLabel =
+    order.customer.deliveryMethod === 'boutique'
+      ? 'Récupération en boutique'
+      : 'Livraison à domicile'
+  const addressLabel = order.customer.deliveryMethod === 'boutique' ? 'Retrait' : 'Adresse'
   const adminUrl = `${getSiteUrl()}/admin-r/livraisons/${order.reference}`
 
   return shell(`
@@ -148,7 +159,8 @@ function renderAdminHtml(order: Order): string {
       <tr><td style="padding:4px 0;color:#6b7280;width:120px">Client</td><td style="padding:4px 0">${esc(order.customer.prenom)} ${esc(order.customer.nom)}</td></tr>
       <tr><td style="padding:4px 0;color:#6b7280">Téléphone</td><td style="padding:4px 0"><a href="tel:${esc(order.customer.telephone)}">${esc(order.customer.telephone)}</a></td></tr>
       ${order.customer.email ? `<tr><td style="padding:4px 0;color:#6b7280">Email</td><td style="padding:4px 0">${esc(order.customer.email)}</td></tr>` : ''}
-      <tr><td style="padding:4px 0;color:#6b7280">Adresse</td><td style="padding:4px 0">${esc(order.customer.adresse)}, ${esc(order.customer.ville)}, ${esc(order.customer.gouvernorat)}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280">Livraison</td><td style="padding:4px 0">${deliveryLabel}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280">${addressLabel}</td><td style="padding:4px 0">${esc(order.customer.adresse)}, ${esc(order.customer.ville)}, ${esc(order.customer.gouvernorat)}</td></tr>
       <tr><td style="padding:4px 0;color:#6b7280">Paiement</td><td style="padding:4px 0">${paymentLabel}</td></tr>
       ${order.customer.notes ? `<tr><td style="padding:4px 0;color:#6b7280">Notes</td><td style="padding:4px 0">${esc(order.customer.notes)}</td></tr>` : ''}
     </table>
@@ -162,52 +174,51 @@ function renderAdminHtml(order: Order): string {
 }
 
 /**
- * OVH Email Pro SMTP. Port 587 with STARTTLS is what OVH documents for
- * pro3.mail.ovh.net; `secure: false` is correct there — nodemailer
- * upgrades the connection via STARTTLS rather than starting TLS-wrapped,
- * which is what port 465 would need.
+ * The verified sender on the Resend account. Resend only accepts a From
+ * address on a domain verified there, so this must stay on inocasa.tn —
+ * pointing it elsewhere makes every send fail with a 403.
  */
-function createTransport() {
-  const user = process.env.SMTP_USER
-  const pass = process.env.SMTP_PASSWORD
+const FROM = process.env.RESEND_FROM_EMAIL ?? 'INOCASA <commandes@inocasa.tn>'
 
-  if (!user || !pass) return null
+function getResend(): Resend | null {
+  const apiKey = process.env.RESEND_API_KEY
 
-  return nodemailer.createTransport({
-    host: process.env.SMTP_HOST ?? 'pro3.mail.ovh.net',
-    port: Number(process.env.SMTP_PORT ?? 587),
-    secure: false,
-    auth: { user, pass },
-  })
+  if (!apiKey) return null
+
+  return new Resend(apiKey)
 }
 
 export async function sendOrderEmails(order: Order): Promise<void> {
-  const transport = createTransport()
+  const resend = getResend()
 
-  if (!transport) {
+  if (!resend) {
     console.log(
-      `[email] SMTP_USER/SMTP_PASSWORD absentes — email non envoyé pour la commande ${order.reference}.`,
+      `[email] RESEND_API_KEY absente — email non envoyé pour la commande ${order.reference}.`,
     )
     return
   }
-
-  // The From address must be the authenticated mailbox: OVH rejects a
-  // mismatched sender, and any other domain would fail SPF anyway.
-  const from = `INOCASA <${process.env.SMTP_USER}>`
 
   // Each send is awaited separately so one failure cannot swallow the
   // other — a customer confirmation that bounces must not cost the shop
   // its notification, or vice versa. Neither ever throws: the order is
   // already committed, and failing the request over an email would tell
   // the customer their purchase failed when it did not.
+  //
+  // Resend reports failures in the resolved `error` rather than by
+  // throwing, so both have to be checked or a rejected send looks like a
+  // success.
   try {
-    await transport.sendMail({
-      from,
+    const { error } = await resend.emails.send({
+      from: FROM,
       to: STORE_EMAIL,
       replyTo: order.customer.email || undefined,
       subject: `Nouvelle commande ${order.reference} — ${order.customer.prenom} ${order.customer.nom}`,
       html: renderAdminHtml(order),
     })
+
+    if (error) {
+      console.error(`[email] Notification boutique refusée (${order.reference}):`, error)
+    }
   } catch (error) {
     console.error(`[email] Notification boutique échouée (${order.reference}):`, error)
   }
@@ -215,13 +226,17 @@ export async function sendOrderEmails(order: Order): Promise<void> {
   if (!order.customer.email) return
 
   try {
-    await transport.sendMail({
-      from,
+    const { error } = await resend.emails.send({
+      from: FROM,
       to: order.customer.email,
       replyTo: STORE_EMAIL,
       subject: `Votre commande INOCASA ${order.reference}`,
       html: renderCustomerHtml(order),
     })
+
+    if (error) {
+      console.error(`[email] Confirmation client refusée (${order.reference}):`, error)
+    }
   } catch (error) {
     console.error(`[email] Confirmation client échouée (${order.reference}):`, error)
   }
