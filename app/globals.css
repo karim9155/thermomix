@@ -155,18 +155,18 @@ h3 {
   white-space: nowrap;
 }
 .nav-dropdown-panel {
-  position: absolute;
-  top: calc(100% + 14px);
-  left: 50%;
-  transform: translateX(-50%);
-  min-width: 210px;
+  /* Fixed, not absolute: .site-nav clips overflow (see its own comment),
+     which would cut this panel off the moment it extends past the nav
+     row. top/left come from the trigger's measured position instead of
+     CSS, so this still lands right under it. */
+  position: fixed;
   background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1);
-  padding: 8px;
-  display: grid;
-  gap: 2px;
+  /* Rounded everywhere but the top-right, which stays square. */
+  border-radius: 16px 0 16px 16px;
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.14);
+  padding: 24px;
+  display: flex;
+  gap: 24px;
   z-index: 40;
 }
 /* Bridges the gap between trigger and panel so the pointer can cross it
@@ -179,16 +179,52 @@ h3 {
   right: 0;
   height: 14px;
 }
-.nav-dropdown-link {
-  display: block;
-  padding: 10px 14px;
-  border-radius: 8px;
-  font-size: 13px;
-  color: var(--ink);
-  white-space: nowrap;
+/* The little green pointer connecting the panel back to its trigger. */
+.nav-dropdown-panel::after {
+  content: '';
+  position: absolute;
+  top: -7px;
+  left: 28px;
+  width: 14px;
+  height: 14px;
+  background: var(--brand-green);
+  clip-path: polygon(50% 0, 0 100%, 100% 100%);
 }
-.nav-dropdown-link:hover {
-  background: var(--surface);
+.nav-dropdown-tile {
+  display: grid;
+  justify-items: center;
+  gap: 12px;
+  width: 130px;
+  text-align: center;
+  color: var(--ink);
+}
+.nav-dropdown-tile-image {
+  width: 100%;
+  aspect-ratio: 1;
+  /* Same square top-right corner as the panel that holds it. */
+  border-radius: 12px 0 12px 12px;
+  border: 1px solid var(--border);
+  overflow: hidden;
+  display: grid;
+  place-items: center;
+  background: var(--white);
+  transition: border-color 0.18s ease;
+}
+.nav-dropdown-tile-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.nav-dropdown-tile-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  transition: color 0.18s ease;
+}
+.nav-dropdown-tile:hover .nav-dropdown-tile-image {
+  border-color: var(--brand-green);
+}
+.nav-dropdown-tile:hover .nav-dropdown-tile-label {
   color: var(--brand-green);
 }
 
@@ -1360,6 +1396,23 @@ h3 {
   color: var(--muted);
   font-weight: 400;
 }
+.checkout-pickup-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f1faf5;
+  border: 1px solid #b7e8cd;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.checkout-pickup-notice svg {
+  flex-shrink: 0;
+  color: var(--brand-green);
+  margin-top: 1px;
+}
 
 /* Confirmation / failure / stub payment */
 .confirmation-box {
@@ -1379,6 +1432,12 @@ h3 {
   color: #1c5e3c;
   max-width: 560px;
   line-height: 1.7;
+}
+.confirmation-pickup-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
 }
 .confirmation-reference {
   font-size: 26px;
@@ -1746,6 +1805,11 @@ footer {
   font-size: 20px;
   margin-top: 40px;
   font-weight: 500;
+}
+.footer-address {
+  margin-top: 20px;
+  font-size: 13px !important;
+  color: #9aa0a3 !important;
 }
 .footer-main a {
   color: #d4d9da;
