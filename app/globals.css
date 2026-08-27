@@ -3361,19 +3361,26 @@ footer {
   .brand-lockup {
     height: 30px;
   }
-  /* Touch targets, not just icons. The controls are drawn at 36px, under
-     the ~44px a fingertip reliably hits, and two near-identical rules in
-     this block left them 4px apart — close enough that the account, cart
-     and IC marks read as one clump. The gap separates them; the min-size
-     grows the tappable box.
+  /* What made these hard to hit was the tap target, not the gap: the
+     icons are drawn at 36px, under the ~42px a fingertip reliably lands
+     on. Growing the box does the separating, so the gap stays small —
+     pushing it wider as well spread the row into scattered islands.
+     (Two near-identical .header-actions rules used to sit in this block;
+     the duplicate is gone and this is the only gap now.)
+
+     A taller box has to restate its centering: without it the glyph
+     hangs at the top of the box rather than its middle.
 
      .ic-mark is a decorative img, not a control, so it is left alone. */
   .header-actions {
-    gap: 10px;
+    gap: 4px;
   }
   .header-actions .icon-button {
-    min-width: 44px;
-    min-height: 44px;
+    min-width: 42px;
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
   /* The circle itself carries the green background, so padding would
      visibly enlarge it. An invisible outset overlay adds the missing
@@ -3386,8 +3393,8 @@ footer {
     position: absolute;
     top: 50%;
     left: 50%;
-    width: 44px;
-    height: 44px;
+    width: 42px;
+    height: 42px;
     transform: translate(-50%, -50%);
   }
 
