@@ -3338,9 +3338,6 @@ footer {
   .header-actions .icon-button[aria-label='Rechercher'] {
     display: none;
   }
-  .header-actions {
-    gap: 2px;
-  }
   .header-brand {
     min-width: 0;
     flex: 0 1 auto;
@@ -3364,8 +3361,34 @@ footer {
   .brand-lockup {
     height: 30px;
   }
+  /* Touch targets, not just icons. The controls are drawn at 36px, under
+     the ~44px a fingertip reliably hits, and two near-identical rules in
+     this block left them 4px apart — close enough that the account, cart
+     and IC marks read as one clump. The gap separates them; the min-size
+     grows the tappable box.
+
+     .ic-mark is a decorative img, not a control, so it is left alone. */
   .header-actions {
-    gap: 4px;
+    gap: 10px;
+  }
+  .header-actions .icon-button {
+    min-width: 44px;
+    min-height: 44px;
+  }
+  /* The circle itself carries the green background, so padding would
+     visibly enlarge it. An invisible outset overlay adds the missing
+     touch area instead, leaving the drawn circle at 36px. */
+  .header-actions .account-initials {
+    position: relative;
+  }
+  .header-actions .account-initials::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 44px;
+    height: 44px;
+    transform: translate(-50%, -50%);
   }
 
   .hero {
