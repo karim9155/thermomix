@@ -14,7 +14,7 @@ import {
   Headphones,
   X,
 } from 'lucide-react'
-import { formatPrice, isPlaceholderImage, type Product } from '@/lib/product-format'
+import { formatPrice, isPlaceholderImage, BOUTIQUE_ADDRESS_LABEL, type Product } from '@/lib/product-format'
 import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/components/ui/toast'
 import { CartDrawer } from '@/components/cart-drawer'
@@ -287,6 +287,10 @@ export function Footer() {
             <a href="mailto:contact@inocasa.tn">Email: contact@inocasa.tn</a>
             <br />
             <a href="tel:+21622081414">Tél. : +216 22 08 14 14</a>
+          </p>
+          <p className="footer-address">
+            L&apos;adresse officielle de Thermomix Tunisie (géré par le distributeur officiel
+            InoCasa) est située au {BOUTIQUE_ADDRESS_LABEL}
           </p>
         </div>
 

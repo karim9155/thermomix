@@ -1804,6 +1804,11 @@ footer {
   margin-top: 40px;
   font-weight: 500;
 }
+.footer-address {
+  margin-top: 20px;
+  font-size: 13px !important;
+  color: #9aa0a3 !important;
+}
 .footer-main a {
   color: #d4d9da;
 }
