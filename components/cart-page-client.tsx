@@ -81,10 +81,6 @@ export function CartPageClient() {
               <span>TVA (19%)</span>
               <strong>{formatPrice(totalTVA)}</strong>
             </div>
-            <div>
-              <span>Livraison</span>
-              <span>Gratuite</span>
-            </div>
             <hr />
             <div className="summary-total">
               <span>Total TTC</span>

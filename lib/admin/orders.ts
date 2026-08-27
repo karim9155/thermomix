@@ -45,6 +45,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
   email: string | null
   adresse: string
   gouvernorat: string
+  deliveryMethod: 'domicile' | 'boutique'
   notes: string | null
   subtotalHT: number
   totalTVA: number
@@ -95,7 +96,7 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      `${LIST_SELECT}, id, email, adresse, gouvernorat, notes, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
+      `${LIST_SELECT}, id, email, adresse, gouvernorat, delivery_method, notes, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
        order_items ( sku, name, quantity, price_ht, price_ttc )`,
     )
     .eq('reference', reference)
@@ -132,6 +133,7 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
     email: order.email,
     adresse: order.adresse,
     gouvernorat: order.gouvernorat,
+    deliveryMethod: order.delivery_method === 'boutique' ? 'boutique' : 'domicile',
     notes: order.notes,
     subtotalHT: Number(order.subtotal_ht),
     totalTVA: Number(order.total_tva),

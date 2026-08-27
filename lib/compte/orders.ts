@@ -39,6 +39,7 @@ export type CustomerOrderDetail = CustomerOrderListItem & {
   adresse: string
   ville: string
   gouvernorat: string
+  deliveryMethod: 'domicile' | 'boutique'
   subtotalHT: number
   totalTVA: number
   timbreFiscal: number
@@ -88,7 +89,7 @@ export async function getCustomerOrder(
     .from('orders')
     .select(
       `${LIST_SELECT}, payment_method, nom, prenom, telephone, email, adresse, ville,
-       gouvernorat, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
+       gouvernorat, delivery_method, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
        order_items ( sku, name, quantity, price_ht, price_ttc )`,
     )
     .eq('reference', reference)
@@ -116,6 +117,7 @@ export async function getCustomerOrder(
     adresse: row.adresse,
     ville: row.ville,
     gouvernorat: row.gouvernorat,
+    deliveryMethod: row.delivery_method === 'boutique' ? 'boutique' : 'domicile',
     subtotalHT: Number(row.subtotal_ht),
     totalTVA: Number(row.total_tva),
     timbreFiscal: Number(row.timbre_fiscal),

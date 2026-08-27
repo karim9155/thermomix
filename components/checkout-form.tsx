@@ -5,10 +5,16 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, ArrowRight, Banknote, CreditCard } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Banknote, CreditCard, Home, Store } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
-import { formatPrice, governorates, TIMBRE_FISCAL } from '@/lib/product-format'
+import {
+  formatPrice,
+  governorates,
+  TIMBRE_FISCAL,
+  BOUTIQUE_ADDRESS,
+  BOUTIQUE_ADDRESS_LABEL,
+} from '@/lib/product-format'
 
 type CheckoutPrefill = {
   prenom: string
@@ -31,6 +37,7 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
     register,
     handleSubmit,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<CheckoutFormValues>({
     resolver: zodResolver(checkoutFormSchema),
@@ -38,6 +45,7 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
     // name from signup and, for a returning buyer, the delivery details
     // from their last order. Every field stays editable.
     defaultValues: {
+      deliveryMethod: 'domicile',
       paymentMethod: 'cash',
       prenom: prefill?.prenom ?? '',
       nom: prefill?.nom ?? '',
@@ -50,6 +58,34 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
   })
 
   const paymentMethod = watch('paymentMethod')
+  const deliveryMethod = watch('deliveryMethod')
+  // Remembers the customer's own address while "Retrait en boutique" has
+  // temporarily replaced it with the boutique's, so switching back to home
+  // delivery restores what they typed instead of leaving the boutique's
+  // address behind.
+  const [savedAddress, setSavedAddress] = useState({
+    adresse: prefill?.adresse ?? '',
+    ville: prefill?.ville ?? '',
+    gouvernorat: prefill?.gouvernorat ?? '',
+  })
+
+  function handleDeliveryMethodChange(value: 'domicile' | 'boutique') {
+    setValue('deliveryMethod', value)
+    if (value === 'boutique') {
+      setSavedAddress({
+        adresse: watch('adresse'),
+        ville: watch('ville'),
+        gouvernorat: watch('gouvernorat'),
+      })
+      setValue('adresse', BOUTIQUE_ADDRESS.adresse, { shouldValidate: true })
+      setValue('ville', BOUTIQUE_ADDRESS.ville, { shouldValidate: true })
+      setValue('gouvernorat', BOUTIQUE_ADDRESS.gouvernorat, { shouldValidate: true })
+    } else {
+      setValue('adresse', savedAddress.adresse, { shouldValidate: true })
+      setValue('ville', savedAddress.ville, { shouldValidate: true })
+      setValue('gouvernorat', savedAddress.gouvernorat, { shouldValidate: true })
+    }
+  }
 
   useEffect(() => {
     setHydrated(true)
@@ -126,6 +162,47 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
 
       <div className="cart-layout">
         <form className="checkout-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+          <h2>Mode de livraison</h2>
+          <div className="payment-options">
+            <label
+              className={deliveryMethod === 'domicile' ? 'payment-card active' : 'payment-card'}
+            >
+              <input
+                type="radio"
+                value="domicile"
+                checked={deliveryMethod === 'domicile'}
+                onChange={() => handleDeliveryMethodChange('domicile')}
+              />
+              <span className="payment-card-icon">
+                <Home size={18} />
+              </span>
+              <span>
+                <strong>Livraison à domicile</strong>
+                <small>Livré à l&apos;adresse que vous indiquez ci-dessous.</small>
+              </span>
+            </label>
+            <label
+              className={deliveryMethod === 'boutique' ? 'payment-card active' : 'payment-card'}
+            >
+              <input
+                type="radio"
+                value="boutique"
+                checked={deliveryMethod === 'boutique'}
+                onChange={() => handleDeliveryMethodChange('boutique')}
+              />
+              <span className="payment-card-icon">
+                <Store size={18} />
+              </span>
+              <span>
+                <strong>Récupération en boutique</strong>
+                <small>{BOUTIQUE_ADDRESS_LABEL}</small>
+              </span>
+            </label>
+          </div>
+          {errors.deliveryMethod ? (
+            <span className="field-error">{errors.deliveryMethod.message}</span>
+          ) : null}
+
           <h2>Vos coordonnées</h2>
           <div className="form-grid">
             <label>
@@ -163,45 +240,59 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
                 <span className="field-error">{errors.telephone.message}</span>
               ) : null}
             </label>
-            <label className="wide">
-              Adresse
-              <input
-                placeholder="Rue, numéro, appartement"
-                {...register('adresse')}
-                aria-invalid={!!errors.adresse}
-              />
-              {errors.adresse ? (
-                <span className="field-error">{errors.adresse.message}</span>
-              ) : null}
-            </label>
-            <label>
-              Ville
-              <input
-                placeholder="Votre ville"
-                {...register('ville')}
-                aria-invalid={!!errors.ville}
-              />
-              {errors.ville ? <span className="field-error">{errors.ville.message}</span> : null}
-            </label>
-            <label>
-              Gouvernorat
-              {/* No defaultValue here: it would override the value
-                  react-hook-form was given, leaving a returning customer's
-                  saved gouvernorat showing "Sélectionner". */}
-              <select {...register('gouvernorat')} aria-invalid={!!errors.gouvernorat}>
-                <option value="" disabled>
-                  Sélectionner
-                </option>
-                {governorates.map((g) => (
-                  <option key={g} value={g}>
-                    {g}
-                  </option>
-                ))}
-              </select>
-              {errors.gouvernorat ? (
-                <span className="field-error">{errors.gouvernorat.message}</span>
-              ) : null}
-            </label>
+            {deliveryMethod === 'boutique' ? (
+              <div className="wide checkout-pickup-notice">
+                <Store size={16} />
+                <span>
+                  Votre commande vous attendra à l&apos;adresse ci-dessus. Aucune adresse de
+                  livraison n&apos;est nécessaire.
+                </span>
+              </div>
+            ) : (
+              <>
+                <label className="wide">
+                  Adresse
+                  <input
+                    placeholder="Rue, numéro, appartement"
+                    {...register('adresse')}
+                    aria-invalid={!!errors.adresse}
+                  />
+                  {errors.adresse ? (
+                    <span className="field-error">{errors.adresse.message}</span>
+                  ) : null}
+                </label>
+                <label>
+                  Ville
+                  <input
+                    placeholder="Votre ville"
+                    {...register('ville')}
+                    aria-invalid={!!errors.ville}
+                  />
+                  {errors.ville ? (
+                    <span className="field-error">{errors.ville.message}</span>
+                  ) : null}
+                </label>
+                <label>
+                  Gouvernorat
+                  {/* No defaultValue here: it would override the value
+                      react-hook-form was given, leaving a returning customer's
+                      saved gouvernorat showing "Sélectionner". */}
+                  <select {...register('gouvernorat')} aria-invalid={!!errors.gouvernorat}>
+                    <option value="" disabled>
+                      Sélectionner
+                    </option>
+                    {governorates.map((g) => (
+                      <option key={g} value={g}>
+                        {g}
+                      </option>
+                    ))}
+                  </select>
+                  {errors.gouvernorat ? (
+                    <span className="field-error">{errors.gouvernorat.message}</span>
+                  ) : null}
+                </label>
+              </>
+            )}
             <label className="wide">
               Notes de commande
               <textarea

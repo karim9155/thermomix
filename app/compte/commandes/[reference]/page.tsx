@@ -129,11 +129,19 @@ export default async function CompteCommandePage({
               </dd>
             </div>
             <div>
+              <dt>Mode</dt>
+              <dd>
+                {order.deliveryMethod === 'boutique'
+                  ? 'Récupération en boutique'
+                  : 'Livraison à domicile'}
+              </dd>
+            </div>
+            <div>
               <dt>Délai estimé</dt>
               <dd>{formatEstimatedDelivery(order.estimatedDelivery) ?? 'À confirmer'}</dd>
             </div>
             <div>
-              <dt>Adresse</dt>
+              <dt>{order.deliveryMethod === 'boutique' ? 'Adresse de retrait' : 'Adresse'}</dt>
               <dd>
                 {order.prenom} {order.nom}
                 <br />
