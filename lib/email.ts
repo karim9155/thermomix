@@ -14,13 +14,19 @@ function renderOrderHtml(order: Order): string {
 
   const paymentLabel =
     order.paymentMethod === 'cash' ? 'Paiement à la livraison' : 'Paiement en ligne'
+  const deliveryLabel =
+    order.customer.deliveryMethod === 'boutique'
+      ? 'Récupération en boutique'
+      : 'Livraison à domicile'
+  const addressLabel = order.customer.deliveryMethod === 'boutique' ? 'Adresse de retrait' : 'Adresse'
 
   return `
     <h2>Commande ${order.reference}</h2>
     <p><strong>Client :</strong> ${order.customer.prenom} ${order.customer.nom}</p>
     <p><strong>Téléphone :</strong> ${order.customer.telephone}</p>
     ${order.customer.email ? `<p><strong>Email :</strong> ${order.customer.email}</p>` : ''}
-    <p><strong>Adresse :</strong> ${order.customer.adresse}, ${order.customer.ville}, ${order.customer.gouvernorat}</p>
+    <p><strong>Mode de livraison :</strong> ${deliveryLabel}</p>
+    <p><strong>${addressLabel} :</strong> ${order.customer.adresse}, ${order.customer.ville}, ${order.customer.gouvernorat}</p>
     ${order.customer.notes ? `<p><strong>Notes :</strong> ${order.customer.notes}</p>` : ''}
     <p><strong>Mode de paiement :</strong> ${paymentLabel}</p>
     <table border="1" cellpadding="8" cellspacing="0">

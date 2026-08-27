@@ -103,7 +103,15 @@ export default async function LivraisonDetailPage({
                 </div>
               ) : null}
               <div>
-                <dt>Adresse</dt>
+                <dt>Mode de livraison</dt>
+                <dd>
+                  {order.deliveryMethod === 'boutique'
+                    ? 'Récupération en boutique'
+                    : 'Livraison à domicile'}
+                </dd>
+              </div>
+              <div>
+                <dt>{order.deliveryMethod === 'boutique' ? 'Adresse de retrait' : 'Adresse'}</dt>
                 <dd>
                   {order.adresse}, {order.ville}, {order.gouvernorat}
                 </dd>

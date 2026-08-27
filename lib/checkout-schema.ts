@@ -19,6 +19,9 @@ export const checkoutFormSchema = z
       message: 'Veuillez sélectionner un gouvernorat.',
     }),
     notes: z.string().trim().optional().or(z.literal('')),
+    deliveryMethod: z.enum(['domicile', 'boutique'], {
+      message: 'Veuillez choisir un mode de livraison.',
+    }),
     paymentMethod: z.enum(['cash', 'online'], {
       message: 'Veuillez choisir un mode de paiement.',
     }),

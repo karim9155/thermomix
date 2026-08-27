@@ -61,6 +61,7 @@ type OrderRow = {
   gouvernorat: string
   notes: string | null
   payment_method: string
+  delivery_method: string
   status: OrderStatus
   subtotal_ht: number
   total_tva: number
@@ -78,7 +79,8 @@ type OrderRow = {
 
 const ORDER_SELECT = `
   reference, nom, prenom, telephone, email, adresse, ville, gouvernorat, notes,
-  payment_method, status, subtotal_ht, total_tva, total_ttc, timbre_fiscal, created_at,
+  payment_method, delivery_method, status, subtotal_ht, total_tva, total_ttc, timbre_fiscal,
+  created_at,
   order_items ( sku, name, quantity, price_ht, price_ttc )
 `
 
@@ -96,6 +98,7 @@ function mapRow(row: OrderRow): Order {
       ville: row.ville,
       gouvernorat: row.gouvernorat,
       notes: row.notes ?? '',
+      deliveryMethod: row.delivery_method === 'boutique' ? 'boutique' : 'domicile',
       paymentMethod,
     },
     items: (row.order_items ?? []).map((item) => ({
@@ -148,6 +151,7 @@ export async function createOrder(input: {
         gouvernorat: input.customer.gouvernorat,
         notes: input.customer.notes || null,
         payment_method: PAYMENT_METHOD_TO_DB[input.paymentMethod],
+        delivery_method: input.customer.deliveryMethod,
         status: 'en_attente',
         subtotal_ht: input.subtotalHT,
         total_tva: input.totalTVA,

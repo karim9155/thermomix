@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { ArrowRight, CheckCircle2 } from 'lucide-react'
+import { ArrowRight, CheckCircle2, MapPin } from 'lucide-react'
 import { BoutiqueShell } from '@/components/boutique-shell'
 import { ClearCartOnMount } from '@/components/clear-cart-on-mount'
 import { getOrder } from '@/lib/orders'
-import { formatPrice } from '@/lib/product-format'
+import { formatPrice, BOUTIQUE_ADDRESS_LABEL } from '@/lib/product-format'
 
 export default async function ConfirmationPage({
   searchParams,
@@ -37,9 +37,16 @@ export default async function ConfirmationPage({
           <p className="confirmation-reference">{order.reference}</p>
           <p>
             {order.paymentMethod === 'cash'
-              ? 'Merci ! Votre commande est confirmée. Un conseiller INOCASA vous contactera sous 24h pour organiser la livraison. Vous paierez à la réception.'
+              ? order.customer.deliveryMethod === 'boutique'
+                ? 'Merci ! Votre commande est confirmée. Elle vous attendra en boutique — vous paierez sur place au retrait.'
+                : 'Merci ! Votre commande est confirmée. Un conseiller INOCASA vous contactera sous 24h pour organiser la livraison. Vous paierez à la réception.'
               : 'Merci ! Votre paiement a bien été reçu.'}
           </p>
+          {order.customer.deliveryMethod === 'boutique' ? (
+            <p className="confirmation-pickup-address">
+              <MapPin size={15} /> {BOUTIQUE_ADDRESS_LABEL}
+            </p>
+          ) : null}
         </div>
 
         <div className="cart-layout">

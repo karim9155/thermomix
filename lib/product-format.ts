@@ -39,6 +39,22 @@ export type Product = {
 // flat fee added at payment time — never part of a product's price.
 export const TIMBRE_FISCAL = 1
 
+/**
+ * The boutique's official pickup address, used both to fill an order's
+ * address fields when the customer chooses in-store pickup over home
+ * delivery, and to display the address wherever that choice needs
+ * explaining (checkout, confirmation, order emails).
+ */
+export const BOUTIQUE_ADDRESS = {
+  adresse: 'RDC, Immeuble Villa Jade, commerce N°3, Avenue du Stade',
+  ville: 'La Marsa',
+  codePostal: '2070',
+  gouvernorat: 'Tunis',
+}
+
+export const BOUTIQUE_ADDRESS_LABEL =
+  `${BOUTIQUE_ADDRESS.adresse}, ${BOUTIQUE_ADDRESS.codePostal} ${BOUTIQUE_ADDRESS.ville}, Tunisie`
+
 export const PLACEHOLDER_IMAGE = '/placeholder.svg'
 
 // next/image blocks SVG optimization by default (XSS surface) — the local

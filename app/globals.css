@@ -1394,6 +1394,23 @@ h3 {
   color: var(--muted);
   font-weight: 400;
 }
+.checkout-pickup-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: #f1faf5;
+  border: 1px solid #b7e8cd;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-size: 13px;
+  color: var(--ink);
+  margin-bottom: 4px;
+}
+.checkout-pickup-notice svg {
+  flex-shrink: 0;
+  color: var(--brand-green);
+  margin-top: 1px;
+}
 
 /* Confirmation / failure / stub payment */
 .confirmation-box {
@@ -1413,6 +1430,12 @@ h3 {
   color: #1c5e3c;
   max-width: 560px;
   line-height: 1.7;
+}
+.confirmation-pickup-address {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
 }
 .confirmation-reference {
   font-size: 26px;
