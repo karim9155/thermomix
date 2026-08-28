@@ -104,6 +104,12 @@ export default async function CompteCommandePage({
               <span>Total TTC</span>
               <strong>{formatPrice(order.totalTTC)}</strong>
             </div>
+            {order.deliveryFee > 0 ? (
+              <div>
+                <span>Frais de livraison</span>
+                <strong>{formatPrice(order.deliveryFee)}</strong>
+              </div>
+            ) : null}
             {order.timbreFiscal > 0 ? (
               <div>
                 <span>Timbre fiscal</span>
@@ -112,7 +118,7 @@ export default async function CompteCommandePage({
             ) : null}
             <div className="compte-totals-final">
               <span>Total à payer</span>
-              <strong>{formatPrice(order.totalTTC + order.timbreFiscal)}</strong>
+              <strong>{formatPrice(order.totalTTC + order.timbreFiscal + order.deliveryFee)}</strong>
             </div>
           </div>
         </section>

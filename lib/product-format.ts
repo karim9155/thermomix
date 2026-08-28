@@ -39,6 +39,35 @@ export type Product = {
 // flat fee added at payment time — never part of a product's price.
 export const TIMBRE_FISCAL = 1
 
+// Home-delivery fees in TND, by product category. Charged once per order,
+// not per item: one order is one shipment. Store pickup is always free.
+export const DELIVERY_FEE_ROBOT = 25
+export const DELIVERY_FEE_ACCESSOIRE = 10
+
+/**
+ * Home-delivery fee for a cart, in TND.
+ *
+ * One shipment, one fee, at the highest rate any item in the cart calls
+ * for: a cart containing a robot ships at the robot rate no matter how
+ * many accessories ride along with it. Quantities do not multiply it.
+ *
+ * Returns 0 for an empty cart and for in-store pickup (callers pass
+ * deliveryMethod), so the row simply disappears rather than showing "0".
+ */
+export function calculateDeliveryFee(
+  // category is optional because cart items saved before it was stored
+  // hydrate without it (see CartItem). A missing category is treated as an
+  // accessory, matching the backfill in lib/cart-context.tsx.
+  items: { category?: ProductCategory }[],
+  deliveryMethod: 'domicile' | 'boutique',
+): number {
+  if (deliveryMethod !== 'domicile' || items.length === 0) return 0
+
+  return items.some((item) => item.category === 'robot')
+    ? DELIVERY_FEE_ROBOT
+    : DELIVERY_FEE_ACCESSOIRE
+}
+
 /**
  * The boutique's official pickup address, used both to fill an order's
  * address fields when the customer chooses in-store pickup over home

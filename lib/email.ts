@@ -56,15 +56,22 @@ function totalsBlock(order: Order): string {
       ? `<tr><td style="padding:4px 0;color:#6b7280">Timbre fiscal</td><td style="padding:4px 0;text-align:right">${formatPrice(order.timbreFiscal)}</td></tr>`
       : ''
 
+  // Home delivery only — omitted entirely for store pickup.
+  const shipping =
+    order.deliveryFee > 0
+      ? `<tr><td style="padding:4px 0;color:#6b7280">Frais de livraison</td><td style="padding:4px 0;text-align:right">${formatPrice(order.deliveryFee)}</td></tr>`
+      : ''
+
   return `
     <table style="width:100%;max-width:320px;margin-left:auto;font-size:14px;border-collapse:collapse">
       <tr><td style="padding:4px 0;color:#6b7280">Sous-total HT</td><td style="padding:4px 0;text-align:right">${formatPriceHT(order.subtotalHT)}</td></tr>
       <tr><td style="padding:4px 0;color:#6b7280">TVA 19%</td><td style="padding:4px 0;text-align:right">${formatPrice(order.totalTVA)}</td></tr>
+      ${shipping}
       ${stamp}
       <tr>
         <td style="padding:10px 0 0;border-top:1px solid #1f2328;font-weight:bold">Total à payer</td>
         <td style="padding:10px 0 0;border-top:1px solid #1f2328;text-align:right;font-weight:bold">
-          ${formatPrice(order.totalTTC + order.timbreFiscal)}
+          ${formatPrice(order.totalTTC + order.timbreFiscal + order.deliveryFee)}
         </td>
       </tr>
     </table>`

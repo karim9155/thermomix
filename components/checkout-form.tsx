@@ -11,6 +11,7 @@ import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-sche
 import {
   formatPrice,
   formatPriceHT,
+  calculateDeliveryFee,
   governorates,
   TIMBRE_FISCAL,
   BOUTIQUE_ADDRESS,
@@ -63,6 +64,10 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
 
   const paymentMethod = watch('paymentMethod')
   const deliveryMethod = watch('deliveryMethod')
+  // Recomputed as the customer toggles delivery method, so the summary
+  // updates live. The server recalculates this from the catalog on submit
+  // (app/api/commande/route.ts) — this is display only.
+  const deliveryFee = calculateDeliveryFee(items, deliveryMethod)
   // Remembers the customer's own address while "Retrait en boutique" has
   // temporarily replaced it with the boutique's, so switching back to home
   // delivery restores what they typed instead of leaving the boutique's
@@ -386,6 +391,14 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
             <span>Total TTC</span>
             <strong>{formatPrice(totalTTC)}</strong>
           </div>
+          {/* Home delivery only — store pickup has no shipping fee, so the
+              row disappears entirely rather than showing 0. */}
+          {deliveryFee > 0 ? (
+            <div>
+              <span>Frais de livraison</span>
+              <strong>{formatPrice(deliveryFee)}</strong>
+            </div>
+          ) : null}
           {/* Cash is the only selectable method today, so these branches
               always take the cash path. They stay because the stamp is a
               real rule — it applies to cash on delivery and not to card —
@@ -400,7 +413,9 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
           <div className="summary-total">
             <span>Total à payer</span>
             <strong>
-              {formatPrice(paymentMethod === 'cash' ? totalTTC + TIMBRE_FISCAL : totalTTC)}
+              {formatPrice(
+                deliveryFee + (paymentMethod === 'cash' ? totalTTC + TIMBRE_FISCAL : totalTTC),
+              )}
             </strong>
           </div>
         </aside>

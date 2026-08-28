@@ -50,6 +50,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
   subtotalHT: number
   totalTVA: number
   timbreFiscal: number
+  deliveryFee: number
   // Storage path of the admin-uploaded invoice PDF, null until one is
   // uploaded. See INVOICE_BUCKET and uploadOrderInvoice() below.
   invoicePath: string | null
@@ -108,7 +109,7 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
   const { data: order, error } = await supabase
     .from('orders')
     .select(
-      `${LIST_SELECT}, id, email, adresse, gouvernorat, delivery_method, notes, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
+      `${LIST_SELECT}, id, email, adresse, gouvernorat, delivery_method, notes, subtotal_ht, total_tva, timbre_fiscal, delivery_fee, invoice_path,
        order_items ( sku, name, quantity, price_ht, price_ttc )`,
     )
     .eq('reference', reference)
@@ -150,6 +151,7 @@ export async function getOrderDetail(reference: string): Promise<AdminOrderDetai
     subtotalHT: Number(order.subtotal_ht),
     totalTVA: Number(order.total_tva),
     timbreFiscal: Number(order.timbre_fiscal),
+    deliveryFee: Number(order.delivery_fee ?? 0),
     invoicePath: order.invoice_path ?? null,
     items: (order.order_items ?? []).map((item: any) => ({
       sku: item.sku,

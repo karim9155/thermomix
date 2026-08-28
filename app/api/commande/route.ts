@@ -4,7 +4,7 @@ import { getProductsBySkus } from '@/lib/products'
 import { createOrder, type OrderLine } from '@/lib/orders'
 import { sendOrderEmails } from '@/lib/email'
 import { getCustomer } from '@/lib/compte/guard'
-import { TIMBRE_FISCAL } from '@/lib/product-format'
+import { TIMBRE_FISCAL, calculateDeliveryFee } from '@/lib/product-format'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -80,6 +80,20 @@ export async function POST(request: NextRequest) {
   // stamp duty, not a fee on the online card payment.
   const timbreFiscal = customer.paymentMethod === 'cash' ? TIMBRE_FISCAL : 0
 
+  // Recomputed here from the catalog rows we just validated, never taken
+  // from the request: the browser sends only sku/slug/quantity, so a
+  // client cannot talk its way into a cheaper shipping rate. Store pickup
+  // resolves to 0.
+  // Every sku is present: the loop above returned 400 for any that was
+  // not, so flatMap here is belt-and-braces rather than a real branch.
+  const deliveryFee = calculateDeliveryFee(
+    items.flatMap((line) => {
+      const product = productsBySku.get(line.sku)
+      return product ? [{ category: product.category }] : []
+    }),
+    customer.deliveryMethod,
+  )
+
   const order = await createOrder({
     customer,
     items: lines,
@@ -87,6 +101,7 @@ export async function POST(request: NextRequest) {
     totalTVA,
     totalTTC,
     timbreFiscal,
+    deliveryFee,
     paymentMethod: customer.paymentMethod,
     userId: customerUser.id,
   })

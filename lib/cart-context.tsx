@@ -9,7 +9,7 @@ import {
   useState,
   type ReactNode,
 } from 'react'
-import type { Product } from '@/lib/product-format'
+import type { Product, ProductCategory } from '@/lib/product-format'
 
 export type CartItem = {
   sku: string
@@ -19,6 +19,12 @@ export type CartItem = {
   priceHT: number
   image: string
   quantity: number
+  /** Drives the home-delivery fee (see calculateDeliveryFee). Carts saved
+      before this field existed hydrate without it, so it is optional and
+      normalized to 'accessoire' on load — the cheaper rate, so a stale
+      cart never over-charges someone. The server recomputes the fee from
+      the real catalog anyway. */
+  category?: ProductCategory
 }
 
 type CartContextValue = {
@@ -47,7 +53,13 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed)) {
-          setItems(parsed)
+          // Backfill category for carts saved before it was stored.
+          setItems(
+            parsed.map((item: CartItem) => ({
+              ...item,
+              category: item.category ?? 'accessoire',
+            })),
+          )
         }
       }
     } catch {
@@ -83,6 +95,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
           priceTTC: product.priceTTC,
           priceHT: product.priceHT,
           image: product.image,
+          category: product.category,
           quantity,
         },
       ]

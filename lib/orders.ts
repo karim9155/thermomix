@@ -23,6 +23,9 @@ export type Order = {
   // Fiscal stamp fee added at payment time, on top of totalTTC. Not part
   // of the product price — see lib/product-format.ts's TIMBRE_FISCAL.
   timbreFiscal: number
+  // Home-delivery fee, also on top of totalTTC and also not part of the
+  // product price — see calculateDeliveryFee(). Always 0 for store pickup.
+  deliveryFee: number
   paymentMethod: OrderPaymentMethod
   status: OrderStatus
   createdAt: string
@@ -67,6 +70,7 @@ type OrderRow = {
   total_tva: number
   total_ttc: number
   timbre_fiscal: number
+  delivery_fee: number
   created_at: string
   order_items: {
     sku: string
@@ -80,6 +84,7 @@ type OrderRow = {
 const ORDER_SELECT = `
   reference, nom, prenom, telephone, email, adresse, ville, gouvernorat, notes,
   payment_method, delivery_method, status, subtotal_ht, total_tva, total_ttc, timbre_fiscal,
+  delivery_fee,
   created_at,
   order_items ( sku, name, quantity, price_ht, price_ttc )
 `
@@ -112,6 +117,7 @@ function mapRow(row: OrderRow): Order {
     totalTVA: Number(row.total_tva),
     totalTTC: Number(row.total_ttc),
     timbreFiscal: Number(row.timbre_fiscal),
+    deliveryFee: Number(row.delivery_fee ?? 0),
     paymentMethod,
     status: row.status,
     createdAt: row.created_at,
@@ -125,6 +131,7 @@ export async function createOrder(input: {
   totalTVA: number
   totalTTC: number
   timbreFiscal: number
+  deliveryFee: number
   paymentMethod: OrderPaymentMethod
   // The owning auth.users id, resolved from the session server-side by the
   // caller. Required for new orders; the column stays nullable only so
@@ -157,6 +164,7 @@ export async function createOrder(input: {
         total_tva: input.totalTVA,
         total_ttc: input.totalTTC,
         timbre_fiscal: input.timbreFiscal,
+        delivery_fee: input.deliveryFee,
         user_id: input.userId,
       })
       .select('id, reference, created_at')
@@ -198,6 +206,7 @@ export async function createOrder(input: {
       totalTVA: input.totalTVA,
       totalTTC: input.totalTTC,
       timbreFiscal: input.timbreFiscal,
+      deliveryFee: input.deliveryFee,
       paymentMethod: input.paymentMethod,
       status: 'en_attente',
       createdAt: inserted.created_at,

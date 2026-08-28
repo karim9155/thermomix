@@ -43,6 +43,7 @@ export type CustomerOrderDetail = CustomerOrderListItem & {
   subtotalHT: number
   totalTVA: number
   timbreFiscal: number
+  deliveryFee: number
   // Storage path of the admin-uploaded invoice PDF, null until the admin
   // uploads one — see app/compte/commandes/[reference]/facture/route.tsx.
   invoicePath: string | null
@@ -89,7 +90,7 @@ export async function getCustomerOrder(
     .from('orders')
     .select(
       `${LIST_SELECT}, payment_method, nom, prenom, telephone, email, adresse, ville,
-       gouvernorat, delivery_method, subtotal_ht, total_tva, timbre_fiscal, invoice_path,
+       gouvernorat, delivery_method, subtotal_ht, total_tva, timbre_fiscal, delivery_fee, invoice_path,
        order_items ( sku, name, quantity, price_ht, price_ttc )`,
     )
     .eq('reference', reference)
@@ -121,6 +122,7 @@ export async function getCustomerOrder(
     subtotalHT: Number(row.subtotal_ht),
     totalTVA: Number(row.total_tva),
     timbreFiscal: Number(row.timbre_fiscal),
+    deliveryFee: Number(row.delivery_fee ?? 0),
     invoicePath: row.invoice_path ?? null,
     items: (row.order_items ?? []).map((item: any) => ({
       sku: item.sku,
