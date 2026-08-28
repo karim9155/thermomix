@@ -16,6 +16,9 @@ import {
   BOUTIQUE_ADDRESS_LABEL,
 } from '@/lib/product-format'
 
+/** Ties the detached submit button back to the form element. */
+const FORM_ID = 'checkout-form'
+
 type CheckoutPrefill = {
   prenom: string
   nom: string
@@ -161,7 +164,12 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
       <h1>On s&apos;occupe du reste.</h1>
 
       <div className="cart-layout">
-        <form className="checkout-form" onSubmit={handleSubmit(onSubmit)} noValidate>
+        <form
+          id={FORM_ID}
+          className="checkout-form"
+          onSubmit={handleSubmit(onSubmit)}
+          noValidate
+        >
           <h2>Mode de livraison</h2>
           <div className="payment-options">
             <label
@@ -334,9 +342,22 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
             <span className="field-error">{errors.paymentMethod.message}</span>
           ) : null}
 
+        </form>
+
+        {/* Outside the <form> on purpose, wired back to it by the `form`
+            attribute — a submit button anywhere in the document still
+            submits the form it names. That makes it a sibling of the
+            summary card, which is the only way the one-column phone
+            layout can order it *after* the card. */}
+        <div className="checkout-submit">
           {submitError ? <p className="form-error">{submitError}</p> : null}
 
-          <button className="primary-button" type="submit" disabled={submitting}>
+          <button
+            className="primary-button"
+            type="submit"
+            form={FORM_ID}
+            disabled={submitting}
+          >
             {submitting
               ? 'Traitement en cours…'
               : paymentMethod === 'online'
@@ -344,7 +365,7 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
                 : 'Confirmer la commande'}{' '}
             <ArrowRight size={17} />
           </button>
-        </form>
+        </div>
 
         <aside className="summary">
           <h2>Votre commande</h2>

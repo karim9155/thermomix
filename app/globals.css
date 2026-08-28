@@ -1297,6 +1297,18 @@ h3 {
 .checkout-form h2:not(:first-child) {
   margin-top: 45px;
 }
+/* The submit block is its own grid item rather than the form's last child
+   (see the comment on it in checkout-form.tsx). On desktop that would drop
+   it into the summary's column, so it is pinned back under the form, with
+   the summary spanning both rows to keep the right column whole. Scoped by
+   :has() because the cart and confirmation pages reuse .cart-layout and
+   .summary without a submit block. */
+.cart-layout:has(.checkout-submit) .checkout-submit {
+  grid-column: 1;
+}
+.cart-layout:has(.checkout-submit) .summary {
+  grid-row: 1 / span 2;
+}
 .form-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3304,6 +3316,17 @@ footer {
   .cart-layout {
     grid-template-columns: 1fr;
     gap: 32px;
+  }
+  /* Stacked, the desktop placement would strand the button above the
+     summary card. Drop the spans and order it last, so the phone reads
+     form → "Votre commande" → Confirmer. */
+  .cart-layout:has(.checkout-submit) .checkout-submit {
+    grid-column: auto;
+    order: 2;
+  }
+  .cart-layout:has(.checkout-submit) .summary {
+    grid-row: auto;
+    order: 1;
   }
   .store-page {
     padding: 72px 6vw 80px;
