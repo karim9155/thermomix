@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { updateDeliveryStatusAction } from '@/app/admin-r/(dashboard)/livraisons/[reference]/actions'
 import { DELIVERY_STATUSES, type DeliveryStatus } from '@/lib/admin/order-format'
 
@@ -24,7 +23,9 @@ export function DeliveryStatusControl({
   // on every row would be redundant.
   hideLabel?: boolean
 }) {
-  const router = useRouter()
+  // No router.refresh() in the handler below: the action revalidates this
+  // page, and a Server Action's response already carries the refreshed RSC
+  // payload — calling refresh() as well fired a second round-trip.
   const [pending, startTransition] = useTransition()
   const [pendingStatus, setPendingStatus] = useState<DeliveryStatus | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -35,8 +36,6 @@ export function DeliveryStatusControl({
       const result = await updateDeliveryStatusAction(reference, newStatus)
       if (result.error) {
         setError(result.error)
-      } else {
-        router.refresh()
       }
       setPendingStatus(null)
     })

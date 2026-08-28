@@ -1,4 +1,5 @@
 import 'server-only'
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/admin-auth'
 
 export type AdminUser = {
@@ -18,8 +19,19 @@ export type AdminUser = {
  * Throws if the caller isn't a verified admin — callers should let that
  * propagate (Server Actions surface it as a generic error) or catch it to
  * return a French-language error to the UI.
+ *
+ * Wrapped in React's cache() so the two network calls it makes (getUser
+ * against Supabase Auth, then the admin_users lookup) happen ONCE per
+ * request instead of once per caller. The dashboard layout calls this and
+ * so does every server action and route handler beneath it, so an admin
+ * click was paying for the same verification three or four times over.
+ *
+ * cache() is per-request, not a cross-request cache: a fresh request still
+ * re-verifies from scratch, so this changes only how often the check runs
+ * within one request, never whether it runs. Revoking an admin still takes
+ * effect on their next request.
  */
-export async function requireAdmin(): Promise<AdminUser> {
+export const requireAdmin = cache(async (): Promise<AdminUser> => {
   const supabase = await createClient()
 
   const {
@@ -41,4 +53,4 @@ export async function requireAdmin(): Promise<AdminUser> {
   }
 
   return { id: user.id, email: user.email ?? '' }
-}
+})

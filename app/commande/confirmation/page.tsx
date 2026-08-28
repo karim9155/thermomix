@@ -3,7 +3,7 @@ import { ArrowRight, CheckCircle2, MapPin } from 'lucide-react'
 import { BoutiqueShell } from '@/components/boutique-shell'
 import { ClearCartOnMount } from '@/components/clear-cart-on-mount'
 import { getOrder } from '@/lib/orders'
-import { formatPrice, BOUTIQUE_ADDRESS_LABEL } from '@/lib/product-format'
+import { formatPrice, formatPriceHT, BOUTIQUE_ADDRESS_LABEL } from '@/lib/product-format'
 
 export default async function ConfirmationPage({
   searchParams,
@@ -62,8 +62,9 @@ export default async function ConfirmationPage({
                     Réf. {item.sku} · Qté {item.quantity}
                   </p>
                 </div>
+                {/* HT, so the lines add up to the Sous-total HT below. */}
                 <strong className="cart-item-line-total">
-                  {formatPrice(item.priceTTC * item.quantity)}
+                  {formatPriceHT(item.priceHT * item.quantity)}
                 </strong>
               </div>
             ))}
@@ -73,7 +74,7 @@ export default async function ConfirmationPage({
             <h2>Récapitulatif</h2>
             <div>
               <span>Sous-total HT</span>
-              <strong>{formatPrice(order.subtotalHT)}</strong>
+              <strong>{formatPriceHT(order.subtotalHT)}</strong>
             </div>
             <div>
               <span>TVA (19%)</span>

@@ -70,6 +70,23 @@ export function formatPrice(price: number): string {
     .replace(/\B(?=(\d{3})+(?!\d))/g, ' ')} TND`
 }
 
+/**
+ * Same thousands separator as formatPrice, but keeping two decimals.
+ *
+ * TTC prices are round dinars by design (5 799, 689, 249...), so formatPrice
+ * rounding them is lossless. The HT half of the same price is not: 5 799
+ * TTC is 4 873,109 HT, and rounding that to "4 873" makes a column of HT
+ * line items visibly fail to add up to the HT subtotal beneath it. Line
+ * items shown HT therefore use this instead.
+ *
+ * Comma as the decimal mark, matching fr-TN and the rest of the UI.
+ */
+export function formatPriceHT(price: number): string {
+  const [whole, decimals] = price.toFixed(2).split('.')
+  const spaced = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  return `${spaced},${decimals} TND`
+}
+
 export const governorates = [
   'Ariana',
   'Béja',

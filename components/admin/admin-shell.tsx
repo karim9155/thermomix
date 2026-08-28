@@ -25,7 +25,7 @@ export function AdminShell({
             alt=""
             width={300}
             height={300}
-            sizes="32px"
+            sizes="44px"
             priority
           />
           INOCASA <small>Admin</small>

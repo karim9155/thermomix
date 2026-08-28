@@ -4,7 +4,7 @@ import { ArrowLeft, FileText } from 'lucide-react'
 import { requireCustomer } from '@/lib/compte/guard'
 import { getCustomerOrder } from '@/lib/compte/orders'
 import { DeliveryStatusBadge, PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
-import { formatPrice } from '@/lib/product-format'
+import { formatPrice, formatPriceHT } from '@/lib/product-format'
 import { formatEstimatedDelivery } from '@/lib/admin/order-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
@@ -26,13 +26,23 @@ export default async function CompteCommandePage({
   params: Promise<{ reference: string }>
 }) {
   const { reference } = await params
-  await requireCustomer(`/compte/commandes/${reference}`)
+
+  // Both start together rather than the read waiting on the guard: they
+  // are two network calls, and serialising them doubled this page's
+  // time-to-first-byte. Safe because getCustomerOrder reads through the
+  // customer's own session, so RLS scopes it — a sessionless request gets
+  // nothing back — and requireCustomer still redirects before any render.
+  const customerPromise = requireCustomer(`/compte/commandes/${reference}`)
+  const orderPromise = getCustomerOrder(reference)
+  orderPromise.catch(() => {})
+
+  await customerPromise
 
   // RLS filters out orders belonging to anyone else, so "not yours" and
   // "doesn't exist" arrive here identically — and both render a 404, which
   // is what stops this page from confirming that a stranger's reference is
   // real.
-  const order = await getCustomerOrder(reference)
+  const order = await orderPromise
 
   if (!order) {
     notFound()
@@ -62,7 +72,7 @@ export default async function CompteCommandePage({
               <tr>
                 <th>Produit</th>
                 <th>Qté</th>
-                <th>Prix TTC</th>
+                <th>Prix HT</th>
                 <th>Total</th>
               </tr>
             </thead>
@@ -74,8 +84,8 @@ export default async function CompteCommandePage({
                     <small>Réf. {item.sku}</small>
                   </td>
                   <td>{item.quantity}</td>
-                  <td>{formatPrice(item.priceTTC)}</td>
-                  <td>{formatPrice(item.priceTTC * item.quantity)}</td>
+                  <td>{formatPriceHT(item.priceHT)}</td>
+                  <td>{formatPriceHT(item.priceHT * item.quantity)}</td>
                 </tr>
               ))}
             </tbody>
@@ -84,7 +94,7 @@ export default async function CompteCommandePage({
           <div className="compte-totals">
             <div>
               <span>Sous-total HT</span>
-              <strong>{formatPrice(order.subtotalHT)}</strong>
+              <strong>{formatPriceHT(order.subtotalHT)}</strong>
             </div>
             <div>
               <span>TVA 19%</span>

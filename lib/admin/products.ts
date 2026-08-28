@@ -294,6 +294,17 @@ export async function addProductImage(
   return inserted
 }
 
+/**
+ * The storefront slug for a SKU, so the image actions can revalidate the
+ * public product page they just changed. Returns null if the SKU is gone,
+ * which callers treat as "nothing public to revalidate".
+ */
+export async function getProductSlugBySku(sku: string): Promise<string | null> {
+  const supabase = createAdminClient()
+  const { data } = await supabase.from('products').select('slug').eq('sku', sku).maybeSingle()
+  return (data as { slug?: string } | null)?.slug ?? null
+}
+
 export async function deleteProductImage(imageId: string): Promise<void> {
   const supabase = createAdminClient()
 
@@ -327,16 +338,28 @@ export async function reorderProductImages(
 ): Promise<void> {
   const supabase = createAdminClient()
 
-  for (let position = 0; position < orderedImageIds.length; position++) {
-    const { error } = await supabase
-      .from('product_images')
-      .update({ position })
-      .eq('id', orderedImageIds[position])
-      .eq('product_id', productId)
+  // One UPDATE per image, but issued together rather than in sequence —
+  // reordering eight images was eight serial round-trips, which is what
+  // made a drag-and-drop feel like it had hung.
+  //
+  // Still one statement per row on purpose: each image gets a different
+  // position, so this cannot collapse into a single WHERE, and an upsert
+  // would need every column of the row to avoid nulling the rest. The
+  // product_id filter stays on each one so a forged id cannot move an
+  // image belonging to another product.
+  const results = await Promise.all(
+    orderedImageIds.map((imageId, position) =>
+      supabase
+        .from('product_images')
+        .update({ position })
+        .eq('id', imageId)
+        .eq('product_id', productId),
+    ),
+  )
 
-    if (error) {
-      throw new Error(`Impossible de réordonner les images : ${error.message}`)
-    }
+  const failed = results.find((result) => result.error)
+  if (failed?.error) {
+    throw new Error(`Impossible de réordonner les images : ${failed.error.message}`)
   }
 }
 

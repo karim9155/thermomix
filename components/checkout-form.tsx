@@ -10,6 +10,7 @@ import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
 import {
   formatPrice,
+  formatPriceHT,
   governorates,
   TIMBRE_FISCAL,
   BOUTIQUE_ADDRESS,
@@ -360,18 +361,22 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
 
         <aside className="summary">
           <h2>Votre commande</h2>
+          {/* Line prices are shown HT, so they add up to the "Sous-total HT"
+              row below and the TVA is broken out once instead of being
+              baked into each line. Display only — the order total and
+              everything sent to the server stay TTC. */}
           {items.map((item) => (
             <div key={item.slug}>
               <span>
                 {item.name} × {item.quantity}
               </span>
-              <strong>{formatPrice(item.priceTTC * item.quantity)}</strong>
+              <strong>{formatPriceHT(item.priceHT * item.quantity)}</strong>
             </div>
           ))}
           <hr />
           <div>
             <span>Sous-total HT</span>
-            <strong>{formatPrice(subtotalHT)}</strong>
+            <strong>{formatPriceHT(subtotalHT)}</strong>
           </div>
           <div>
             <span>TVA (19%)</span>

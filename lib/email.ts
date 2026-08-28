@@ -1,6 +1,6 @@
 import 'server-only'
 import { Resend } from 'resend'
-import { formatPrice } from '@/lib/product-format'
+import { formatPrice, formatPriceHT } from '@/lib/product-format'
 import type { Order } from '@/lib/orders'
 
 /**
@@ -43,8 +43,8 @@ function itemRows(order: Order): string {
           <span style="color:#6b7280;font-size:12px">Réf. ${esc(item.sku)}</span>
         </td>
         <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${item.quantity}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${formatPrice(item.priceTTC)}</td>
-        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${formatPrice(item.priceTTC * item.quantity)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${formatPriceHT(item.priceHT)}</td>
+        <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;text-align:right">${formatPriceHT(item.priceHT * item.quantity)}</td>
       </tr>`,
     )
     .join('')
@@ -58,7 +58,7 @@ function totalsBlock(order: Order): string {
 
   return `
     <table style="width:100%;max-width:320px;margin-left:auto;font-size:14px;border-collapse:collapse">
-      <tr><td style="padding:4px 0;color:#6b7280">Sous-total HT</td><td style="padding:4px 0;text-align:right">${formatPrice(order.subtotalHT)}</td></tr>
+      <tr><td style="padding:4px 0;color:#6b7280">Sous-total HT</td><td style="padding:4px 0;text-align:right">${formatPriceHT(order.subtotalHT)}</td></tr>
       <tr><td style="padding:4px 0;color:#6b7280">TVA 19%</td><td style="padding:4px 0;text-align:right">${formatPrice(order.totalTVA)}</td></tr>
       ${stamp}
       <tr>
@@ -81,7 +81,7 @@ function tableHead(): string {
         <tr>
           <th style="text-align:left;padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #1f2328">Produit</th>
           <th style="text-align:right;padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #1f2328">Qté</th>
-          <th style="text-align:right;padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #1f2328">Prix</th>
+          <th style="text-align:right;padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #1f2328">Prix HT</th>
           <th style="text-align:right;padding:8px 12px;font-size:11px;color:#6b7280;text-transform:uppercase;border-bottom:2px solid #1f2328">Total</th>
         </tr>
       </thead>`

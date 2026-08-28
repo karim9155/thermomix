@@ -11,6 +11,7 @@ import {
   addProductImage,
   deleteProductImage,
   reorderProductImages,
+  getProductSlugBySku,
 } from '@/lib/admin/products'
 
 export type ActionState = { error?: string; success?: boolean }
@@ -21,6 +22,24 @@ function revalidateStorefront(slugs: string[]) {
   for (const slug of slugs) {
     if (slug) revalidatePath(`/boutique/${slug}`)
   }
+}
+
+/**
+ * Everything an image change affects.
+ *
+ * The image actions used to revalidate only '/admin-r/produits' — the LIST
+ * page — while the image manager itself lives on the DETAIL page, so the
+ * page the admin was looking at was never invalidated and only the
+ * component's router.refresh() made the change appear. They also never
+ * touched the storefront, so a customer kept seeing the old photo until
+ * the 5-minute ISR window lapsed. Both are fixed here.
+ */
+async function revalidateProductImagePaths(sku: string) {
+  revalidatePath('/admin-r/produits')
+  revalidatePath(`/admin-r/produits/${sku}`)
+
+  const slug = await getProductSlugBySku(sku)
+  revalidateStorefront(slug ? [slug] : [])
 }
 
 export async function createProductAction(values: ProductFormValues): Promise<ActionState> {
@@ -113,37 +132,41 @@ export async function uploadProductImageAction(formData: FormData): Promise<Uplo
     }
 
     await addProductImage(productId, sku, file)
+    await revalidateProductImagePaths(sku)
   } catch (error) {
     return { error: error instanceof Error ? error.message : "Échec de l'envoi." }
   }
 
-  revalidatePath('/admin-r/produits')
   return { success: true }
 }
 
-export async function deleteProductImageAction(imageId: string): Promise<ActionState> {
+export async function deleteProductImageAction(
+  imageId: string,
+  sku: string,
+): Promise<ActionState> {
   try {
     await requireAdmin()
     await deleteProductImage(imageId)
+    await revalidateProductImagePaths(sku)
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Une erreur est survenue.' }
   }
 
-  revalidatePath('/admin-r/produits')
   return { success: true }
 }
 
 export async function reorderProductImagesAction(
   productId: string,
   orderedImageIds: string[],
+  sku: string,
 ): Promise<ActionState> {
   try {
     await requireAdmin()
     await reorderProductImages(productId, orderedImageIds)
+    await revalidateProductImagePaths(sku)
   } catch (error) {
     return { error: error instanceof Error ? error.message : 'Une erreur est survenue.' }
   }
 
-  revalidatePath('/admin-r/produits')
   return { success: true }
 }

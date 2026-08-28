@@ -1978,9 +1978,9 @@ footer {
    already carries its own dark ground and padding, so it needs no
    background or centring of its own — just the rounded corner. */
 .admin-brand-mark {
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+  width: 44px;
+  height: 44px;
+  border-radius: 10px;
   object-fit: cover;
   flex-shrink: 0;
 }
@@ -2614,6 +2614,12 @@ footer {
 .admin-invoice-control {
   display: grid;
   gap: 10px;
+}
+.admin-invoice-visibility {
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--muted);
+  margin: 10px 0 0;
 }
 .admin-invoice-upload {
   cursor: pointer;

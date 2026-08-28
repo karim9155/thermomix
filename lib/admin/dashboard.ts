@@ -15,6 +15,10 @@ export type DashboardStats = {
  * re-query them.
  */
 export async function getDashboardStats(orders: AdminOrderListItem[]): Promise<DashboardStats> {
+  // Started before the synchronous reductions below rather than after, so
+  // the one query this function makes overlaps the caller's order fetch
+  // instead of waiting behind it. Nothing in the counting depends on it.
+  const outOfStockPromise = countOutOfStockProducts()
 
   const countsByDeliveryStatus = Object.fromEntries(
     DELIVERY_STATUSES.map((status) => [
@@ -31,8 +35,16 @@ export async function getDashboardStats(orders: AdminOrderListItem[]): Promise<D
     })
     .reduce((sum, order) => sum + order.totalTTC, 0)
 
+  return {
+    countsByDeliveryStatus,
+    totalTTCThisMonth,
+    outOfStockCount: await outOfStockPromise,
+  }
+}
+
+async function countOutOfStockProducts(): Promise<number> {
   const supabase = createAdminClient()
-  const { count: outOfStockCount, error } = await supabase
+  const { count, error } = await supabase
     .from('products')
     .select('*', { count: 'exact', head: true })
     .eq('in_stock', false)
@@ -42,9 +54,5 @@ export async function getDashboardStats(orders: AdminOrderListItem[]): Promise<D
     throw new Error(`Impossible de charger les statistiques produits : ${error.message}`)
   }
 
-  return {
-    countsByDeliveryStatus,
-    totalTTCThisMonth,
-    outOfStockCount: outOfStockCount ?? 0,
-  }
+  return count ?? 0
 }

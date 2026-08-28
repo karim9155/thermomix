@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { updateEstimatedDeliveryAction } from '@/app/admin-r/(dashboard)/livraisons/[reference]/actions'
 
 /**
@@ -16,7 +15,9 @@ export function EstimatedDeliveryControl({
   reference: string
   currentValue: string | null
 }) {
-  const router = useRouter()
+  // No router.refresh() in the handler below: the action revalidates this
+  // page, and a Server Action's response already carries the refreshed RSC
+  // payload — calling refresh() as well fired a second round-trip.
   const [pending, startTransition] = useTransition()
   const [value, setValue] = useState(currentValue ?? '')
   const [error, setError] = useState<string | null>(null)
@@ -40,7 +41,6 @@ export function EstimatedDeliveryControl({
         setError(result.error)
       } else {
         setSaved(true)
-        router.refresh()
       }
     })
   }

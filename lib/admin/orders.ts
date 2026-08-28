@@ -76,6 +76,18 @@ function mapListRow(row: any): AdminOrderListItem {
   }
 }
 
+/**
+ * NOTE: deliberately unbounded, and that is a scaling limit to fix before
+ * order volume gets real.
+ *
+ * A .limit() cannot just be added here: the dashboard feeds this list to
+ * getDashboardStats(), which derives the status counts and this month's
+ * revenue from it, so a cap would silently make those figures wrong rather
+ * than merely truncating the table. Fixing this properly means moving the
+ * stats to their own aggregate queries (count/sum in the database) and
+ * only then paginating the table with .range(). Until that happens, every
+ * status change re-runs this over the whole orders table.
+ */
 export async function listOrders(): Promise<AdminOrderListItem[]> {
   const supabase = createAdminClient()
   const { data, error } = await supabase
@@ -165,7 +177,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status, invoice_path')
+    .select('id, delivery_status')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -177,14 +189,15 @@ export async function updateDeliveryStatus(
     return
   }
 
-  // The admin-uploaded PDF is what the customer downloads as their
-  // invoice (see app/compte/commandes/[reference]/facture) — an order
-  // cannot be marked delivered without one already in place.
-  if (newStatus === 'livree' && !order.invoice_path) {
-    throw new Error(
-      'Uploadez la facture PDF de cette commande avant de la marquer comme livrée.',
-    )
-  }
+  // No invoice requirement here on purpose. The admin uploads the PDF
+  // whenever it suits them — before or after delivery — and marking an
+  // order delivered is never blocked by its absence.
+  //
+  // What the customer sees is gated separately, and still is: the download
+  // button and the facture route both require delivery_status = 'livree'
+  // AND an invoice_path (see app/compte/commandes/[reference]/). So an
+  // invoice uploaded early stays invisible until the order is delivered,
+  // and one uploaded late appears the moment it lands.
 
   // Payment status is derived from delivery, not set by hand. Cash on
   // delivery is the only method that ships today, so the money arrives
@@ -249,21 +262,31 @@ async function decrementStockForOrder(orderId: string): Promise<void> {
 
   if (itemsError || !items?.length) return
 
-  for (const item of items) {
-    const { data: product } = await supabase
-      .from('products')
-      .select('id, stock_quantity')
-      .eq('sku', item.sku)
-      .maybeSingle()
+  // One query for every SKU on the order instead of one per line, then the
+  // updates issued together. This was two serial round-trips per item, so
+  // marking a multi-line order delivered stalled the admin for as long as
+  // the order was big.
+  const { data: products } = await supabase
+    .from('products')
+    .select('id, sku, stock_quantity')
+    .in(
+      'sku',
+      items.map((item) => item.sku),
+    )
 
+  const productBySku = new Map((products ?? []).map((product) => [product.sku, product]))
+
+  const updates = items.flatMap((item) => {
     // The SKU may no longer exist — order_items snapshot the sku at
     // purchase time precisely so history survives a product being removed.
-    if (!product) continue
+    const product = productBySku.get(item.sku)
+    if (!product) return []
 
     const next = Math.max(0, (product.stock_quantity ?? 0) - item.quantity)
+    return [supabase.from('products').update({ stock_quantity: next }).eq('id', product.id)]
+  })
 
-    await supabase.from('products').update({ stock_quantity: next }).eq('id', product.id)
-  }
+  await Promise.all(updates)
 }
 
 /**

@@ -1,7 +1,6 @@
 'use client'
 
 import { useRef, useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { Star, Trash2, Upload } from 'lucide-react'
 import type { AdminProductImage } from '@/lib/admin/products'
@@ -20,7 +19,10 @@ export function ProductImageManager({
   sku: string
   images: AdminProductImage[]
 }) {
-  const router = useRouter()
+  // No router.refresh() in the handlers below: the server actions call
+  // revalidatePath for this page, and a Server Action's response already
+  // carries the refreshed RSC payload. Calling refresh() as well fired a
+  // second full round-trip for every image change.
   const [pending, startTransition] = useTransition()
   const [error, setError] = useState<string | null>(null)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -30,9 +32,8 @@ export function ProductImageManager({
   function reorder(newOrder: string[]) {
     setError(null)
     startTransition(async () => {
-      const result = await reorderProductImagesAction(productId, newOrder)
+      const result = await reorderProductImagesAction(productId, newOrder, sku)
       if (result.error) setError(result.error)
-      router.refresh()
     })
   }
 
@@ -52,9 +53,8 @@ export function ProductImageManager({
   function deleteImage(imageId: string) {
     setError(null)
     startTransition(async () => {
-      const result = await deleteProductImageAction(imageId)
+      const result = await deleteProductImageAction(imageId, sku)
       if (result.error) setError(result.error)
-      router.refresh()
     })
   }
 
@@ -72,7 +72,6 @@ export function ProductImageManager({
       const result = await uploadProductImageAction(formData)
       if (result.error) setError(result.error)
       if (fileInputRef.current) fileInputRef.current.value = ''
-      router.refresh()
     })
   }
 

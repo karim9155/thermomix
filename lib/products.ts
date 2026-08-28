@@ -1,3 +1,4 @@
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { PLACEHOLDER_IMAGE, type Product, type ProductCategory } from '@/lib/product-format'
 
@@ -55,11 +56,28 @@ function mapRow(row: ProductRow): Product {
   }
 }
 
-// All four queries below serve the PUBLIC storefront and therefore always
+// All queries below serve the PUBLIC storefront and therefore always
 // exclude archived products. Admin queries live in lib/admin/products.ts
 // and intentionally include them.
+//
+// Only getAllProducts and getProductsBySkus have callers today: the
+// catalog is small enough that the storefront pages filter one cached
+// getAllProducts() in memory rather than issuing a narrower query per
+// page. getProductBySlug / getProductsByCategory / getFeaturedProducts /
+// getProductBySku are kept as the right shape to reach for if the catalog
+// outgrows that.
 
-export async function getAllProducts(): Promise<Product[]> {
+/**
+ * The full public catalog.
+ *
+ * Wrapped in React's cache() because BoutiqueShell (the header's search and
+ * nav) calls this on nearly every page, and /boutique then calls it AGAIN
+ * for the grid — the same catalog fetched twice per render. cache() is
+ * per-request, so this dedupes within one render without holding data
+ * across requests; the ISR revalidate on the catalog pages is what controls
+ * staleness, and it is unaffected.
+ */
+export const getAllProducts = cache(async (): Promise<Product[]> => {
   const supabase = await createClient()
   const { data, error } = await supabase
     .from('products')
@@ -72,7 +90,7 @@ export async function getAllProducts(): Promise<Product[]> {
   }
 
   return (data ?? []).map((row) => mapRow(row as unknown as ProductRow))
-}
+})
 
 export async function getProductBySlug(slug: string): Promise<Product | undefined> {
   const supabase = await createClient()

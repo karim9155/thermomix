@@ -15,6 +15,9 @@ const DELIVERY_LABELS: Record<string, string> = {
 
 export default async function AdminCommandesPage() {
   const orders = await listOrders()
+  // getDashboardStats derives its counts from `orders`, so it genuinely has
+  // to wait — but the one query it makes (out-of-stock products) is fired
+  // inside it before any of that work, so the two overlap.
   const stats = await getDashboardStats(orders)
 
   return (

@@ -7,7 +7,7 @@ import { DeliveryStatusControl } from '@/components/admin/delivery-status-contro
 import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
 import { InvoiceUploadControl } from '@/components/admin/invoice-upload-control'
 import { parseEstimatedDeliveryEvent, formatEstimatedDelivery } from '@/lib/admin/order-format'
-import { formatPrice } from '@/lib/product-format'
+import { formatPrice, formatPriceHT } from '@/lib/product-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
   const { reference } = await params
@@ -142,7 +142,7 @@ export default async function LivraisonDetailPage({
                   <th>Produit</th>
                   <th>Réf.</th>
                   <th>Qté</th>
-                  <th>Prix TTC</th>
+                  <th>Prix HT</th>
                   <th>Total</th>
                 </tr>
               </thead>
@@ -152,8 +152,8 @@ export default async function LivraisonDetailPage({
                     <td>{item.name}</td>
                     <td>{item.sku}</td>
                     <td>{item.quantity}</td>
-                    <td>{formatPrice(item.priceTTC)}</td>
-                    <td>{formatPrice(item.priceTTC * item.quantity)}</td>
+                    <td>{formatPriceHT(item.priceHT)}</td>
+                    <td>{formatPriceHT(item.priceHT * item.quantity)}</td>
                   </tr>
                 ))}
               </tbody>
@@ -163,7 +163,7 @@ export default async function LivraisonDetailPage({
             <div className="admin-totals">
               <div>
                 <span>Sous-total HT</span>
-                <strong>{formatPrice(order.subtotalHT)}</strong>
+                <strong>{formatPriceHT(order.subtotalHT)}</strong>
               </div>
               <div>
                 <span>TVA</span>
@@ -211,7 +211,11 @@ export default async function LivraisonDetailPage({
 
         <aside className="admin-card admin-detail-side">
           <h2>Facture</h2>
-          <InvoiceUploadControl reference={order.reference} hasInvoice={order.invoicePath !== null} />
+          <InvoiceUploadControl
+            reference={order.reference}
+            hasInvoice={order.invoicePath !== null}
+            isDelivered={order.deliveryStatus === 'livree'}
+          />
 
           <h2>Paiement</h2>
           <dl className="admin-def-list">

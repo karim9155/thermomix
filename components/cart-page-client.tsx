@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowRight, Minus, Plus, Trash2 } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
-import { formatPrice, isPlaceholderImage } from '@/lib/product-format'
+import { formatPrice, formatPriceHT, isPlaceholderImage } from '@/lib/product-format'
 
 export function CartPageClient() {
   const { items, updateQuantity, removeItem, subtotalHT, totalTVA, totalTTC } = useCart()
@@ -38,7 +38,9 @@ export function CartPageClient() {
                 <div className="cart-item-copy">
                   <h3>{item.name}</h3>
                   <p>Réf. {item.sku}</p>
-                  <strong>{formatPrice(item.priceTTC)}</strong>
+                  {/* HT, like the line total and the Sous-total HT row in
+                      the summary — the TVA is broken out once there. */}
+                  <strong>{formatPriceHT(item.priceHT)}</strong>
                 </div>
                 <div className="quantity">
                   <button
@@ -58,7 +60,7 @@ export function CartPageClient() {
                   </button>
                 </div>
                 <strong className="cart-item-line-total">
-                  {formatPrice(item.priceTTC * item.quantity)}
+                  {formatPriceHT(item.priceHT * item.quantity)}
                 </strong>
                 <button
                   className="icon-button"
@@ -75,7 +77,7 @@ export function CartPageClient() {
             <h2>Résumé</h2>
             <div>
               <span>Sous-total HT</span>
-              <strong>{formatPrice(subtotalHT)}</strong>
+              <strong>{formatPriceHT(subtotalHT)}</strong>
             </div>
             <div>
               <span>TVA (19%)</span>
