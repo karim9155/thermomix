@@ -4,6 +4,7 @@ import { CheckoutForm } from '@/components/checkout-form'
 import { getCustomer } from '@/lib/compte/guard'
 import { getLastOrderDetails } from '@/lib/compte/orders'
 import { getProfile } from '@/lib/compte/profile'
+import { getAllProducts } from '@/lib/products'
 
 // Checkout needs a session: /api/commande rejects a sessionless order, so
 // send the user to sign in first rather than letting them fill the whole
@@ -42,9 +43,20 @@ export default async function CheckoutPage() {
   const profile = await profilePromise
   const last = await lastPromise
 
+  // sku -> category for the delivery-fee rule. The cart in localStorage is
+  // the customer's, and older carts predate the category field, so the
+  // summary resolves each line against the real catalog instead of
+  // trusting (or guessing) what the cart happens to carry. Free: this is
+  // the same cache()d getAllProducts() BoutiqueShell already awaits.
+  const catalog = await getAllProducts()
+  const categoryBySku = Object.fromEntries(
+    catalog.map((product) => [product.sku, product.category]),
+  )
+
   return (
     <BoutiqueShell>
       <CheckoutForm
+        categoryBySku={categoryBySku}
         prefill={{
           prenom: profile?.prenom || last?.prenom || customer.prenom,
           nom: profile?.nom || last?.nom || customer.nom,

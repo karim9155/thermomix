@@ -53,13 +53,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       if (raw) {
         const parsed = JSON.parse(raw)
         if (Array.isArray(parsed)) {
-          // Backfill category for carts saved before it was stored.
-          setItems(
-            parsed.map((item: CartItem) => ({
-              ...item,
-              category: item.category ?? 'accessoire',
-            })),
-          )
+          // Stored as-is. Items saved before `category` existed keep an
+          // undefined one rather than being guessed at — guessing them
+          // 'accessoire' quietly under-charged delivery on a cart that
+          // already held a robot. Anything that needs the category
+          // resolves it against the live catalog instead (see
+          // CheckoutForm's categoryBySku), and re-adding an item refreshes
+          // it. The server never trusts this field at all.
+          setItems(parsed as CartItem[])
         }
       }
     } catch {

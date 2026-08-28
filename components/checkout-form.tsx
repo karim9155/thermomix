@@ -8,6 +8,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Banknote, CreditCard, Home, Store } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
+import type { ProductCategory } from '@/lib/product-format'
 import {
   formatPrice,
   formatPriceHT,
@@ -31,7 +32,16 @@ type CheckoutPrefill = {
   gouvernorat: string
 }
 
-export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
+export function CheckoutForm({
+  prefill,
+  categoryBySku,
+}: {
+  prefill?: CheckoutPrefill
+  /** sku -> category from the live catalog, used for the delivery fee.
+      Authoritative: a cart saved before the category was stored has none,
+      and one edited by hand could claim anything. */
+  categoryBySku?: Record<string, ProductCategory>
+}) {
   const router = useRouter()
   const { items, subtotalHT, totalTVA, totalTTC } = useCart()
   const [hydrated, setHydrated] = useState(false)
@@ -65,9 +75,15 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
   const paymentMethod = watch('paymentMethod')
   const deliveryMethod = watch('deliveryMethod')
   // Recomputed as the customer toggles delivery method, so the summary
-  // updates live. The server recalculates this from the catalog on submit
+  // updates live. Categories come from the catalog rather than the cart:
+  // carts saved before the field existed carry none, and the fallback for
+  // an unknown sku is the item's own category, then 'accessoire'. The
+  // server recalculates all of this on submit from the catalog
   // (app/api/commande/route.ts) — this is display only.
-  const deliveryFee = calculateDeliveryFee(items, deliveryMethod)
+  const deliveryFee = calculateDeliveryFee(
+    items.map((item) => ({ category: categoryBySku?.[item.sku] ?? item.category })),
+    deliveryMethod,
+  )
   // Remembers the customer's own address while "Retrait en boutique" has
   // temporarily replaced it with the boutique's, so switching back to home
   // delivery restores what they typed instead of leaving the boutique's
