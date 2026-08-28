@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createOrderSchema } from '@/lib/checkout-schema'
-import { getProductBySku } from '@/lib/products'
+import { getProductsBySkus } from '@/lib/products'
 import { createOrder, type OrderLine } from '@/lib/orders'
-import { createPayment } from '@/lib/payment'
 import { sendOrderEmails } from '@/lib/email'
 import { getCustomer } from '@/lib/compte/guard'
 import { TIMBRE_FISCAL } from '@/lib/product-format'
@@ -37,9 +36,14 @@ export async function POST(request: NextRequest) {
 
   const { customer, items } = parsed.data
 
+  // Fetched in one query rather than one per line. The loop below still
+  // validates in cart order and returns on the first bad line, so the
+  // error the customer sees is unchanged — only the round-trips are gone.
+  const productsBySku = await getProductsBySkus(items.map((line) => line.sku))
+
   const lines: OrderLine[] = []
   for (const line of items) {
-    const product = await getProductBySku(line.sku)
+    const product = productsBySku.get(line.sku)
     if (!product || product.slug !== line.slug) {
       return NextResponse.json({ error: `Produit inconnu : ${line.sku}.` }, { status: 400 })
     }
@@ -91,33 +95,14 @@ export async function POST(request: NextRequest) {
     console.error('[commande] Échec inattendu de sendOrderEmails:', error)
   })
 
-  if (customer.paymentMethod === 'cash') {
-    return NextResponse.json({
-      reference: order.reference,
-      redirectTo: `/commande/confirmation?ref=${order.reference}`,
-    })
-  }
-
-  try {
-    const { paymentUrl } = await createPayment({
-      amount: order.totalTTC,
-      reference: order.reference,
-      customer: {
-        nom: customer.nom,
-        prenom: customer.prenom,
-        email: customer.email,
-        telephone: customer.telephone,
-      },
-    })
-    return NextResponse.json({ reference: order.reference, paymentUrl })
-  } catch (error) {
-    console.error('[commande] Échec de création du paiement:', error)
-    return NextResponse.json(
-      {
-        error: 'Impossible de démarrer le paiement en ligne pour le moment.',
-        reference: order.reference,
-      },
-      { status: 502 },
-    )
-  }
+  // Cash on delivery is the only payment method that ships today, so every
+  // order lands straight on the confirmation page. The online-payment
+  // branch that used to live here is gone along with lib/payment.ts and the
+  // provider webhook — it was unreachable anyway, because checkoutFormSchema
+  // rejects paymentMethod: 'online' before this point. When card payment is
+  // built, this is where the redirect to the provider goes.
+  return NextResponse.json({
+    reference: order.reference,
+    redirectTo: `/commande/confirmation?ref=${order.reference}`,
+  })
 }

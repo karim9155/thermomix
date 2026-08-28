@@ -224,16 +224,9 @@ export async function getOrder(reference: string): Promise<Order | undefined> {
   return data ? mapRow(data as unknown as OrderRow) : undefined
 }
 
-export async function updateOrderStatus(
-  reference: string,
-  status: OrderStatus,
-): Promise<Order | undefined> {
-  const supabase = createAdminClient()
-  const { error } = await supabase.from('orders').update({ status }).eq('reference', reference)
-
-  if (error) {
-    throw new Error(`Impossible de mettre à jour la commande ${reference} : ${error.message}`)
-  }
-
-  return getOrder(reference)
-}
+// updateOrderStatus() used to live here: an unguarded writer that set the
+// payment status to whatever it was handed, with no transition check. Its
+// only caller was the payment webhook, so it went with it. Payment status
+// is now derived from the delivery status in lib/admin/orders.ts, which is
+// guarded and records history — keep it that way rather than reintroducing
+// a free-form setter.

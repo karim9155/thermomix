@@ -90,6 +90,36 @@ export async function getProductBySlug(slug: string): Promise<Product | undefine
   return data ? mapRow(data as unknown as ProductRow) : undefined
 }
 
+/**
+ * Batch SKU lookup for checkout, which has to validate every line of the
+ * cart. One `in` query instead of one round-trip per item — a five-item
+ * cart was five sequential queries before the order could be created,
+ * which the customer felt as a stalled submit button.
+ *
+ * Returned as a Map keyed by SKU so the caller keeps validating in cart
+ * order and reports the same "Produit inconnu" for a missing SKU. Applies
+ * the same is_archived filter as getProductBySku below, so an archived
+ * SKU is absent from the map and reads as unknown — matching that
+ * function's undefined for the same row.
+ */
+export async function getProductsBySkus(skus: string[]): Promise<Map<string, Product>> {
+  if (skus.length === 0) return new Map()
+
+  const supabase = await createClient()
+  const { data, error } = await supabase
+    .from('products')
+    .select(PRODUCT_SELECT)
+    .in('sku', [...new Set(skus)])
+    .eq('is_archived', false)
+
+  if (error) {
+    throw new Error(`Impossible de charger les produits de la commande : ${error.message}`)
+  }
+
+  const products = (data ?? []).map((row) => mapRow(row as unknown as ProductRow))
+  return new Map(products.map((product) => [product.sku, product]))
+}
+
 export async function getProductBySku(sku: string): Promise<Product | undefined> {
   const supabase = await createClient()
   const { data, error } = await supabase

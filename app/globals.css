@@ -1259,6 +1259,26 @@ h3 {
   gap: 18px;
   color: var(--muted);
 }
+/* Error boundaries (app/error.tsx, app/global-error.tsx) reuse the
+   .cart-empty block for their copy and add these two. */
+.cart-empty h1 {
+  font-size: 30px;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+.error-digest {
+  font-size: 12px;
+  color: var(--muted);
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  margin: 0;
+}
+.error-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  align-items: center;
+}
 .summary {
   background: var(--surface);
   border-radius: 12px;

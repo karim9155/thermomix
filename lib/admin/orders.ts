@@ -186,9 +186,22 @@ export async function updateDeliveryStatus(
     )
   }
 
+  // Payment status is derived from delivery, not set by hand. Cash on
+  // delivery is the only method that ships today, so the money arrives
+  // exactly when the order is handed over: 'livree' means paid, 'annulee'
+  // means it never will be. Without this, every order sat at 'en_attente'
+  // forever and the admin's payment column was meaningless — there is no
+  // other writer for that column now that the provider webhook is gone.
+  //
+  // When card payment ships, an order paid up front must NOT be reopened
+  // by a later delivery change, so this will need to branch on
+  // payment_method rather than applying to every order.
+  const paymentStatus =
+    newStatus === 'livree' ? 'payee' : newStatus === 'annulee' ? 'annulee' : 'en_attente'
+
   const { error: updateError } = await supabase
     .from('orders')
-    .update({ delivery_status: newStatus })
+    .update({ delivery_status: newStatus, status: paymentStatus })
     .eq('id', order.id)
 
   if (updateError) {

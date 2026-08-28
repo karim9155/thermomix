@@ -8,7 +8,6 @@ export const metadata: Metadata = {
   title: 'Boutique Thermomix® | INOCASA Tunisie',
   description:
     'Découvrez le Thermomix® TM7, ses accessoires et ses pièces d’origine chez INOCASA, distributeur officiel Vorwerk en Tunisie.',
-  generator: 'v0.app',
 }
 
 export const viewport: Viewport = {

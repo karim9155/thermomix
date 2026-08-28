@@ -138,11 +138,6 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
         return
       }
 
-      if (data.paymentUrl) {
-        window.location.href = data.paymentUrl
-        return
-      }
-
       setSubmitError('Réponse inattendue du serveur. Merci de réessayer.')
       setSubmitting(false)
     } catch {
@@ -358,11 +353,7 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
             form={FORM_ID}
             disabled={submitting}
           >
-            {submitting
-              ? 'Traitement en cours…'
-              : paymentMethod === 'online'
-                ? 'Procéder au paiement'
-                : 'Confirmer la commande'}{' '}
+            {submitting ? 'Traitement en cours…' : 'Confirmer la commande'}{' '}
             <ArrowRight size={17} />
           </button>
         </div>
@@ -390,6 +381,10 @@ export function CheckoutForm({ prefill }: { prefill?: CheckoutPrefill }) {
             <span>Total TTC</span>
             <strong>{formatPrice(totalTTC)}</strong>
           </div>
+          {/* Cash is the only selectable method today, so these branches
+              always take the cash path. They stay because the stamp is a
+              real rule — it applies to cash on delivery and not to card —
+              so this stays correct when online payment ships. */}
           {paymentMethod === 'cash' ? (
             <div>
               <span>Timbre fiscal</span>

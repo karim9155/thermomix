@@ -35,6 +35,9 @@ export default async function ConfirmationPage({
         <div className="confirmation-box">
           <CheckCircle2 size={32} />
           <p className="confirmation-reference">{order.reference}</p>
+          {/* No new order can be 'en_ligne' — checkout is cash only — but
+              the branch stays for any historical order placed before that
+              was true, which would otherwise read as cash on delivery. */}
           <p>
             {order.paymentMethod === 'cash'
               ? order.customer.deliveryMethod === 'boutique'

@@ -15,7 +15,23 @@ import { getProfile } from '@/lib/compte/profile'
 export const dynamic = 'force-dynamic'
 
 export default async function CheckoutPage() {
-  const customer = await getCustomer()
+  // All three start together. The session check used to be awaited on its
+  // own first, which made the page cost two serial Supabase round-trips
+  // before any HTML could stream — the reason this button felt dead for
+  // most of a second after the click.
+  //
+  // Starting the prefill reads before the session is confirmed is safe
+  // because both go through the customer's own session, so RLS scopes
+  // them to that customer's rows (migrations 0006/0007): a sessionless
+  // request reads nothing rather than someone else's address, and the
+  // redirect below still fires before anything renders. Both helpers
+  // swallow their errors and return undefined, so neither can lose the
+  // race against the redirect the way a throwing query would.
+  const customerPromise = getCustomer()
+  const profilePromise = getProfile()
+  const lastPromise = getLastOrderDetails()
+
+  const customer = await customerPromise
 
   if (!customer) {
     redirect(`/compte/connexion?next=${encodeURIComponent('/commande')}`)
@@ -23,7 +39,8 @@ export default async function CheckoutPage() {
 
   // Saved profile first — it is what the customer explicitly chose to keep
   // — then the last order's address, then whatever signup captured.
-  const [profile, last] = await Promise.all([getProfile(), getLastOrderDetails()])
+  const profile = await profilePromise
+  const last = await lastPromise
 
   return (
     <BoutiqueShell>
