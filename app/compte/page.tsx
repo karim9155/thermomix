@@ -27,16 +27,45 @@ export default async function ComptePage({
   searchParams: Promise<{ onglet?: string }>
 }) {
   const { onglet } = await searchParams
-  const customer = await requireCustomer('/compte')
 
   // Tab state lives in the URL so it survives a reload and can be linked
   // to — and so the server only loads the data the active tab needs.
   const tab = onglet === 'profil' ? 'profil' : 'commandes'
 
-  const orders = tab === 'commandes' ? await listCustomerOrders() : []
+  // The guard and the tab's data run together rather than in sequence.
+  // Both hit Supabase over the network, and awaiting the guard first made
+  // the page cost two serial round-trips before any HTML could stream.
+  //
+  // Starting the read before the session is confirmed is safe here and
+  // only here: these queries go through the customer's own session, so
+  // migration 0006's RLS policies scope them to that customer's rows. A
+  // request with no valid session reads nothing rather than someone
+  // else's data, and requireCustomer() still redirects it away before any
+  // of it is rendered. Do NOT copy this shape onto a service-role client,
+  // which bypasses RLS and genuinely does need the guard to land first.
+  //
+  // They are kicked off together but awaited guard-first, not via a bare
+  // Promise.all: listCustomerOrders() throws on a database error and
+  // redirect() also works by throwing, so Promise.all could let a query
+  // failure win the race and surface a 500 where a signed-out visitor
+  // should simply have been sent to the login page.
+  const customerPromise = requireCustomer('/compte')
+  const ordersPromise = tab === 'commandes' ? listCustomerOrders() : Promise.resolve([])
+  const profilePromise = tab === 'profil' ? getProfile() : Promise.resolve(undefined)
+
+  // Nothing is awaiting these yet, and an unhandled rejection between now
+  // and the awaits below would be fatal in Node. A no-op catch marks them
+  // as handled; the real error still arrives at the await.
+  ordersPromise.catch(() => {})
+  profilePromise.catch(() => {})
+
+  const customer = await customerPromise
+  const orders = await ordersPromise
+  const loadedProfile = await profilePromise
+
   const profile =
     tab === 'profil'
-      ? ((await getProfile()) ?? {
+      ? (loadedProfile ?? {
           ...EMPTY_PROFILE,
           prenom: customer.prenom,
           nom: customer.nom,

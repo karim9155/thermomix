@@ -43,8 +43,17 @@ export const createClient = cache(async () => {
             cookieStore.set(name, value, options),
           )
         } catch {
-          // Called from a Server Component that can't set cookies — the
-          // proxy's session refresh covers it.
+          // Called from a Server Component, which cannot set cookies.
+          //
+          // The proxy no longer covers /compte (see proxy.ts), so a token
+          // refreshed during a page render is used for that render and
+          // then dropped rather than written back. That is not a
+          // correctness problem: the refresh token in the cookie stays
+          // valid, so the next request simply refreshes again, and the
+          // Server Actions in app/compte/actions.ts — sign-in, sign-out,
+          // updateProfile — CAN set cookies and do persist it. The cost is
+          // an occasional extra refresh, which is what dropping a blocking
+          // getUser() from every /compte navigation bought.
         }
       },
     },

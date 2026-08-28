@@ -12,19 +12,24 @@ import { createMiddlewareClient } from '@/lib/supabase/middleware'
  * admin_users lookup below is the only thing gating /admin-r and it is
  * never consulted for /compte — that separation is the security property.
  *
- * This is an optimistic pre-filter, not the security boundary: it keeps
- * unauthorized requests from rendering a page, but every read and mutation
- * re-verifies for itself (lib/admin/guard.ts, lib/compte/guard.ts). Next's
- * proxy guide is explicit that proxy runs on prefetches too and must not
- * carry the whole authorization story.
+ * Only /admin-r is matched here (see config at the bottom). Both bars are
+ * still enforced, just in different places: /admin-r pre-filters here and
+ * re-verifies in lib/admin/guard.ts, while /compte is enforced solely by
+ * lib/compte/guard.ts inside each route. That is not a weakening — this
+ * layer was never the security boundary. It is an optimistic pre-filter;
+ * every read and mutation re-verifies for itself, and Next's proxy guide
+ * is explicit that proxy runs on prefetches too and must not carry the
+ * whole authorization story. Dropping /compte removed a duplicated,
+ * blocking getUser() from the hottest customer path.
+ *
+ * The corollary: a new route under /compte gets NO protection from this
+ * file. It must call requireCustomer() (or getCustomer()) itself.
  */
 
-// Public entry points inside otherwise-protected areas.
-const PUBLIC_PATHS = new Set([
-  '/admin-r/login',
-  '/compte/connexion',
-  '/compte/inscription',
-])
+// Public entry points inside otherwise-protected areas. The /compte ones
+// that used to sit here are gone with the matcher — an unmatched path
+// never reaches this function, so listing them was dead weight.
+const PUBLIC_PATHS = new Set(['/admin-r/login'])
 
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -41,35 +46,37 @@ export async function proxy(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  const isAdminArea = pathname.startsWith('/admin-r')
-
+  // Only /admin-r reaches this function now, so there is no customer
+  // branch here any more. The equivalent redirect for /compte — bouncing
+  // to /compte/connexion?next=... so a deep link survives the detour —
+  // lives in requireCustomer(), which is where it always had to work
+  // anyway for prefetched and directly-hit routes.
   if (!user) {
-    if (isAdminArea) {
-      return NextResponse.redirect(new URL('/admin-r/login', request.url))
-    }
-    // Send the customer back where they were headed after signing in, so
-    // a deep link (or checkout) isn't lost to the login detour.
-    const loginUrl = new URL('/compte/connexion', request.url)
-    loginUrl.searchParams.set('next', pathname)
-    return NextResponse.redirect(loginUrl)
+    return NextResponse.redirect(new URL('/admin-r/login', request.url))
   }
 
-  // Admin area only: signed in is not sufficient.
-  if (isAdminArea) {
-    const { data: adminRow } = await supabase
-      .from('admin_users')
-      .select('user_id')
-      .eq('user_id', user.id)
-      .maybeSingle()
+  // Signed in is not sufficient for the admin area.
+  const { data: adminRow } = await supabase
+    .from('admin_users')
+    .select('user_id')
+    .eq('user_id', user.id)
+    .maybeSingle()
 
-    if (!adminRow) {
-      return NextResponse.redirect(new URL('/admin-r/login', request.url))
-    }
+  if (!adminRow) {
+    return NextResponse.redirect(new URL('/admin-r/login', request.url))
   }
 
   return getResponse()
 }
 
 export const config = {
-  matcher: ['/admin-r/:path*', '/compte/:path*'],
+  // /compte is deliberately NOT matched. Every route under it already
+  // calls requireCustomer() or getCustomer() (page.tsx, commandes/, the
+  // facture route, updateProfile), which redirects a signed-out visitor to
+  // the same /compte/connexion?next=... this used to produce — so matching
+  // it here bought no protection and cost every navigation an extra
+  // blocking getUser() round-trip to Supabase before the page could even
+  // begin rendering. /admin-r stays: its admin_users lookup is worth doing
+  // before rendering, and it is not on a hot customer path.
+  matcher: ['/admin-r/:path*'],
 }
