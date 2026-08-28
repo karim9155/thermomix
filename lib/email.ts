@@ -69,7 +69,7 @@ function totalsBlock(order: Order): string {
       ${shipping}
       ${stamp}
       <tr>
-        <td style="padding:10px 0 0;border-top:1px solid #1f2328;font-weight:bold">Total à payer</td>
+        <td style="padding:10px 0 0;border-top:1px solid #1f2328;font-weight:bold">Total TTC à payer</td>
         <td style="padding:10px 0 0;border-top:1px solid #1f2328;text-align:right;font-weight:bold">
           ${formatPrice(order.totalTTC + order.timbreFiscal + order.deliveryFee)}
         </td>

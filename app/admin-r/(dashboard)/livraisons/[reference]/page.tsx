@@ -170,7 +170,7 @@ export default async function LivraisonDetailPage({
                 <strong>{formatPrice(order.totalTVA)}</strong>
               </div>
               <div>
-                <span>Total TTC</span>
+                <span>Total</span>
                 <strong>{formatPrice(order.totalTTC)}</strong>
               </div>
               {order.deliveryFee > 0 ? (
@@ -186,7 +186,7 @@ export default async function LivraisonDetailPage({
                 </div>
               ) : null}
               <div className="admin-totals-final">
-                <span>Total à payer</span>
+                <span>Total TTC à payer</span>
                 <strong>{formatPrice(order.totalTTC + order.timbreFiscal + order.deliveryFee)}</strong>
               </div>
             </div>

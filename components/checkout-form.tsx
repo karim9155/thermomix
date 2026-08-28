@@ -404,7 +404,7 @@ export function CheckoutForm({
             <strong>{formatPrice(totalTVA)}</strong>
           </div>
           <div>
-            <span>Total TTC</span>
+            <span>Total</span>
             <strong>{formatPrice(totalTTC)}</strong>
           </div>
           {/* Home delivery only — store pickup has no shipping fee, so the
@@ -427,7 +427,7 @@ export function CheckoutForm({
           ) : null}
           <hr />
           <div className="summary-total">
-            <span>Total à payer</span>
+            <span>Total TTC à payer</span>
             <strong>
               {formatPrice(
                 deliveryFee + (paymentMethod === 'cash' ? totalTTC + TIMBRE_FISCAL : totalTTC),

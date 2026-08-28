@@ -81,7 +81,7 @@ export default async function ConfirmationPage({
               <strong>{formatPrice(order.totalTVA)}</strong>
             </div>
             <div>
-              <span>Total TTC</span>
+              <span>Total</span>
               <strong>{formatPrice(order.totalTTC)}</strong>
             </div>
             {order.deliveryFee > 0 ? (
@@ -98,7 +98,7 @@ export default async function ConfirmationPage({
             ) : null}
             <hr />
             <div className="summary-total">
-              <span>Total à payer</span>
+              <span>Total TTC à payer</span>
               <strong>{formatPrice(order.totalTTC + order.timbreFiscal + order.deliveryFee)}</strong>
             </div>
           </aside>

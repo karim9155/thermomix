@@ -84,6 +84,9 @@ export function CartPageClient() {
               <strong>{formatPrice(totalTVA)}</strong>
             </div>
             <hr />
+            {/* The final line here, not an intermediate row — the cart
+                has no delivery fee or stamp yet (both depend on choices
+                made at checkout), so this stays the explicit TTC total. */}
             <div className="summary-total">
               <span>Total TTC</span>
               <strong>{formatPrice(totalTTC)}</strong>
