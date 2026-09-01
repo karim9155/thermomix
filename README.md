@@ -65,6 +65,30 @@ Elles sont persistées via `lib/orders.ts` dans un fichier `.data/orders.json` (
 automatiquement, ignoré par git), en attendant un éventuel remplacement par une vraie
 base de données. Statuts : `en_attente` → `payee` | `annulee`.
 
+## Keepalive cron
+
+Supabase's free tier auto-pauses a project after 7 days without any database
+activity. Ordinary site traffic doesn't prevent that: `/boutique` and
+`/boutique/[slug]` are ISR with `revalidate = 300`, so most requests are
+served from Next's cache and never reach Postgres — the site can look
+perfectly alive while Supabase still counts seven quiet days.
+
+`app/api/keepalive/route.ts` exists to make sure something does reach
+Postgres: it runs `select sku from products limit 1` using the publishable
+key (`products` has a public read policy, so no privileged access is
+needed). `vercel.json` schedules Vercel Cron to call it every Monday and
+Thursday at 06:00 UTC — twice a week leaves a spare run if one fails, well
+inside the 7-day window.
+
+The route is guarded by `CRON_SECRET`, sent automatically by Vercel Cron as
+`Authorization: Bearer <CRON_SECRET>`; any other caller gets a 401. Set the
+same value in **Project Settings → Environment Variables** on Vercel, or the
+cron can't authenticate. It's also `dynamic = 'force-dynamic'` (never cached)
+and responds with `X-Robots-Tag: noindex`.
+
+This becomes unnecessary on Supabase Pro, which has no pause — the cron
+entry and route can simply be deleted if the project moves to a paid plan.
+
 ## Structure
 
 - `lib/products.tsx` — catalogue produit (8 références réelles), TVA 19%, helpers de
