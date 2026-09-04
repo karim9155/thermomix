@@ -36,7 +36,7 @@ export function ProductDetail({ product, related }: { product: Product; related:
   /**
    * Moves the gallery to an image. On touch layouts the track is a real
    * scroller, so scroll it; on desktop it has no overflow and scrollTo is
-   * a no-op, leaving CSS to park the selected slide. Either way
+   * a no-op, leaving CS to park the selected slide. Either way
    * selectedIndex is the source of truth for the thumbnails.
    */
   const showImage = useCallback((index: number) => {
