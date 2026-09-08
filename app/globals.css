@@ -453,7 +453,9 @@ h3 {
 .ic-mark {
   width: 48px;
   height: 48px;
-  object-fit: cover;
+  /* The artwork is a tall shield on a square canvas, so it has to be
+     contained -- cover would crop the shield's point top and bottom. */
+  object-fit: contain;
   flex-shrink: 0;
   /* A direct child of .site-header rather than of .header-actions, so it
      can be ordered past the burger on mobile. The negative margin cancels
@@ -1825,12 +1827,13 @@ footer {
   max-width: 100%;
   min-width: 0;
 }
-/* Boxed INOCASA mark, matching the bordered treatment in the footer. */
+/* Same artwork as the header mark, just scaled up: same object-fit, no
+   border, so the two read as one logo rather than two variants. */
 .footer-brand .ic-mark {
   width: 86px;
   height: 86px;
-  border: 1px solid #454a4d;
-  object-fit: contain;
+  /* The base rule's negative margin only exists to cancel the header's gap. */
+  margin-left: 0;
 }
 .footer-main > div > p {
   max-width: 500px;
