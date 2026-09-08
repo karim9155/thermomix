@@ -21,7 +21,7 @@ export function AdminShell({
         <Link href="/admin-r" className="admin-brand">
           <Image
             className="admin-brand-mark"
-            src="/official.png"
+            src="/inocasa-logo-icone.png"
             alt=""
             width={300}
             height={300}

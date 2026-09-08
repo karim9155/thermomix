@@ -36,16 +36,23 @@ export function BrandLockup({ dark = false }: { dark?: boolean }) {
   )
 }
 
-export function ICMark() {
+export function ICMark({
+  sizes = '48px',
+  priority = true,
+}: { sizes?: string; priority?: boolean } = {}) {
   return (
     <Image
       className="ic-mark"
-      src="/official.png"
+      src="/inocasa-logo-icone.png"
       alt="INOCASA"
       width={300}
       height={300}
-      sizes="48px"
-      priority
+      /* Each placement declares the width it actually renders at: the
+         header draws this at 48px, the footer at 86px. A single shared
+         value made Next serve the 48px file to the footer, which then
+         upscaled it and looked pixelated. */
+      sizes={sizes}
+      priority={priority}
     />
   )
 }
@@ -276,7 +283,8 @@ export function Footer() {
         <div>
           <div className="footer-brand">
             <BrandLockup dark />
-            <ICMark />
+            {/* Below the fold: no preload, unlike the header mark. */}
+            <ICMark sizes="86px" priority={false} />
           </div>
           <p>
             Depuis plus de 140 ans, nos produits convainquent des millions de familles grâce à leur

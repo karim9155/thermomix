@@ -34,7 +34,7 @@ export default async function AdminLoginPage() {
       <div className="admin-login-card">
         <Image
           className="admin-login-mark"
-          src="/official.png"
+          src="/inocasa-logo-icone.png"
           alt="INOCASA"
           width={300}
           height={300}
