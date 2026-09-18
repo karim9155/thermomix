@@ -2,6 +2,25 @@
 @import 'tw-animate-css';
 @import 'shadcn/tailwind.css';
 
+/* Vorwerk's own brand face, as served by tunisia.vorwerk-thermomix.com. The two
+   files ship as separate "Regular"/"Light" families there; here they are one
+   family at 400/300 so weight works normally. `swap` keeps text visible while
+   the file loads rather than blocking the first paint. */
+@font-face {
+  font-family: 'Vorwerk';
+  src: url('/fonts/Vorwerk-Regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Vorwerk';
+  src: url('/fonts/Vorwerk-Light.woff2') format('woff2');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -1798,117 +1817,114 @@ h3 {
   flex-shrink: 0;
 }
 
-/* Footer */
+/* Footer
+   Values below mirror the reference build (hello-theme-child-master
+   custom.css): a 1440px wrapper, a 6/4 Bootstrap split with a 2-column
+   offset, Vorwerk Regular for body copy and Vorwerk Light for the headings,
+   legal menu and copyright. */
 footer {
-  background: var(--charcoal);
-  color: var(--white);
-  padding: 65px 10vw 25px;
+  background: #23282a;
+  color: #fff;
+  padding: 60px 30px 40px;
+  font-family: 'Vorwerk', var(--font-sans);
 }
 .footer-main {
+  width: 100%;
+  max-width: 1440px;
+  margin: 0 auto;
+  padding: 0 15px;
   display: grid;
-  grid-template-columns: 1fr 0.85fr;
-  gap: 60px;
+  /* col-md-6 + offset-md-2 + col-md-4 */
+  grid-template-columns: 50% 16.666667% 33.333333%;
 }
-.footer-brand {
-  display: flex;
-  align-items: center;
-  gap: 22px;
-  /* The lockup is width:auto off a fixed height, so on a narrow footer
-     column the pair overflowed and pushed the INOCASA mark outside. Let
-     the row wrap and the lockup shrink rather than escape. */
-  flex-wrap: wrap;
-  min-width: 0;
+.footer-column-one {
+  grid-column: 1;
 }
-/* The footer lockup shows the full "Official Distributor" artwork stacked,
-   so it needs more height than the compact header instance. */
-.footer-brand .brand-lockup {
-  height: 62px;
-  width: auto;
-  max-width: 100%;
-  min-width: 0;
+.footer-column-two {
+  grid-column: 3;
 }
-/* Same artwork as the header mark, just scaled up: same object-fit, no
-   border, so the two read as one logo rather than two variants. */
-.footer-brand .ic-mark {
-  width: 86px;
-  height: 86px;
-  /* The base rule's negative margin only exists to cancel the header's gap. */
-  margin-left: 0;
+.footer-lockup {
+  width: 200px;
+  height: auto;
+  margin-bottom: 20px;
 }
-.footer-main > div > p {
-  max-width: 500px;
-  color: #c3c8ca;
-  line-height: 1.7;
-  font-size: 15px;
+.footer-column-one p {
+  font-size: 18px;
+  line-height: 24px;
+  margin: 0 0 47px;
 }
-.footer-main h3 {
+.footer-column h5,
+.footer-main h5 {
+  font-family: 'Vorwerk', var(--font-sans);
+  font-weight: 300;
   font-size: 20px;
-  margin-top: 40px;
-  font-weight: 500;
-}
-.footer-address {
-  margin-top: 20px;
-  font-size: 13px !important;
-  color: #9aa0a3 !important;
+  line-height: 30px;
+  margin: 0 0 8px;
 }
 .footer-main a {
-  color: #d4d9da;
+  color: #fff;
 }
-/* Right column shows the wordmark alone: the artwork is cropped to its green
-   thermomix half, so the "Official Distributor" lockup does not repeat here. */
-.footer-links .brand-lockup {
-  height: 34px;
-  width: 190px;
-  object-fit: cover;
-  object-position: left center;
+.footer-wordmark {
+  width: 151px;
+  height: auto;
+  margin-bottom: 32px;
 }
-.newsletter-link {
-  display: block;
+.newsletter a {
+  font-size: 20px;
+  color: #fff;
   text-decoration: underline;
-  text-underline-offset: 4px;
-  color: var(--white);
-  font-size: 19px;
-  margin: 42px 0 55px;
+}
+.social-media {
+  margin-top: 32px;
 }
 .socials {
   display: flex;
-  gap: 26px;
+  align-items: center;
 }
 .socials a {
-  color: var(--white);
+  color: #fff;
   display: inline-flex;
+  margin-right: 18px;
 }
 .socials a:hover {
-  color: #00d879;
+  color: var(--primary);
 }
-.footer-bottom {
-  margin-top: 70px;
-  padding-top: 22px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 18px;
-  color: var(--white);
-  font-size: 15px;
+/* Legal menu and copyright are both centred rows under the two columns. */
+.footer-menu {
+  margin-top: 40px;
 }
-/* Legal links sit in one centered row, separated by spacing rather than
-   punctuation. */
-.footer-bottom > span {
+.footer-menu ul {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 34px;
+  gap: 0;
+  margin: 0;
+  padding: 0;
 }
-.footer-bottom small {
-  color: var(--white);
+.footer-menu ul li {
+  display: inline-block;
+  list-style: none;
+  margin-right: 45px;
+  font-weight: 300;
   font-size: 14px;
+  line-height: 24px;
 }
-.footer-bottom a {
-  color: inherit;
+.footer-menu ul li:last-child {
+  margin-right: 0;
+}
+.footer-menu ul li a {
+  color: #fff;
   text-decoration: none;
 }
-.footer-bottom a:hover {
+.footer-menu ul li a:hover {
   text-decoration: underline;
+}
+.copyright {
+  margin-top: 8px;
+  text-align: center;
+  font-weight: 300;
+  font-size: 14px;
+  line-height: 24px;
 }
 
 /* ============================================================
@@ -3331,10 +3347,7 @@ footer {
     justify-content: center;
     padding: 0;
   }
-  .footer-bottom > span {
-    gap: 8px 24px;
-  }
-  .footer-bottom a,
+  .footer-menu ul li a,
   .footer-main a {
     display: inline-block;
     padding: 7px 0;
@@ -3801,13 +3814,30 @@ footer {
     gap: 32px;
   }
 
+  /* Bootstrap's md breakpoint is 768px, so below it the two columns stack and
+     the legal menu becomes a left-aligned list, as on the reference build. */
   .footer-main {
     grid-template-columns: 1fr;
     gap: 32px;
   }
-  .footer-brand {
-    flex-wrap: wrap;
-    gap: 14px;
+  .footer-column-one,
+  .footer-column-two {
+    grid-column: 1;
+  }
+  .footer-column-one p {
+    margin-bottom: 32px;
+  }
+  .footer-menu ul {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: flex-start;
+    gap: 8px;
+  }
+  .footer-menu ul li {
+    margin-right: 0;
+  }
+  .copyright {
+    text-align: left;
   }
 
   /* Anything with a fixed px width must be capped to the viewport. */

@@ -14,7 +14,7 @@ import {
   Headphones,
   X,
 } from 'lucide-react'
-import { formatPrice, isPlaceholderImage, BOUTIQUE_ADDRESS_LABEL, type Product } from '@/lib/product-format'
+import { formatPrice, isPlaceholderImage, type Product } from '@/lib/product-format'
 import { useCart } from '@/lib/cart-context'
 import { useToast } from '@/components/ui/toast'
 import { CartDrawer } from '@/components/cart-drawer'
@@ -32,6 +32,47 @@ export function BrandLockup({ dark = false }: { dark?: boolean }) {
       height={757}
       sizes="220px"
       priority
+    />
+  )
+}
+
+/* The footer lockup is its own artwork, not the header's: wordmark over VORWERK
+   over a rule over "Official Distributor", then the divider and the square
+   INOCASA tile — all baked into one file, already drawn for a dark ground. The
+   header's wide strip cannot be reshaped into this, so it is a separate asset. */
+export function BrandLockupStacked() {
+  return (
+    <Image
+      className="footer-lockup"
+      src="/footer-official-logo.webp"
+      alt="Thermomix by Vorwerk — Official Distributor — INOCASA"
+      /* 3x the 420x152 display size: the INOCASA tile is redrawn from the
+         vector master (INOCASA_Logo_CMYK.pdf, p4) so it stays sharp on retina,
+         where the original 137px tile was visibly soft. */
+      width={1260}
+      height={456}
+      sizes="200px"
+      /* Flat-colour line art: the optimizer's q=75 re-encode smeared the thin
+         white strokes and blotched the solid green. The file is ~86KB, so it is
+         cheaper to serve as-is than to lose the sharpness we just gained. */
+      unoptimized
+      priority={false}
+    />
+  )
+}
+
+/* Right column: the plain white wordmark, no VORWERK and no "Official
+   Distributor" — a white-ink file, so it needs no filter on charcoal. */
+export function BrandWordmark() {
+  return (
+    <Image
+      className="footer-wordmark"
+      src="/thermomix-white.png"
+      alt="Thermomix"
+      width={151}
+      height={28}
+      sizes="151px"
+      priority={false}
     />
   )
 }
@@ -280,69 +321,68 @@ export function Footer() {
   return (
     <footer>
       <div className="footer-main">
-        <div>
-          <div className="footer-brand">
-            <BrandLockup dark />
-            {/* Below the fold: no preload, unlike the header mark. */}
-            <ICMark sizes="86px" priority={false} />
-          </div>
+        {/* The INOCASA tile is part of the lockup artwork, so no separate
+            ICMark here. */}
+        <div className="footer-column-one">
+          <BrandLockupStacked />
           <p>
             Depuis plus de 140 ans, nos produits convainquent des millions de familles grâce à leur
             technologie innovante et supérieure et à leur durée de vie proverbiale.
           </p>
-          <h3>Contact</h3>
+          <h5>Contact</h5>
           <p>
             Vous avez des questions ?
             <br />
-            Nous sommes là pour vous aider :
+            Nous sommes là pour vous aider:
             <br />
-            <a href="mailto:contact@inocasa.tn">Email: contact@inocasa.tn</a>
+            Email: <a href="mailto:contact@inocasa.tn">contact@inocasa.tn</a>
             <br />
-            <a href="tel:+21622081414">Tél. : +216 22 08 14 14</a>
-          </p>
-          <p className="footer-address">
-            L&apos;adresse officielle de Thermomix Tunisie (géré par le distributeur officiel
-            InoCasa) est située au {BOUTIQUE_ADDRESS_LABEL}
+            Tél. : <a href="tel:+21622081414">+216 22 08 14 14</a>
           </p>
         </div>
 
-        <div className="footer-links">
-          <BrandLockup dark />
-          <a
-            href="https://tunisia.vorwerk-thermomix.com/newsletter/"
-            className="newsletter-link"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Inscrivez-vous à notre newsletter
-          </a>
-          <h3>Réseaux sociaux</h3>
-          <div className="socials">
-            {socials.map(({ Icon, label, href }) => (
-              <a
-                key={label}
-                href={href}
-                target="_blank"
-                rel="noopener noreferrer"
-                aria-label={label}
-              >
-                <Icon size={24} />
-              </a>
-            ))}
+        <div className="footer-column-two">
+          <BrandWordmark />
+          <div className="newsletter">
+            <a
+              href="https://tunisia.vorwerk-thermomix.com/newsletter/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Inscrivez-vous à notre newsletter
+            </a>
+          </div>
+          <div className="social-media">
+            <h5>Réseaux sociaux</h5>
+            <div className="socials">
+              {socials.map(({ Icon, label, href }) => (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                >
+                  <Icon size={24} />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="footer-bottom">
-        <span>
+      <div className="footer-menu">
+        <ul>
           {legalLinks.map(({ label, href }) => (
-            <a key={label} href={href} target="_blank" rel="noopener noreferrer">
-              {label}
-            </a>
+            <li key={label}>
+              <a href={href} target="_blank" rel="noopener noreferrer">
+                {label}
+              </a>
+            </li>
           ))}
-        </span>
-        <small>© 2025 — 2026</small>
+        </ul>
       </div>
+      <div className="copyright">© 2025 — 2026</div>
     </footer>
   )
 }
