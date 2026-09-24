@@ -89,6 +89,17 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   'parrainage.code_regenere': "Code d'affiliation régénéré",
   'parrainage.code_active': "Code d'affiliation activé",
   'parrainage.code_desactive': "Code d'affiliation désactivé",
+  'grade.cree': 'Grade créé',
+  'grade.modifie': 'Grade modifié',
+  'grade.archive': 'Grade archivé',
+  'grade.restaure': 'Grade restauré',
+  'challenge.cree': 'Challenge créé',
+  'challenge.modifie': 'Challenge modifié',
+  'challenge.publie': 'Challenge publié',
+  'challenge.depublie': 'Challenge dépublié',
+  'challenge.supprime': 'Challenge supprimé',
+  'challenge.cloture': 'Challenge clôturé',
+  'challenge.gagne': 'Challenge gagné',
 }
 
 export function activityLabel(action: string): string {
@@ -443,3 +454,152 @@ export function formatAmount(amount: number, signed = false): string {
   const sign = amount < 0 ? '−' : signed && amount > 0 ? '+' : ''
   return `${sign}${spaced},${decimals} TND`
 }
+
+// ---------- GRADES (phase 5) ----------
+
+export type GradeCriteria = {
+  minRevenue: number
+  minSales: number
+  minRecruits: number
+  periodMonths: number
+}
+
+export type GradeDetail = {
+  id: string
+  name: string
+  rank: number
+  description: string | null
+  isArchived: boolean
+  criteria: GradeCriteria
+  advisorCount: number
+}
+
+/** "450", "450,5", "1 200" → number; '' → 0. */
+const amountField = (label: string) =>
+  z
+    .string()
+    .trim()
+    .transform((value) => value.replace(/\s/g, '').replace(',', '.'))
+    .refine((value) => value === '' || /^\d+(\.\d{1,3})?$/.test(value), `${label} invalide.`)
+    .transform((value) => (value === '' ? 0 : Number(value)))
+
+const countField = (label: string) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => value === '' || /^\d{1,6}$/.test(value), `${label} invalide.`)
+    .transform((value) => (value === '' ? 0 : Number(value)))
+
+export const gradeSchema = z.object({
+  name: z.string().trim().min(2, 'Nom requis.').max(60, 'Nom trop long.'),
+  rank: z
+    .string()
+    .trim()
+    .regex(/^\d{1,3}$/, 'Rang invalide.')
+    .transform(Number)
+    .refine((value) => value >= 1, 'Le rang commence à 1.'),
+  description: z.string().trim().max(300, 'Description trop longue.').optional().or(z.literal('')),
+  minRevenue: amountField("Chiffre d'affaires"),
+  minSales: countField('Nombre de ventes'),
+  minRecruits: countField('Nombre de recrues'),
+  periodMonths: z
+    .string()
+    .trim()
+    .regex(/^\d{1,2}$/, 'Période invalide.')
+    .transform(Number)
+    .refine((value) => value >= 1 && value <= 24, 'La période va de 1 à 24 mois.'),
+})
+
+export type GradeFormValues = z.infer<typeof gradeSchema>
+
+export const newGradeSchema = gradeSchema.extend({
+  robotSaleBonus: amountField('Prime par Thermomix'),
+  recruitmentBonus: amountField('Bonus de recrutement'),
+})
+
+// ---------- CHALLENGES (phase 5) ----------
+
+export const CHALLENGE_METRICS = ['ventes', 'robots', 'ca', 'recrues'] as const
+export type ChallengeMetric = (typeof CHALLENGE_METRICS)[number]
+
+export const CHALLENGE_METRIC_LABELS: Record<ChallengeMetric, string> = {
+  ventes: 'Nombre de ventes',
+  robots: 'Thermomix vendus',
+  ca: "Chiffre d'affaires (TTC)",
+  recrues: 'Recrues activées',
+}
+
+export type ChallengeStatus = 'brouillon' | 'publie' | 'cloture'
+
+export const CHALLENGE_STATUS_LABELS: Record<ChallengeStatus, string> = {
+  brouillon: 'Brouillon',
+  publie: 'Publié',
+  cloture: 'Clôturé',
+}
+
+export const CHALLENGE_STATUS_CLASS: Record<ChallengeStatus, string> = {
+  brouillon: 'badge-gray',
+  publie: 'badge-green',
+  cloture: 'badge-blue',
+}
+
+export type Challenge = {
+  id: string
+  title: string
+  description: string | null
+  imageUrl: string | null
+  metric: ChallengeMetric
+  target: number | null
+  winnersCount: number | null
+  rewardLabel: string | null
+  prizeAmount: number
+  startsOn: string
+  endsOn: string
+  status: ChallengeStatus
+  closedAt: string | null
+}
+
+export type RankingRow = {
+  advisorId: string
+  name: string
+  score: number
+  /** Standard competition ranking: ties share a rank (1, 2, 2, 4). */
+  rank: number
+  reachedTarget: boolean
+}
+
+export function formatScore(metric: ChallengeMetric, value: number): string {
+  return metric === 'ca' ? formatAmount(value) : String(Math.round(value))
+}
+
+export const challengeSchema = z
+  .object({
+    title: z.string().trim().min(3, 'Titre requis.').max(120, 'Titre trop long.'),
+    description: z.string().trim().max(2000, 'Description trop longue.').optional().or(z.literal('')),
+    metric: z.enum(CHALLENGE_METRICS, { message: 'Choisissez un objectif.' }),
+    target: z
+      .string()
+      .trim()
+      .transform((value) => value.replace(/\s/g, '').replace(',', '.'))
+      .refine((value) => value === '' || /^\d+(\.\d{1,3})?$/.test(value), 'Seuil invalide.')
+      .transform((value) => (value === '' || Number(value) === 0 ? null : Number(value))),
+    winnersCount: z
+      .string()
+      .trim()
+      .refine((value) => value === '' || /^\d{1,3}$/.test(value), 'Nombre de gagnants invalide.')
+      .transform((value) => (value === '' || Number(value) === 0 ? null : Number(value))),
+    rewardLabel: z.string().trim().max(200, 'Récompense trop longue.').optional().or(z.literal('')),
+    prizeAmount: amountField('Prime'),
+    startsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date de début invalide.'),
+    endsOn: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Date de fin invalide.'),
+  })
+  .refine((values) => values.endsOn >= values.startsOn, {
+    path: ['endsOn'],
+    message: 'La fin doit être après le début.',
+  })
+  .refine((values) => values.target !== null || values.winnersCount !== null, {
+    path: ['winnersCount'],
+    message: 'Indiquez un seuil à atteindre, un nombre de gagnants, ou les deux.',
+  })
+
+export type ChallengeFormValues = z.infer<typeof challengeSchema>

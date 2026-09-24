@@ -5,6 +5,9 @@ import { requireAdvisorPage } from '@/lib/conseiller/guard'
 import { getAdvisorDetail, listApplications } from '@/lib/conseiller/network'
 import { listActivity } from '@/lib/conseiller/activity'
 import { ActivityFeed } from '@/components/conseiller/activity-feed'
+import { GradeProgressCard } from '@/components/conseiller/grade-progress'
+import { getGradeProgress } from '@/lib/conseiller/grades'
+import { todayInTunis } from '@/lib/conseiller/sales'
 
 export const metadata = { title: 'Tableau de bord' }
 
@@ -12,10 +15,11 @@ export default async function ConseillerDashboardPage() {
   const session = await requireAdvisorPage()
 
   // Always the signed-in advisor's own id, from the guard — never the URL.
-  const [advisor, applications, activity] = await Promise.all([
+  const [advisor, applications, activity, progress] = await Promise.all([
     getAdvisorDetail(session.id),
     listApplications({ sponsorId: session.id }),
     listActivity({ advisorId: session.id, limit: 10 }),
+    getGradeProgress(session.id, todayInTunis()),
   ])
 
   if (!advisor) notFound()
@@ -46,6 +50,8 @@ export default async function ConseillerDashboardPage() {
 
       <div className="admin-detail-grid">
         <div className="admin-detail-main">
+          <GradeProgressCard progress={progress} />
+
           <section className="admin-card">
             <h2>Mon code d&apos;affiliation</h2>
             <div className="advisor-code-row">

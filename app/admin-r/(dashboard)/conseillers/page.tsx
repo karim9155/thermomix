@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import { Activity, Inbox, Network, UserPlus } from 'lucide-react'
+import { Activity, ArrowUpCircle, Award, Inbox, Network, UserPlus } from 'lucide-react'
 import { countPendingApplications, listAdvisors } from '@/lib/conseiller/network'
 import { AdvisorsTable } from '@/components/admin/advisors-table'
 
@@ -27,6 +27,12 @@ export default async function ConseillersPage() {
         </Link>
         <Link href="/admin-r/conseillers/activite" className="admin-tab">
           <Activity size={14} /> Activité
+        </Link>
+        <Link href="/admin-r/conseillers/grades" className="admin-tab">
+          <Award size={14} /> Grades
+        </Link>
+        <Link href="/admin-r/conseillers/promotions" className="admin-tab">
+          <ArrowUpCircle size={14} /> Promotions proposées
         </Link>
       </nav>
 
