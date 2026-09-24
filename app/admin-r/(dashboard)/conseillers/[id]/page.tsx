@@ -19,6 +19,8 @@ import {
   AdvisorIdentityForm,
   AdvisorSponsorForm,
 } from '@/components/admin/advisor-edit-forms'
+import { AffiliateCodeControls } from '@/components/admin/affiliate-code-controls'
+import { affiliateUrl, getAffiliateStats } from '@/lib/conseiller/affiliation'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -37,12 +39,13 @@ export default async function ConseillerDetailPage({
   // Anything that isn't a uuid would only reach Postgres to fail its cast.
   if (!z.uuid().safeParse(id).success) notFound()
 
-  const [advisor, grades, advisors, activity, applications] = await Promise.all([
+  const [advisor, grades, advisors, activity, applications, affiliate] = await Promise.all([
     getAdvisorDetail(id),
     listGrades(),
     listAdvisors(),
     listActivity({ advisorId: id, limit: 30 }),
     listApplications({ sponsorId: id }),
+    getAffiliateStats(id),
   ])
 
   if (!advisor) notFound()
@@ -94,7 +97,17 @@ export default async function ConseillerDetailPage({
               <div>
                 <dt>Code d&apos;affiliation</dt>
                 <dd>
-                  <code className="advisor-code">{advisor.affiliateCode}</code>
+                  <code className="advisor-code">{advisor.affiliateCode}</code>{' '}
+                  {advisor.affiliateCodeActive ? null : (
+                    <span className="admin-badge badge-red">Désactivé</span>
+                  )}
+                  <div className="admin-muted advisor-table-sub">{affiliateUrl(advisor.affiliateCode)}</div>
+                  <div className="admin-muted advisor-table-sub">
+                    {affiliate.clicks} clic{affiliate.clicks > 1 ? 's' : ''} · {affiliate.customers} client
+                    {affiliate.customers > 1 ? 's' : ''} rattaché{affiliate.customers > 1 ? 's' : ''} ·{' '}
+                    {affiliate.orders.length} commande{affiliate.orders.length > 1 ? 's' : ''} en ligne
+                  </div>
+                  <AffiliateCodeControls advisorId={advisor.id} active={advisor.affiliateCodeActive} />
                 </dd>
               </div>
               <div>

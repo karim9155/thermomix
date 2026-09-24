@@ -51,6 +51,9 @@ export const orderLineSchema = z.object({
 export const createOrderSchema = z.object({
   customer: checkoutFormSchema,
   items: z.array(orderLineSchema).min(1, 'Le panier est vide.'),
+  // Optional advisor code typed at checkout. Only a claim: the route
+  // checks it against the database before anything is attributed.
+  advisorCode: z.string().trim().max(40).optional(),
 })
 
 export type CreateOrderPayload = z.infer<typeof createOrderSchema>

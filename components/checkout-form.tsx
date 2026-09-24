@@ -7,6 +7,7 @@ import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, ArrowRight, Banknote, CreditCard, Home, Store } from 'lucide-react'
 import { useCart } from '@/lib/cart-context'
+import { AdvisorCodeField } from '@/components/advisor-code-field'
 import { checkoutFormSchema, type CheckoutFormValues } from '@/lib/checkout-schema'
 import type { ProductCategory } from '@/lib/product-format'
 import {
@@ -35,8 +36,11 @@ type CheckoutPrefill = {
 export function CheckoutForm({
   prefill,
   categoryBySku,
+  currentAdvisorName = null,
 }: {
   prefill?: CheckoutPrefill
+  /** The advisor this order would be credited to without a code, if any. */
+  currentAdvisorName?: string | null
   /** sku -> category from the live catalog, used for the delivery fee.
       Authoritative: a cart saved before the category was stored has none,
       and one edited by hand could claim anything. */
@@ -47,6 +51,7 @@ export function CheckoutForm({
   const [hydrated, setHydrated] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [advisorCode, setAdvisorCode] = useState('')
 
   const {
     register,
@@ -137,6 +142,7 @@ export function CheckoutForm({
             slug: item.slug,
             quantity: item.quantity,
           })),
+          advisorCode: advisorCode.trim() || undefined,
         }),
       })
 
@@ -327,6 +333,12 @@ export function CheckoutForm({
               />
             </label>
           </div>
+
+          <AdvisorCodeField
+            value={advisorCode}
+            onChange={setAdvisorCode}
+            currentAdvisorName={currentAdvisorName}
+          />
 
           <h2>Mode de paiement</h2>
           <div className="payment-options">

@@ -5,6 +5,11 @@ import { createOrder, type OrderLine } from '@/lib/orders'
 import { sendOrderEmails } from '@/lib/email'
 import { getCustomer } from '@/lib/compte/guard'
 import { TIMBRE_FISCAL, calculateDeliveryFee } from '@/lib/product-format'
+import {
+  advisorForNewOrder,
+  attributeCustomer,
+  checkAdvisorCode,
+} from '@/lib/conseiller/affiliation'
 
 export async function POST(request: NextRequest) {
   let body: unknown
@@ -34,7 +39,18 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  const { customer, items } = parsed.data
+  const { customer, items, advisorCode } = parsed.data
+
+  // A code typed at checkout is checked before anything else is done, so
+  // a typo is reported instead of silently ordering without an advisor.
+  let codeAdvisorId: string | null = null
+  if (advisorCode) {
+    const checked = await checkAdvisorCode(advisorCode, customerUser.id)
+    if ('error' in checked) {
+      return NextResponse.json({ error: checked.error }, { status: 400 })
+    }
+    codeAdvisorId = checked.id
+  }
 
   // Fetched in one query rather than one per line. The loop below still
   // validates in cart order and returns on the first bad line, so the
@@ -94,6 +110,15 @@ export async function POST(request: NextRequest) {
     customer.deliveryMethod,
   )
 
+  // Affiliate attribution (I6). A code typed at checkout counts as
+  // opening that advisor's link right now — the latest click, so it wins
+  // and follows the account from here on. Recorded only now, once the
+  // order is otherwise valid. Stored as 'lien' like any link attribution.
+  if (codeAdvisorId) {
+    await attributeCustomer(customerUser.id, codeAdvisorId, new Date())
+  }
+  const advisorId = await advisorForNewOrder(customerUser.id)
+
   const order = await createOrder({
     customer,
     items: lines,
@@ -104,6 +129,7 @@ export async function POST(request: NextRequest) {
     deliveryFee,
     paymentMethod: customer.paymentMethod,
     userId: customerUser.id,
+    advisorId,
   })
 
   sendOrderEmails(order).catch((error) => {

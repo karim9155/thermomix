@@ -121,7 +121,13 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
                     {order.reference}
                   </Link>
                   {order.source === 'conseiller' ? (
-                    <span className="admin-badge badge-blue order-source-tag">Conseiller</span>
+                    <span className="admin-badge badge-blue order-source-tag">
+                      Conseiller{order.advisorName ? ` · ${order.advisorName}` : ''}
+                    </span>
+                  ) : order.advisorName ? (
+                    <span className="admin-badge badge-gray order-source-tag">
+                      {order.attributionSource === 'admin' ? 'Attribuée' : 'Lien'} · {order.advisorName}
+                    </span>
                   ) : null}
                 </td>
                 <td>{dateFormatter.format(new Date(order.createdAt))}</td>

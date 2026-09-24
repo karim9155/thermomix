@@ -8,6 +8,7 @@ import {
   uploadOrderInvoice,
   type DeliveryStatus,
 } from '@/lib/admin/orders'
+import { reassignWebOrder } from '@/lib/conseiller/affiliation'
 
 const MAX_INVOICE_SIZE_BYTES = 10 * 1024 * 1024
 
@@ -26,6 +27,9 @@ export async function updateDeliveryStatusAction(
 
   revalidatePath(`/admin-r/livraisons/${reference}`)
   revalidatePath('/admin-r')
+  // Delivering an affiliated web order can earn (or reverse) a commission.
+  revalidatePath('/admin-r/remuneration')
+  revalidatePath('/conseiller/remuneration')
 
   return { success: true }
 }
@@ -75,5 +79,31 @@ export async function updateEstimatedDeliveryAction(
   revalidatePath(`/admin-r/livraisons/${reference}`)
   revalidatePath('/admin-r')
 
+  return { success: true }
+}
+
+export type ReassignOrderState = { error?: string; success?: boolean }
+
+/** Attributes a web order to an advisor by hand, or detaches it (I9). */
+export async function reassignOrderAdvisorAction(
+  reference: string,
+  advisorId: string,
+): Promise<ReassignOrderState> {
+  if (advisorId !== '' && !/^[0-9a-f-]{36}$/i.test(advisorId)) {
+    return { error: 'Conseiller invalide.' }
+  }
+
+  try {
+    const admin = await requireAdmin()
+    await reassignWebOrder(reference, advisorId || null, { id: admin.id, role: 'admin' })
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Une erreur est survenue.' }
+  }
+
+  revalidatePath(`/admin-r/livraisons/${reference}`)
+  revalidatePath('/admin-r')
+  revalidatePath('/admin-r/remuneration')
+  revalidatePath('/conseiller/parrainage')
+  revalidatePath('/conseiller/remuneration')
   return { success: true }
 }

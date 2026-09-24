@@ -5,6 +5,7 @@ import { getCustomer } from '@/lib/compte/guard'
 import { getLastOrderDetails } from '@/lib/compte/orders'
 import { getProfile } from '@/lib/compte/profile'
 import { getAllProducts } from '@/lib/products'
+import { previewAttribution } from '@/lib/conseiller/affiliation'
 
 // Checkout needs a session: /api/commande rejects a sessionless order, so
 // send the user to sign in first rather than letting them fill the whole
@@ -48,7 +49,11 @@ export default async function CheckoutPage() {
   // summary resolves each line against the real catalog instead of
   // trusting (or guessing) what the cart happens to carry. Free: this is
   // the same cache()d getAllProducts() BoutiqueShell already awaits.
-  const catalog = await getAllProducts()
+  const [catalog, currentAdvisor] = await Promise.all([
+    getAllProducts(),
+    // Who this order would be credited to right now, if anyone.
+    previewAttribution(customer.id),
+  ])
   const categoryBySku = Object.fromEntries(
     catalog.map((product) => [product.sku, product.category]),
   )
@@ -57,6 +62,7 @@ export default async function CheckoutPage() {
     <BoutiqueShell>
       <CheckoutForm
         categoryBySku={categoryBySku}
+        currentAdvisorName={currentAdvisor?.name ?? null}
         prefill={{
           prenom: profile?.prenom || last?.prenom || customer.prenom,
           nom: profile?.nom || last?.nom || customer.nom,

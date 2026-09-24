@@ -16,6 +16,7 @@ import {
   type AccessLinkResult,
 } from '@/lib/conseiller/accounts'
 import { createAdvisorSchema, updateAdvisorSchema } from '@/lib/conseiller/format'
+import { regenerateAffiliateCode, setAffiliateCodeActive } from '@/lib/conseiller/affiliation'
 
 export type ActionState = { error?: string; success?: boolean }
 
@@ -226,5 +227,29 @@ export async function refuseApplicationAction(
     return { error: message(error) }
   }
   revalidatePath('/admin-r/conseillers/candidatures')
+  return { success: true }
+}
+
+// ---------- AFFILIATE CODE (I10) ----------
+
+export async function regenerateCodeAction(advisorId: string): Promise<ActionState> {
+  try {
+    await regenerateAffiliateCode(advisorId, await adminActor())
+  } catch (error) {
+    return { error: message(error) }
+  }
+  revalidateAdvisor(advisorId)
+  revalidatePath('/conseiller/parrainage')
+  return { success: true }
+}
+
+export async function setCodeActiveAction(advisorId: string, active: boolean): Promise<ActionState> {
+  try {
+    await setAffiliateCodeActive(advisorId, active, await adminActor())
+  } catch (error) {
+    return { error: message(error) }
+  }
+  revalidateAdvisor(advisorId)
+  revalidatePath('/conseiller/parrainage')
   return { success: true }
 }

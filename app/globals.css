@@ -3685,6 +3685,78 @@ footer {
   font-weight: 700;
 }
 
+/* ---------- Affiliate links (phase 4) ---------- */
+
+.advisor-share {
+  display: grid;
+  gap: 16px;
+}
+.advisor-share .advisor-code-row {
+  margin: 0;
+  color: var(--ink);
+  flex-wrap: wrap;
+}
+.advisor-share-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.advisor-share-buttons a {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+.advisor-stat-grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.advisor-code-controls {
+  margin-top: 10px;
+}
+
+/* Checkout: optional advisor code, styled like the .form-grid fields. */
+.advisor-code-field {
+  display: grid;
+  gap: 8px;
+  margin: 22px 0 28px;
+  font-size: 12px;
+}
+.advisor-code-field label {
+  font-weight: 700;
+}
+.advisor-code-input {
+  display: flex;
+  gap: 8px;
+}
+.advisor-code-input input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 13px;
+  outline-color: var(--brand-green);
+  font-size: 12px;
+  font-family: inherit;
+  letter-spacing: 0.04em;
+}
+.advisor-code-input input[aria-invalid='true'] {
+  border-color: #e0574c;
+}
+.advisor-code-input .outline-button {
+  flex-shrink: 0;
+}
+.advisor-code-field small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.advisor-code-ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  color: var(--brand-green-dark);
+  font-weight: 600;
+}
+
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
    than hand a 1280px laptop a hamburger, tighten the row until it fits —
    smaller gaps, tighter CTA padding, slightly smaller type. Everything
@@ -3998,6 +4070,13 @@ footer {
   }
   .advisor-two-columns {
     grid-template-columns: 1fr;
+  }
+  .advisor-stat-grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .advisor-share-buttons a {
+    flex: 1 1 auto;
+    justify-content: center;
   }
   .advisor-lines li {
     grid-template-columns: minmax(0, 1fr) auto;

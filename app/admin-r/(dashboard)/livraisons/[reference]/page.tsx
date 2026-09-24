@@ -6,6 +6,8 @@ import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badge
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
 import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
 import { InvoiceUploadControl } from '@/components/admin/invoice-upload-control'
+import { OrderAdvisorControl } from '@/components/admin/order-advisor-control'
+import { listAdvisors } from '@/lib/conseiller/network'
 import { parseEstimatedDeliveryEvent, formatEstimatedDelivery } from '@/lib/admin/order-format'
 import { formatPrice, formatPriceHT } from '@/lib/product-format'
 
@@ -59,6 +61,17 @@ export default async function LivraisonDetailPage({
   if (!order) {
     notFound()
   }
+
+  // Only web orders can be (re)attributed; an order form belongs to the
+  // advisor who wrote it.
+  const advisors =
+    order.source === 'web'
+      ? (await listAdvisors()).map((advisor) => ({
+          id: advisor.id,
+          name: `${advisor.prenom} ${advisor.nom}`,
+          suspended: advisor.status === 'suspendu',
+        }))
+      : []
 
   return (
     <div className="admin-page">
@@ -242,6 +255,17 @@ export default async function LivraisonDetailPage({
               </dd>
             </div>
           </dl>
+          {order.source === 'web' ? (
+            <>
+              <h2>Parrainage</h2>
+              <OrderAdvisorControl
+                reference={order.reference}
+                advisorId={order.advisorId}
+                source={order.attributionSource}
+                advisors={advisors}
+              />
+            </>
+          ) : null}
           <a href={`tel:${order.telephone}`} className="outline-button full center">
             <Phone size={16} /> Appeler le client
           </a>

@@ -8,6 +8,7 @@ import { safeNext } from '@/lib/compte/safe-next'
 import { requireCustomer } from '@/lib/compte/guard'
 import { saveProfile } from '@/lib/compte/profile'
 import { phoneRegex } from '@/lib/checkout-schema'
+import { syncAttributionFromCookie } from '@/lib/conseiller/affiliation'
 
 const credentialsSchema = z.object({
   email: z.email(),
@@ -102,12 +103,16 @@ export async function signin(_prevState: AuthState, formData: FormData): Promise
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.signInWithPassword(parsed.data)
+  const { data, error } = await supabase.auth.signInWithPassword(parsed.data)
 
   if (error) {
     // Never reveal whether the email exists — same message for both cases.
     return { error: GENERIC_ERROR }
   }
+
+  // An advisor's link opened before signing in now follows the account
+  // everywhere (permanent attribution, phase 4).
+  await syncAttributionFromCookie(data.user.id)
 
   redirect(safeNext(formData.get('next') as string | null))
 }

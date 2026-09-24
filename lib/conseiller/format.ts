@@ -85,6 +85,10 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   'remuneration.periode_cloturee': 'Mois de rémunération clôturé',
   'remuneration.versement': 'Rémunération versée',
   'remuneration.versement_annule': 'Versement annulé',
+  'parrainage.commande_reattribuee': 'Commande en ligne réattribuée',
+  'parrainage.code_regenere': "Code d'affiliation régénéré",
+  'parrainage.code_active': "Code d'affiliation activé",
+  'parrainage.code_desactive': "Code d'affiliation désactivé",
 }
 
 export function activityLabel(action: string): string {

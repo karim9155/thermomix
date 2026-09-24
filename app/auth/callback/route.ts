@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { createClient } from '@/lib/supabase/customer-auth'
 import { safeNext } from '@/lib/compte/safe-next'
+import { syncAttributionFromCookie } from '@/lib/conseiller/affiliation'
 
 /**
  * Lands the user after they click the link in a Supabase auth email
@@ -34,12 +35,18 @@ export async function GET(request: NextRequest) {
   }
 
   const supabase = await createClient()
-  const { error } = await supabase.auth.exchangeCodeForSession(code)
+  const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
   if (error) {
     const url = new URL('/compte/connexion', origin)
     url.searchParams.set('erreur', 'lien')
     return NextResponse.redirect(url)
+  }
+
+  // A new customer who arrived through an advisor's link is attributed
+  // as soon as their account is confirmed.
+  if (data.user) {
+    await syncAttributionFromCookie(data.user.id)
   }
 
   return NextResponse.redirect(new URL(next, origin))

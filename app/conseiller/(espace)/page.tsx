@@ -53,9 +53,11 @@ export default async function ConseillerDashboardPage() {
               <code className="advisor-code advisor-code-large">{advisor.affiliateCode}</code>
             </div>
             <p className="admin-muted advisor-help">
-              Bientôt, votre lien de parrainage vous attribuera automatiquement les commandes
-              passées en ligne par vos clients.
+              Les commandes passées en ligne via votre lien vous sont attribuées automatiquement.
             </p>
+            <Link href="/conseiller/parrainage" className="outline-button advisor-inline-link">
+              <Link2 size={15} /> Partager mon lien
+            </Link>
           </section>
 
           <section className="admin-card">

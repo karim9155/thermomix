@@ -137,6 +137,9 @@ export async function createOrder(input: {
   // caller. Required for new orders; the column stays nullable only so
   // pre-account guest orders survive (see migration 0006).
   userId: string
+  // The advisor whose affiliate link this customer followed, decided
+  // server-side by lib/conseiller/affiliation.ts. Null for most orders.
+  advisorId?: string | null
 }): Promise<Order> {
   const supabase = createAdminClient()
 
@@ -166,6 +169,8 @@ export async function createOrder(input: {
         timbre_fiscal: input.timbreFiscal,
         delivery_fee: input.deliveryFee,
         user_id: input.userId,
+        advisor_id: input.advisorId ?? null,
+        attribution_source: input.advisorId ? 'lien' : null,
       })
       .select('id, reference, created_at')
       .single()

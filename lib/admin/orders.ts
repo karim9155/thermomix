@@ -7,6 +7,7 @@ import type {
   PaymentMethod,
 } from '@/lib/admin/order-format'
 import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT } from '@/lib/admin/order-format'
+import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
 
 const INVOICE_BUCKET = 'order-invoices'
 
@@ -31,6 +32,10 @@ export type AdminOrderListItem = {
   source: OrderSource
   /** When an advisor sale was invoiced; null for web orders. */
   invoicedAt: string | null
+  /** The advisor who sold it (order form) or brought the customer (link). */
+  advisorId: string | null
+  advisorName: string | null
+  attributionSource: 'lien' | 'admin' | null
 }
 
 export type AdminOrderItem = {
@@ -67,7 +72,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
 }
 
 const LIST_SELECT =
-  'reference, created_at, prenom, nom, telephone, ville, total_ttc, payment_method, status, delivery_status, estimated_delivery, source, invoiced_at'
+  'reference, created_at, prenom, nom, telephone, ville, total_ttc, payment_method, status, delivery_status, estimated_delivery, source, invoiced_at, advisor_id, attribution_source, advisor:advisors!orders_advisor_id_fkey ( prenom, nom )'
 
 function mapListRow(row: any): AdminOrderListItem {
   return {
@@ -84,6 +89,9 @@ function mapListRow(row: any): AdminOrderListItem {
     estimatedDelivery: row.estimated_delivery ?? null,
     source: row.source === 'conseiller' ? 'conseiller' : 'web',
     invoicedAt: row.invoiced_at ?? null,
+    advisorId: row.advisor_id ?? null,
+    advisorName: row.advisor ? `${row.advisor.prenom} ${row.advisor.nom}` : null,
+    attributionSource: row.attribution_source ?? null,
   }
 }
 
@@ -193,7 +201,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status, source, invoiced_at')
+    .select('id, delivery_status, source, invoiced_at, advisor_id')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -248,7 +256,13 @@ export async function updateDeliveryStatus(
     .update(
       isAdvisorSale
         ? { delivery_status: newStatus }
-        : { delivery_status: newStatus, status: paymentStatus },
+        : {
+            delivery_status: newStatus,
+            status: paymentStatus,
+            // The date the commission engine reads for an affiliated
+            // web order: paid when delivered (cash on delivery).
+            paid_at: paymentStatus === 'payee' ? new Date().toISOString() : null,
+          },
     )
     .eq('id', order.id)
 
@@ -274,6 +288,12 @@ export async function updateDeliveryStatus(
   // the dropdown cannot deduct twice for one order.
   if (newStatus === 'livree') {
     await decrementStockForOrder(order.id)
+  }
+
+  // A web order that came through an advisor's link earns them their
+  // commission once paid — and loses it if delivery is reversed.
+  if (!isAdvisorSale && order.advisor_id) {
+    await reconcileSaleCommission(order.id, adminUserId)
   }
 }
 

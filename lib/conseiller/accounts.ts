@@ -36,7 +36,7 @@ function activationUrl(tokenHash: string, type: 'invite' | 'recovery'): string {
 
 const CODE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
 
-function generateAffiliateCode(prenom: string): string {
+export function generateAffiliateCode(prenom: string): string {
   const base =
     prenom
       .normalize('NFD')
