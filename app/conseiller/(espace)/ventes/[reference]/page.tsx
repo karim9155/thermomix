@@ -12,6 +12,8 @@ import { SaleStatusBadge } from '@/components/conseiller/badges'
 import { SaleLinesTable, ScheduleTable } from '@/components/conseiller/sale-summary'
 import { ActivityFeed } from '@/components/conseiller/activity-feed'
 import { OrderFormEditor } from '@/components/conseiller/order-form-editor'
+import { CommissionLines } from '@/components/conseiller/commission-lines'
+import { listEntries } from '@/lib/conseiller/remuneration'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
   const { reference } = await params
@@ -68,7 +70,10 @@ export default async function VentePage({ params }: { params: Promise<{ referenc
     )
   }
 
-  const history = await listActivity({ entity: { type: 'order', id: sale.reference } })
+  const [history, commissions] = await Promise.all([
+    listActivity({ entity: { type: 'order', id: sale.reference } }),
+    listEntries({ orderId: sale.id, advisorId: advisor.id }),
+  ])
 
   return (
     <div className="admin-page">
@@ -116,6 +121,14 @@ export default async function VentePage({ params }: { params: Promise<{ referenc
               installments={sale.installments}
               totalDue={sale.totalDue}
               paidAmount={sale.paidAmount}
+            />
+          </section>
+
+          <section className="admin-card">
+            <h2>Ma prime</h2>
+            <CommissionLines
+              entries={commissions}
+              empty="Votre prime sera calculée quand la vente sera entièrement payée."
             />
           </section>
         </div>

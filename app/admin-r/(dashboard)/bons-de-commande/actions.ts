@@ -12,6 +12,7 @@ import {
   undoInstallmentPayment,
 } from '@/lib/conseiller/sales'
 import { INSTALLMENT_PAYMENT_METHODS } from '@/lib/conseiller/format'
+import { recalculateSaleCommission } from '@/lib/conseiller/remuneration'
 
 export type SaleActionState = { error?: string; success?: boolean }
 
@@ -35,6 +36,8 @@ function revalidateSale(reference: string) {
   revalidatePath(`/admin-r/livraisons/${reference}`)
   revalidatePath('/conseiller/ventes')
   revalidatePath(`/conseiller/ventes/${reference}`)
+  revalidatePath('/conseiller/remuneration')
+  revalidatePath('/admin-r/remuneration')
 }
 
 export async function invoiceSaleAction(
@@ -149,5 +152,25 @@ export async function reviseScheduleAction(
     return { error: message(error) }
   }
   revalidateSale(reference)
+  return { success: true }
+}
+
+/**
+ * Re-runs the commission engine for one sale. Normally automatic; this
+ * is the manual retry if it ever failed after a payment or cancellation.
+ */
+export async function recalculateCommissionAction(
+  reference: string,
+  orderId: string,
+): Promise<SaleActionState> {
+  if (!z.uuid().safeParse(orderId).success) return { error: 'Requête invalide.' }
+  try {
+    const actor = await adminActor()
+    await recalculateSaleCommission(orderId, actor.id)
+  } catch (error) {
+    return { error: message(error) }
+  }
+  revalidateSale(reference)
+  revalidatePath('/admin-r/remuneration')
   return { success: true }
 }

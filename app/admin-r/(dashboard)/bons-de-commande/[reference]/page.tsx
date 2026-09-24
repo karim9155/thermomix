@@ -11,6 +11,9 @@ import { RemainingSummary, SaleLinesTable } from '@/components/conseiller/sale-s
 import { ActivityFeed } from '@/components/conseiller/activity-feed'
 import { CancelSale, InvoiceDecision } from '@/components/admin/sale-admin-actions'
 import { InstallmentsAdmin } from '@/components/admin/installments-admin'
+import { RecalculateCommissionButton } from '@/components/admin/remuneration-controls'
+import { CommissionLines } from '@/components/conseiller/commission-lines'
+import { listEntries } from '@/lib/conseiller/remuneration'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
   const { reference } = await params
@@ -26,7 +29,10 @@ export default async function BonDeCommandePage({
   const sale = await getSale(reference)
   if (!sale) notFound()
 
-  const history = await listActivity({ entity: { type: 'order', id: sale.reference } })
+  const [history, commissions] = await Promise.all([
+    listActivity({ entity: { type: 'order', id: sale.reference } }),
+    listEntries({ orderId: sale.id }),
+  ])
 
   // What the delivery fee WOULD be, shown next to its checkbox at
   // invoicing. The server recomputes it itself when the box is ticked.
@@ -105,6 +111,17 @@ export default async function BonDeCommandePage({
                 today={todayInTunis()}
               />
               <RemainingSummary totalDue={sale.totalDue} paidAmount={sale.paidAmount} />
+            </section>
+          ) : null}
+
+          {invoiced ? (
+            <section className="admin-card">
+              <h2>Primes liées à cette vente</h2>
+              <CommissionLines
+                entries={commissions}
+                empty="Aucune prime : elle sera calculée quand la vente sera entièrement payée."
+              />
+              <RecalculateCommissionButton reference={sale.reference} orderId={sale.id} />
             </section>
           ) : null}
 

@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getProductsBySkus } from '@/lib/products'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import { getClient } from '@/lib/conseiller/clients'
+import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
 import {
   BOUTIQUE_ADDRESS,
   TIMBRE_FISCAL,
@@ -779,6 +780,10 @@ export async function recordInstallmentPayment(
     installment.orders.reference,
     installment.orders.advisor_id,
   )
+
+  // Fully paid now — or no longer: the commission engine settles either
+  // way (phase 3, migration 0015).
+  await reconcileSaleCommission(installment.order_id, actor.id)
 }
 
 /** Undoes a payment recorded by mistake. Logged like everything else. */
@@ -810,6 +815,10 @@ export async function undoInstallmentPayment(installmentId: string, actor: Actor
     installment.orders.reference,
     installment.orders.advisor_id,
   )
+
+  // Fully paid now — or no longer: the commission engine settles either
+  // way (phase 3, migration 0015).
+  await reconcileSaleCommission(installment.order_id, actor.id)
 }
 
 /**
@@ -914,4 +923,7 @@ export async function cancelSale(reference: string, reason: string, actor: Actor
     entityId: reference,
     details: { motif: reason, statutPrecedent: sale.sale_status },
   })
+
+  // A cancelled sale earns nothing: any commission it had is clawed back.
+  await reconcileSaleCommission(sale.id, actor.id)
 }

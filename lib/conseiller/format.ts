@@ -80,6 +80,11 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   'vente.echeancier_revise': 'Échéancier révisé',
   'vente.payee': 'Vente soldée',
   'vente.annulee': 'Vente annulée',
+  'remuneration.regle_modifiee': 'Montants de rémunération modifiés',
+  'remuneration.ajustement': 'Ajustement de rémunération',
+  'remuneration.periode_cloturee': 'Mois de rémunération clôturé',
+  'remuneration.versement': 'Rémunération versée',
+  'remuneration.versement_annule': 'Versement annulé',
 }
 
 export function activityLabel(action: string): string {
@@ -345,4 +350,92 @@ export type SaleDetail = SaleListItem & {
   }
   items: SaleLine[]
   installments: Installment[]
+}
+
+// ---------- REMUNERATION ----------
+
+export type CommissionKind = 'vente' | 'recrutement' | 'challenge' | 'ajustement' | 'report'
+
+export const COMMISSION_KIND_LABELS: Record<CommissionKind, string> = {
+  vente: 'Prime de vente',
+  recrutement: 'Bonus de recrutement',
+  challenge: 'Challenge',
+  ajustement: 'Ajustement',
+  report: 'Report',
+}
+
+export const PAYOUT_METHODS = ['virement', 'especes', 'cheque'] as const
+export type PayoutMethod = (typeof PAYOUT_METHODS)[number]
+
+export const PAYOUT_METHOD_LABELS: Record<PayoutMethod, string> = {
+  virement: 'Virement',
+  especes: 'Espèces',
+  cheque: 'Chèque',
+}
+
+export type CommissionEntry = {
+  id: number
+  advisorId: string
+  month: string
+  kind: CommissionKind
+  amount: number
+  eventDate: string
+  label: string
+  orderReference: string | null
+  createdAt: string
+}
+
+export type CommissionRule = {
+  id: string
+  gradeId: string
+  gradeName: string
+  gradeRank: number
+  robotSaleBonus: number
+  recruitmentBonus: number
+  effectiveFrom: string
+}
+
+export type PeriodSummary = {
+  month: string
+  status: 'ouverte' | 'cloturee'
+  closedAt: string | null
+  payday: string
+  total: number
+  /** Advisors with a positive balance to pay this month. */
+  advisorCount: number
+  paidCount: number
+  paidTotal: number
+}
+
+export type PeriodAdvisorTotal = {
+  advisorId: string
+  advisorName: string
+  telephone: string
+  byKind: Partial<Record<CommissionKind, number>>
+  total: number
+  payout: {
+    amount: number
+    paidAt: string
+    method: PayoutMethod | null
+    reference: string | null
+  } | null
+}
+
+const monthFormatter = new Intl.DateTimeFormat('fr-FR', {
+  month: 'long',
+  year: 'numeric',
+  timeZone: 'UTC',
+})
+
+/** '2026-09-01' → 'septembre 2026'. */
+export function formatMonth(month: string): string {
+  return monthFormatter.format(new Date(`${month.slice(0, 10)}T12:00:00Z`))
+}
+
+/** Signed dinars with millimes: '+450,000 TND', '−450,000 TND'. */
+export function formatAmount(amount: number, signed = false): string {
+  const [whole, decimals] = Math.abs(amount).toFixed(3).split('.')
+  const spaced = whole.replace(/\B(?=(\d{3})+(?!\d))/g, ' ')
+  const sign = amount < 0 ? '−' : signed && amount > 0 ? '+' : ''
+  return `${sign}${spaced},${decimals} TND`
 }

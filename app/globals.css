@@ -3597,6 +3597,94 @@ footer {
   line-height: 1.6;
 }
 
+/* ---------- Remuneration (phase 3) ---------- */
+
+.admin-table th.advisor-num,
+.admin-table td.advisor-num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+.advisor-negative {
+  color: #b6392f;
+}
+.advisor-capitalize {
+  text-transform: capitalize;
+}
+.admin-table tfoot td {
+  padding: 14px 16px;
+  border-top: 2px solid var(--border);
+  background: var(--surface);
+}
+.advisor-two-columns {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 24px;
+  margin-top: 40px;
+  align-items: start;
+}
+.advisor-section-gap {
+  margin-top: 28px;
+}
+.advisor-payout-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.advisor-payout-form input,
+.advisor-payout-form select {
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 7px 10px;
+  font-size: 12px;
+  font-family: inherit;
+}
+.advisor-payout-form .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+.advisor-payout-done {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+}
+.advisor-recalc {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.advisor-month-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.advisor-month-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+.advisor-month-list li:first-child {
+  border-top: 0;
+}
+.advisor-month-list a {
+  display: grid;
+  gap: 2px;
+  color: var(--ink);
+}
+.advisor-month-list li.active a span {
+  color: var(--brand-green);
+  font-weight: 700;
+}
+
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
    than hand a 1280px laptop a hamburger, tighten the row until it fits —
    smaller gaps, tighter CTA padding, slightly smaller type. Everything
@@ -3907,6 +3995,9 @@ footer {
   .advisor-tree ul {
     margin-left: 6px;
     padding-left: 12px;
+  }
+  .advisor-two-columns {
+    grid-template-columns: 1fr;
   }
   .advisor-lines li {
     grid-template-columns: minmax(0, 1fr) auto;

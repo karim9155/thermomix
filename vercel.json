@@ -3,6 +3,10 @@
     {
       "path": "/api/keepalive",
       "schedule": "0 6 * * 1,4"
+    },
+    {
+      "path": "/api/cron/remuneration",
+      "schedule": "30 3 * * *"
     }
   ]
 }
