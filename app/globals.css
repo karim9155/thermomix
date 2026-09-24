@@ -3936,6 +3936,82 @@ li.ranking-me {
   margin-right: 4px;
 }
 
+/* ---------- Workshops (phase 6) ---------- */
+
+.advisor-stat-grid-5 {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+.workshop-report p {
+  font-size: 13px;
+  line-height: 1.7;
+  white-space: pre-line;
+  margin: 8px 0 0;
+}
+.workshop-calendar {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 20px;
+}
+.workshop-calendar-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  margin-bottom: 16px;
+  font-size: 15px;
+}
+.workshop-calendar-head .outline-button {
+  display: inline-flex;
+  align-items: center;
+}
+.workshop-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 4px;
+}
+.workshop-calendar-weekday {
+  text-align: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  padding-bottom: 6px;
+}
+.workshop-calendar-day {
+  min-height: 92px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  min-width: 0;
+}
+.workshop-calendar-day.is-empty {
+  border-color: transparent;
+  background: var(--surface);
+}
+.workshop-calendar-day.is-today {
+  border-color: var(--brand-green);
+  box-shadow: inset 0 0 0 1px var(--brand-green);
+}
+.workshop-calendar-number {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+}
+.workshop-calendar-event {
+  display: block;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 6px;
+  border-radius: 5px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
    than hand a 1280px laptop a hamburger, tighten the row until it fits —
    smaller gaps, tighter CTA padding, slightly smaller type. Everything
@@ -4255,6 +4331,21 @@ li.ranking-me {
   }
   .challenge-banner {
     aspect-ratio: 16 / 9;
+  }
+  .advisor-stat-grid-5 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  /* A 7-column month is unreadable at phone width; the list below the
+     calendar carries the same information. The grid scrolls instead. */
+  .workshop-calendar {
+    overflow-x: auto;
+    padding: 12px;
+  }
+  .workshop-calendar-grid {
+    min-width: 640px;
+  }
+  .workshop-calendar-day {
+    min-height: 70px;
   }
   .advisor-share-buttons a {
     flex: 1 1 auto;

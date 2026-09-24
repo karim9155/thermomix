@@ -4,6 +4,7 @@ import { getProductsBySkus } from '@/lib/products'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import { getClient } from '@/lib/conseiller/clients'
 import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
+import { assertWorkshopOwner } from '@/lib/conseiller/workshops'
 import {
   BOUTIQUE_ADDRESS,
   TIMBRE_FISCAL,
@@ -151,6 +152,7 @@ type SaleRow = {
   installment_count: number
   delivery_method: string
   delivery_status: string
+  workshop_id: string | null
   notes: string | null
   refusal_reason: string | null
   cancel_reason: string | null
@@ -190,7 +192,7 @@ type SaleRow = {
 
 const SALE_SELECT = `
   id, reference, sale_status, advisor_id, client_id, installment_count,
-  delivery_method, delivery_status, notes, refusal_reason, cancel_reason,
+  delivery_method, delivery_status, workshop_id, notes, refusal_reason, cancel_reason,
   subtotal_ht, total_tva, total_ttc, timbre_fiscal, delivery_fee,
   created_at, submitted_at, invoiced_at, paid_at, cancelled_at,
   client:clients!orders_client_id_fkey ( id, prenom, nom, telephone, email, adresse, ville, gouvernorat, user_id ),
@@ -247,7 +249,7 @@ function mapListItem(row: SaleRow, today: string): SaleListItem {
  * draft is the advisor's private work until it is submitted.
  */
 export async function listSales(
-  options: { advisorId?: string; clientId?: string } = {},
+  options: { advisorId?: string; clientId?: string; workshopId?: string } = {},
 ): Promise<SaleListItem[]> {
   const supabase = createAdminClient()
 
@@ -263,6 +265,7 @@ export async function listSales(
     query = query.neq('sale_status', 'brouillon')
   }
   if (options.clientId) query = query.eq('client_id', options.clientId)
+  if (options.workshopId) query = query.eq('workshop_id', options.workshopId)
 
   const { data, error } = await query
   if (error) throw new Error(`Impossible de charger les bons de commande : ${error.message}`)
@@ -304,6 +307,7 @@ export async function getSale(
   return {
     ...mapListItem(row, today),
     id: row.id,
+    workshopId: row.workshop_id,
     deliveryMethod: row.delivery_method === 'boutique' ? 'boutique' : 'domicile',
     deliveryStatus: row.delivery_status,
     notes: row.notes,
@@ -374,6 +378,8 @@ export async function saveDraft(
     )
   }
 
+  if (values.workshopId) await assertWorkshopOwner(advisorId, values.workshopId)
+
   const priced = await priceItems(values.items, { checkStock: submit })
   const address =
     values.deliveryMethod === 'boutique'
@@ -392,6 +398,7 @@ export async function saveDraft(
     email: client.email,
     ...address,
     delivery_method: values.deliveryMethod,
+    workshop_id: values.workshopId || null,
     notes: values.notes || null,
     installment_count: values.installmentCount,
     payment_method: values.installmentCount > 1 ? 'echelonne' : 'comptant',

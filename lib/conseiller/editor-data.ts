@@ -1,6 +1,11 @@
 import type { Product } from '@/lib/product-format'
 import type { ClientListItem } from '@/lib/conseiller/format'
-import type { EditorClient, EditorProduct } from '@/components/conseiller/order-form-editor'
+import type {
+  EditorClient,
+  EditorProduct,
+  EditorWorkshop,
+} from '@/components/conseiller/order-form-editor'
+import { dateFormatter } from '@/lib/conseiller/format'
 
 // Trims catalog and client records down to what the order-form editor
 // needs, so the page doesn't ship full descriptions and image lists to
@@ -23,4 +28,13 @@ export function toEditorClients(clients: ClientListItem[]): EditorClient[] {
       hasAddress: client.hasAddress,
     }))
     .sort((a, b) => a.name.localeCompare(b.name, 'fr'))
+}
+
+export function toEditorWorkshops(
+  workshops: { id: string; scheduledAt: string; label: string }[],
+): EditorWorkshop[] {
+  return workshops.map((workshop) => ({
+    id: workshop.id,
+    name: `Atelier du ${dateFormatter.format(new Date(workshop.scheduledAt))} — ${workshop.label}`,
+  }))
 }

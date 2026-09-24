@@ -20,6 +20,11 @@ export type EditorClient = {
   hasAddress: boolean
 }
 
+export type EditorWorkshop = {
+  id: string
+  name: string
+}
+
 /**
  * Order-form editor (D1, D3–D6). Prices shown here are a preview only:
  * the browser sends SKUs and quantities, and the server re-prices from
@@ -30,11 +35,13 @@ export function OrderFormEditor({
   reference,
   products,
   clients,
+  workshops = [],
   initial,
 }: {
   reference: string | null
   products: EditorProduct[]
   clients: EditorClient[]
+  workshops?: EditorWorkshop[]
   initial: OrderFormValues
 }) {
   const [clientId, setClientId] = useState(initial.clientId)
@@ -42,6 +49,7 @@ export function OrderFormEditor({
   const [deliveryMethod, setDeliveryMethod] = useState(initial.deliveryMethod)
   const [installmentCount, setInstallmentCount] = useState(initial.installmentCount)
   const [notes, setNotes] = useState(initial.notes ?? '')
+  const [workshopId, setWorkshopId] = useState(initial.workshopId ?? '')
   const [toAdd, setToAdd] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [confirmSubmit, setConfirmSubmit] = useState(false)
@@ -80,7 +88,7 @@ export function OrderFormEditor({
       // On success the action redirects, so a result only ever means an error.
       const result = await saveOrderFormAction(
         reference,
-        { clientId, items: lines, deliveryMethod, installmentCount, notes },
+        { clientId, items: lines, deliveryMethod, installmentCount, notes, workshopId },
         submit,
       )
       if (result?.error) setError(result.error)
@@ -204,6 +212,19 @@ export function OrderFormEditor({
                 ))}
               </select>
             </label>
+            {workshops.length > 0 ? (
+              <label className="wide">
+                Vente issue d&apos;un atelier (facultatif)
+                <select value={workshopId} onChange={(event) => setWorkshopId(event.target.value)}>
+                  <option value="">Aucun</option>
+                  {workshops.map((workshop) => (
+                    <option key={workshop.id} value={workshop.id}>
+                      {workshop.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
             <label className="wide">
               Notes pour l&apos;administration (facultatif)
               <textarea rows={3} value={notes} onChange={(event) => setNotes(event.target.value)} />

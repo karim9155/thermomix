@@ -4,20 +4,22 @@ import { requireAdvisorPage } from '@/lib/conseiller/guard'
 import { listClients } from '@/lib/conseiller/clients'
 import { getAllProducts } from '@/lib/products'
 import { OrderFormEditor } from '@/components/conseiller/order-form-editor'
-import { toEditorClients, toEditorProducts } from '@/lib/conseiller/editor-data'
+import { toEditorClients, toEditorProducts, toEditorWorkshops } from '@/lib/conseiller/editor-data'
+import { listLinkableWorkshops } from '@/lib/conseiller/workshops'
 
 export const metadata = { title: 'Nouveau bon de commande' }
 
 export default async function NouveauBonPage({
   searchParams,
 }: {
-  searchParams: Promise<{ client?: string }>
+  searchParams: Promise<{ client?: string; atelier?: string }>
 }) {
   const advisor = await requireAdvisorPage()
-  const [{ client }, clients, products] = await Promise.all([
+  const [{ client, atelier }, clients, products, workshops] = await Promise.all([
     searchParams,
     listClients({ advisorId: advisor.id }),
     getAllProducts(),
+    listLinkableWorkshops(advisor.id),
   ])
 
   // Only preselect a client that is actually this advisor's.
@@ -33,7 +35,9 @@ export default async function NouveauBonPage({
         reference={null}
         products={toEditorProducts(products)}
         clients={toEditorClients(clients)}
+        workshops={toEditorWorkshops(workshops)}
         initial={{
+          workshopId: workshops.some((entry) => entry.id === atelier) ? atelier! : '',
           clientId: preselected,
           items: [],
           deliveryMethod: 'domicile',

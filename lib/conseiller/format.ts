@@ -100,6 +100,11 @@ export const ACTIVITY_LABELS: Record<string, string> = {
   'challenge.supprime': 'Challenge supprimé',
   'challenge.cloture': 'Challenge clôturé',
   'challenge.gagne': 'Challenge gagné',
+  'atelier.planifie': 'Atelier planifié',
+  'atelier.modifie': 'Atelier modifié',
+  'atelier.annule': 'Atelier annulé',
+  'atelier.effectue': 'Atelier effectué (rapport saisi)',
+  'atelier.rapport_modifie': "Rapport d'atelier modifié",
 }
 
 export function activityLabel(action: string): string {
@@ -176,10 +181,14 @@ export const passwordSchema = z
     message: 'Les deux mots de passe ne correspondent pas.',
   })
 
+// Pinned to Tunis time: the server runs in UTC (Vercel), and without a
+// time zone every time shown would be an hour early — a 10:00 workshop
+// displayed as 09:00. hourCycle h23: fr-TN otherwise writes "06:30 PM".
 export const dateFormatter = new Intl.DateTimeFormat('fr-TN', {
   day: '2-digit',
   month: '2-digit',
   year: 'numeric',
+  timeZone: 'Africa/Tunis',
 })
 
 export const dateTimeFormatter = new Intl.DateTimeFormat('fr-TN', {
@@ -188,6 +197,8 @@ export const dateTimeFormatter = new Intl.DateTimeFormat('fr-TN', {
   year: 'numeric',
   hour: '2-digit',
   minute: '2-digit',
+  hourCycle: 'h23',
+  timeZone: 'Africa/Tunis',
 })
 
 // ---------- CLIENTS ----------
@@ -310,6 +321,9 @@ export const orderFormSchema = z.object({
   deliveryMethod: z.enum(['domicile', 'boutique']),
   installmentCount: z.number().int().min(1).max(5),
   notes: z.string().trim().max(1000, 'Note trop longue.').optional().or(z.literal('')),
+  // The workshop this sale came out of, if any (E5). Ownership is checked
+  // server-side, like the client's.
+  workshopId: z.uuid().optional().or(z.literal('')),
 })
 
 export type OrderFormValues = z.infer<typeof orderFormSchema>
@@ -340,6 +354,7 @@ export type SaleLine = {
 
 export type SaleDetail = SaleListItem & {
   id: string
+  workshopId: string | null
   deliveryMethod: 'domicile' | 'boutique'
   deliveryStatus: string
   notes: string | null
@@ -603,3 +618,95 @@ export const challengeSchema = z
   })
 
 export type ChallengeFormValues = z.infer<typeof challengeSchema>
+
+// ---------- WORKSHOPS (phase 6) ----------
+
+export type WorkshopStatus = 'planifie' | 'effectue' | 'annule'
+
+export const WORKSHOP_STATUS_LABELS: Record<WorkshopStatus, string> = {
+  planifie: 'Planifié',
+  effectue: 'Effectué',
+  annule: 'Annulé',
+}
+
+export const WORKSHOP_STATUS_CLASS: Record<WorkshopStatus, string> = {
+  planifie: 'badge-blue',
+  effectue: 'badge-green',
+  annule: 'badge-red',
+}
+
+export type Workshop = {
+  id: string
+  advisorId: string
+  advisorName: string
+  hostClientId: string | null
+  hostName: string | null
+  scheduledAt: string
+  location: string
+  gouvernorat: string
+  invitedCount: number
+  notes: string | null
+  status: WorkshopStatus
+  cancelReason: string | null
+  attendeesCount: number | null
+  contactsCount: number | null
+  feedback: string | null
+  observations: string | null
+  reportedAt: string | null
+  /** Invoiced (not cancelled) order forms linked to this workshop (E5). */
+  salesCount: number
+  salesTotal: number
+}
+
+/**
+ * A <input type="datetime-local"> value is a wall-clock time with no zone.
+ * The shop is in Tunis, UTC+1 all year, so the offset is fixed.
+ */
+export function tunisLocalToIso(value: string): string {
+  return `${value}:00+01:00`
+}
+
+/** The reverse, for prefilling an input: an instant shown in Tunis time. */
+export function isoToTunisLocal(iso: string): string {
+  const parts = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Africa/Tunis',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    hourCycle: 'h23',
+  }).formatToParts(new Date(iso))
+  const get = (type: string) => parts.find((part) => part.type === type)?.value ?? '00'
+  return `${get('year')}-${get('month')}-${get('day')}T${get('hour')}:${get('minute')}`
+}
+
+const smallCount = (label: string) =>
+  z
+    .string()
+    .trim()
+    .refine((value) => value === '' || /^\d{1,4}$/.test(value), `${label} invalide.`)
+    .transform((value) => (value === '' ? 0 : Number(value)))
+
+export const workshopSchema = z.object({
+  hostClientId: z.uuid().or(z.literal('')),
+  scheduledAt: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/, 'Date et heure invalides.'),
+  location: z.string().trim().min(3, 'Indiquez le lieu.').max(200, 'Lieu trop long.'),
+  gouvernorat: regionField,
+  invitedCount: smallCount("Nombre d'invités"),
+  notes: z.string().trim().max(1000, 'Notes trop longues.').optional().or(z.literal('')),
+})
+
+export type WorkshopFormValues = z.infer<typeof workshopSchema>
+
+/** The report written once the workshop took place (E4). */
+export const workshopReportSchema = z.object({
+  attendeesCount: smallCount('Nombre de présents'),
+  contactsCount: smallCount('Nombre de contacts'),
+  feedback: z.string().trim().max(2000, 'Texte trop long.').optional().or(z.literal('')),
+  observations: z.string().trim().max(2000, 'Texte trop long.').optional().or(z.literal('')),
+})
+
+export type WorkshopReportValues = z.infer<typeof workshopReportSchema>

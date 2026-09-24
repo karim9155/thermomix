@@ -7,7 +7,8 @@ import { listClients } from '@/lib/conseiller/clients'
 import { listActivity } from '@/lib/conseiller/activity'
 import { getAllProducts } from '@/lib/products'
 import { dateTimeFormatter, installmentCountLabel } from '@/lib/conseiller/format'
-import { toEditorClients, toEditorProducts } from '@/lib/conseiller/editor-data'
+import { toEditorClients, toEditorProducts, toEditorWorkshops } from '@/lib/conseiller/editor-data'
+import { listLinkableWorkshops } from '@/lib/conseiller/workshops'
 import { SaleStatusBadge } from '@/components/conseiller/badges'
 import { SaleLinesTable, ScheduleTable } from '@/components/conseiller/sale-summary'
 import { ActivityFeed } from '@/components/conseiller/activity-feed'
@@ -29,9 +30,10 @@ export default async function VentePage({ params }: { params: Promise<{ referenc
   if (!sale) notFound()
 
   if (sale.saleStatus === 'brouillon') {
-    const [clients, products] = await Promise.all([
+    const [clients, products, workshops] = await Promise.all([
       listClients({ advisorId: advisor.id }),
       getAllProducts(),
+      listLinkableWorkshops(advisor.id),
     ])
 
     return (
@@ -58,7 +60,9 @@ export default async function VentePage({ params }: { params: Promise<{ referenc
           reference={sale.reference}
           products={toEditorProducts(products)}
           clients={toEditorClients(clients)}
+          workshops={toEditorWorkshops(workshops)}
           initial={{
+            workshopId: sale.workshopId ?? '',
             clientId: sale.clientId,
             items: sale.items.map((item) => ({ sku: item.sku, quantity: item.quantity })),
             deliveryMethod: sale.deliveryMethod,

@@ -8,6 +8,7 @@ import {
   Link2,
   LogOut,
   Network,
+  Presentation,
   Trophy,
   UserRound,
 } from 'lucide-react'
@@ -17,6 +18,7 @@ const NAV_ITEMS = [
   { href: '/conseiller', label: 'Tableau de bord', Icon: LayoutDashboard },
   { href: '/conseiller/ventes', label: 'Ventes', Icon: FileText },
   { href: '/conseiller/clients', label: 'Clients', Icon: Contact },
+  { href: '/conseiller/ateliers', label: 'Ateliers', Icon: Presentation },
   { href: '/conseiller/remuneration', label: 'Rémunération', Icon: Coins },
   { href: '/conseiller/parrainage', label: 'Parrainage', Icon: Link2 },
   { href: '/conseiller/challenges', label: 'Challenges', Icon: Trophy },
