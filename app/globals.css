@@ -3155,6 +3155,280 @@ footer {
 }
 
 
+/* ============================================================
+   CONSEILLERS — admin pages and the /conseiller area
+   Both reuse the admin shell, cards and tables; only what those
+   don't already cover lives here.
+   ============================================================ */
+
+.advisor-narrow-page {
+  max-width: 820px;
+}
+.advisor-subnav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+.advisor-pending-count {
+  background: #fdf1dc;
+  color: #92660c;
+}
+.advisor-table-sub {
+  font-size: 12px;
+  margin-top: 2px;
+}
+.advisor-heading-meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+}
+.advisor-facts {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.advisor-subheading {
+  font-size: 13px;
+  margin: 28px 0 12px;
+}
+.advisor-help {
+  font-size: 12px;
+  line-height: 1.6;
+  margin: 0 0 16px;
+}
+.advisor-card-gap {
+  margin-bottom: 8px;
+}
+.advisor-first-section {
+  margin-top: 0;
+}
+.advisor-first-section h2,
+.admin-section > h2 {
+  font-size: 16px;
+  margin: 0 0 16px;
+}
+
+/* Forms: .form-grid gives the fields; these add the spacing between the
+   grid and its action row, which the checkout form never needed. */
+.advisor-stack-form {
+  display: grid;
+  gap: 18px;
+}
+.advisor-stack-form .admin-form-actions.wide {
+  grid-column: 1 / -1;
+}
+.advisor-form-error {
+  margin: 18px 0 0;
+}
+.advisor-form-actions {
+  margin-top: 24px;
+  gap: 16px;
+}
+.advisor-inline-form {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-top: 18px;
+}
+.advisor-inline-form select,
+.advisor-inline-form input {
+  border: 1px solid #d7dcda;
+  border-radius: 999px;
+  padding: 10px 16px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--white);
+  min-width: 200px;
+}
+.advisor-inline-form .field-error {
+  flex-basis: 100%;
+  margin: 0;
+}
+
+/* Account buttons in the detail heading. */
+.advisor-controls {
+  display: grid;
+  gap: 12px;
+  justify-items: end;
+  max-width: 560px;
+}
+.advisor-control-buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: flex-end;
+}
+.advisor-control-buttons .outline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.advisor-suspend-button {
+  color: #b6392f;
+  border-color: #f3c3bd;
+}
+
+/* The one-time access link, after an invite or a reset. */
+.advisor-access-notice {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 18px;
+  display: grid;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+}
+.advisor-access-notice p {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 700;
+}
+.advisor-access-notice small {
+  color: var(--muted);
+  font-size: 11px;
+}
+.advisor-link-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.advisor-link-box code {
+  flex: 1;
+  min-width: 0;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  padding: 9px 12px;
+  font-size: 11px;
+  overflow-wrap: anywhere;
+}
+.advisor-copy-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  flex-shrink: 0;
+  padding: 9px 14px;
+  font-size: 12px;
+}
+.advisor-after-create {
+  margin-top: 20px;
+}
+
+.advisor-code {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  background: var(--surface);
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+}
+.advisor-code-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+  color: var(--brand-green);
+}
+.advisor-code-large {
+  font-size: 20px;
+  padding: 8px 14px;
+  color: var(--ink);
+}
+
+.advisor-simple-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 10px;
+}
+.advisor-simple-list li {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 13px;
+}
+
+/* Organigramme: nested lists with a guide line per level. */
+.advisor-tree,
+.advisor-tree ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.advisor-tree ul {
+  margin-left: 14px;
+  padding-left: 18px;
+  border-left: 2px solid var(--border);
+}
+.advisor-tree li {
+  padding: 6px 0;
+}
+.advisor-tree-node {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 13px;
+}
+
+/* Candidatures */
+.advisor-application-list {
+  display: grid;
+  gap: 16px;
+}
+.advisor-application-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+.advisor-application-head > div {
+  display: grid;
+  gap: 4px;
+}
+.advisor-application-head span {
+  font-size: 12px;
+}
+.advisor-application-facts {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+/* Advisor area */
+.advisor-stat-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+.advisor-cta {
+  justify-content: center;
+}
+.advisor-login-intro {
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.6;
+  margin: -12px 0 22px;
+}
+.advisor-notice {
+  margin: 0;
+}
+.advisor-success {
+  background: #e1f6ea;
+  border-radius: 12px;
+  padding: 16px 20px;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--brand-green-dark);
+}
+.advisor-success p {
+  margin: 0;
+}
+
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
    than hand a 1280px laptop a hamburger, tighten the row until it fits —
    smaller gaps, tighter CTA padding, slightly smaller type. Everything
@@ -3435,6 +3709,38 @@ footer {
 }
 
 @media (max-width: 760px) {
+  /* ---------- CONSEILLERS ---------- */
+  .advisor-facts,
+  .advisor-application-facts {
+    grid-template-columns: 1fr;
+  }
+  .advisor-stat-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .advisor-controls,
+  .advisor-control-buttons {
+    justify-items: stretch;
+    justify-content: flex-start;
+    max-width: none;
+    width: 100%;
+  }
+  .advisor-link-box {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .advisor-inline-form select,
+  .advisor-inline-form input {
+    min-width: 0;
+    width: 100%;
+  }
+  .advisor-application-head {
+    flex-direction: column;
+  }
+  .advisor-tree ul {
+    margin-left: 6px;
+    padding-left: 12px;
+  }
+
   /* Header stays a single row at every width now: brand on the left, icons
      and burger on the right, with the links themselves in the drawer.
 

@@ -25,7 +25,7 @@ function getSiteUrl(): string {
  * interpolated value is escaped. Without this a name containing a tag
  * would break the markup — or worse, in a mail client that renders it.
  */
-function esc(value: string | null | undefined): string {
+export function esc(value: string | null | undefined): string {
   return String(value ?? '')
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -77,7 +77,7 @@ function totalsBlock(order: Order): string {
     </table>`
 }
 
-function shell(inner: string): string {
+export function shell(inner: string): string {
   return `<div style="font-family:Helvetica,Arial,sans-serif;color:#1f2328;max-width:600px;margin:0 auto;padding:28px">${inner}</div>`
 }
 
@@ -185,9 +185,9 @@ function renderAdminHtml(order: Order): string {
  * address on a domain verified there, so this must stay on inocasa.tn —
  * pointing it elsewhere makes every send fail with a 403.
  */
-const FROM = process.env.RESEND_FROM_EMAIL ?? 'INOCASA <commandes@inocasa.tn>'
+export const FROM = process.env.RESEND_FROM_EMAIL ?? 'INOCASA <commandes@inocasa.tn>'
 
-function getResend(): Resend | null {
+export function getResend(): Resend | null {
   const apiKey = process.env.RESEND_API_KEY
 
   if (!apiKey) return null
