@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowRight, Award, Link2, UserPlus, Users } from 'lucide-react'
+import { ArrowRight, Coins, Link2, ShoppingBag, UserPlus, Wallet } from 'lucide-react'
 import { requireAdvisorPage } from '@/lib/conseiller/guard'
 import { getAdvisorDetail, listApplications } from '@/lib/conseiller/network'
 import { listActivity } from '@/lib/conseiller/activity'
@@ -8,6 +8,8 @@ import { ActivityFeed } from '@/components/conseiller/activity-feed'
 import { GradeProgressCard } from '@/components/conseiller/grade-progress'
 import { getGradeProgress } from '@/lib/conseiller/grades'
 import { todayInTunis } from '@/lib/conseiller/sales'
+import { getAdvisorSnapshot } from '@/lib/conseiller/stats'
+import { formatAmount } from '@/lib/conseiller/format'
 
 export const metadata = { title: 'Tableau de bord' }
 
@@ -15,11 +17,13 @@ export default async function ConseillerDashboardPage() {
   const session = await requireAdvisorPage()
 
   // Always the signed-in advisor's own id, from the guard — never the URL.
-  const [advisor, applications, activity, progress] = await Promise.all([
+  const today = todayInTunis()
+  const [advisor, applications, activity, progress, snapshot] = await Promise.all([
     getAdvisorDetail(session.id),
     listApplications({ sponsorId: session.id }),
     listActivity({ advisorId: session.id, limit: 10 }),
-    getGradeProgress(session.id, todayInTunis()),
+    getGradeProgress(session.id, today),
+    getAdvisorSnapshot(session.id, today),
   ])
 
   if (!advisor) notFound()
@@ -30,21 +34,32 @@ export default async function ConseillerDashboardPage() {
     <div className="admin-page">
       <h1>Bonjour {advisor.prenom}</h1>
 
-      <div className="admin-stat-grid advisor-stat-grid">
+      {/* J1: this month's figures, the same definitions as the admin's
+          statistics — a sale counts once fully paid. */}
+      <div className="admin-stat-grid advisor-stat-grid-4">
         <div className="admin-stat-card">
-          <Award size={20} />
-          <strong>{advisor.gradeName}</strong>
-          <span>Mon grade</span>
+          <Wallet size={20} />
+          <strong>{formatAmount(snapshot.month.revenue)}</strong>
+          <span>Chiffre d&apos;affaires ce mois</span>
         </div>
         <div className="admin-stat-card">
-          <Users size={20} />
-          <strong>{advisor.recruits.length}</strong>
-          <span>Recrues directes</span>
+          <ShoppingBag size={20} />
+          <strong>{snapshot.month.sales}</strong>
+          <span>
+            Ventes payées ce mois{snapshot.openSales > 0 ? ` · ${snapshot.openSales} en cours` : ''}
+          </span>
+        </div>
+        <div className="admin-stat-card">
+          <Coins size={20} />
+          <strong>{formatAmount(snapshot.commissionsMonth)}</strong>
+          <span>Primes ce mois</span>
         </div>
         <div className="admin-stat-card">
           <UserPlus size={20} />
-          <strong>{pendingApplications}</strong>
-          <span>Candidatures en attente</span>
+          <strong>{advisor.recruits.length}</strong>
+          <span>
+            Recrues directes{pendingApplications > 0 ? ` · ${pendingApplications} en attente` : ''}
+          </span>
         </div>
       </div>
 

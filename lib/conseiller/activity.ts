@@ -59,6 +59,9 @@ export async function listActivity(
   options: {
     advisorId?: string
     entity?: { type: string; id: string }
+    /** ISO instants, `to` exclusive. */
+    from?: string
+    to?: string
     limit?: number
   } = {},
 ): Promise<ActivityEntry[]> {
@@ -76,6 +79,8 @@ export async function listActivity(
   if (options.entity) {
     query = query.eq('entity_type', options.entity.type).eq('entity_id', options.entity.id)
   }
+  if (options.from) query = query.gte('created_at', options.from)
+  if (options.to) query = query.lt('created_at', options.to)
 
   const { data, error } = await query
   if (error) throw new Error(error.message)

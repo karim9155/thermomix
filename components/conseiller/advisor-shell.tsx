@@ -8,6 +8,7 @@ import {
   Link2,
   LogOut,
   Network,
+  NotebookPen,
   Presentation,
   Trophy,
   UserRound,
@@ -23,6 +24,7 @@ const NAV_ITEMS = [
   { href: '/conseiller/parrainage', label: 'Parrainage', Icon: Link2 },
   { href: '/conseiller/challenges', label: 'Challenges', Icon: Trophy },
   { href: '/conseiller/reseau', label: 'Mon réseau', Icon: Network },
+  { href: '/conseiller/journal', label: 'Journal', Icon: NotebookPen },
   { href: '/conseiller/profil', label: 'Profil', Icon: UserRound },
 ]
 

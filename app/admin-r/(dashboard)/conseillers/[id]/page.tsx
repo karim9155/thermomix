@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, NotebookPen } from 'lucide-react'
 import { z } from 'zod'
 import {
   getAdvisorDetail,
@@ -10,7 +10,7 @@ import {
   subtreeIds,
 } from '@/lib/conseiller/network'
 import { listActivity } from '@/lib/conseiller/activity'
-import { dateFormatter, dateTimeFormatter } from '@/lib/conseiller/format'
+import { dateFormatter, dateTimeFormatter, formatAmount } from '@/lib/conseiller/format'
 import { AdvisorStatusBadge, ApplicationStatusBadge } from '@/components/conseiller/badges'
 import { ActivityFeed } from '@/components/conseiller/activity-feed'
 import { AdvisorAccountControls } from '@/components/admin/advisor-account-controls'
@@ -21,6 +21,8 @@ import {
 } from '@/components/admin/advisor-edit-forms'
 import { AffiliateCodeControls } from '@/components/admin/affiliate-code-controls'
 import { affiliateUrl, getAffiliateStats } from '@/lib/conseiller/affiliation'
+import { getAdvisorSnapshot } from '@/lib/conseiller/stats'
+import { todayInTunis } from '@/lib/conseiller/sales'
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
@@ -39,13 +41,14 @@ export default async function ConseillerDetailPage({
   // Anything that isn't a uuid would only reach Postgres to fail its cast.
   if (!z.uuid().safeParse(id).success) notFound()
 
-  const [advisor, grades, advisors, activity, applications, affiliate] = await Promise.all([
+  const [advisor, grades, advisors, activity, applications, affiliate, snapshot] = await Promise.all([
     getAdvisorDetail(id),
     listGrades(),
     listAdvisors(),
     listActivity({ advisorId: id, limit: 30 }),
     listApplications({ sponsorId: id }),
     getAffiliateStats(id),
+    getAdvisorSnapshot(id, todayInTunis()),
   ])
 
   if (!advisor) notFound()
@@ -79,6 +82,69 @@ export default async function ConseillerDetailPage({
 
       <div className="admin-detail-grid">
         <div className="admin-detail-main">
+          {/* J10: the advisor at a glance — sales, workshops, network, pay. */}
+          <section className="admin-card">
+            <div className="admin-section-heading">
+              <h2>Performance</h2>
+              <Link
+                href={`/admin-r/conseillers/${advisor.id}/journal`}
+                className="outline-button advisor-small-button"
+              >
+                <NotebookPen size={14} /> Journal d&apos;activité
+              </Link>
+            </div>
+            <div className="admin-table-scroll">
+              <table className="admin-table">
+                <thead>
+                  <tr>
+                    <th />
+                    <th className="advisor-num">Ce mois</th>
+                    <th className="advisor-num">90 derniers jours</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>Chiffre d&apos;affaires</td>
+                    <td className="advisor-num">{formatAmount(snapshot.month.revenue)}</td>
+                    <td className="advisor-num">{formatAmount(snapshot.quarter.revenue)}</td>
+                  </tr>
+                  <tr>
+                    <td>Ventes payées</td>
+                    <td className="advisor-num">{snapshot.month.sales}</td>
+                    <td className="advisor-num">{snapshot.quarter.sales}</td>
+                  </tr>
+                  <tr>
+                    <td>Thermomix vendus</td>
+                    <td className="advisor-num">{snapshot.month.robots}</td>
+                    <td className="advisor-num">{snapshot.quarter.robots}</td>
+                  </tr>
+                  <tr>
+                    <td>Recrues activées</td>
+                    <td className="advisor-num">{snapshot.month.recruits}</td>
+                    <td className="advisor-num">{snapshot.quarter.recruits}</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <dl className="admin-def-list advisor-facts advisor-section-gap">
+              <div>
+                <dt>Primes</dt>
+                <dd>
+                  {formatAmount(snapshot.commissionsMonth)} ce mois ·{' '}
+                  {formatAmount(snapshot.commissionsTotal)} au total ·{' '}
+                  {formatAmount(snapshot.paidOutTotal)} versées
+                </dd>
+              </div>
+              <div>
+                <dt>Activité</dt>
+                <dd>
+                  {snapshot.clients} client(s) · {snapshot.workshopsDone} atelier(s) effectué(s) ·{' '}
+                  {snapshot.openSales} vente(s) en cours
+                </dd>
+              </div>
+            </dl>
+          </section>
+
           <section className="admin-card">
             <h2>Informations</h2>
             <dl className="admin-def-list advisor-facts">

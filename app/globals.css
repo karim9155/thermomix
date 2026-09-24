@@ -4001,6 +4001,178 @@ li.ranking-me {
   font-weight: 700;
   color: var(--muted);
 }
+/* ---------- Dashboards and statistics (phase 7) ---------- */
+
+.stats-kpis {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+.stats-subtitle {
+  font-size: 16px;
+  margin: 8px 0 16px;
+}
+.stats-link-card {
+  color: var(--ink);
+  transition: border-color 0.15s ease;
+}
+.stats-link-card:hover {
+  border-color: var(--brand-green);
+}
+.period-picker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 12px;
+}
+.period-picker-range {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 10px;
+}
+.period-picker-range label {
+  display: grid;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+.period-picker-range input,
+.period-picker-range select {
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  background: var(--white);
+  color: var(--ink);
+}
+.auto-refresh {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.auto-refresh-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-green);
+}
+
+/* Bar list: a table whose middle column is a proportional bar. One hue
+   (brand green, validated), thin marks, rounded data end, recessive
+   track — the value column carries the exact figure. */
+.bar-list {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.bar-list thead th {
+  text-align: left;
+  font-size: 11px;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+  padding: 0 0 8px;
+}
+.bar-list tbody th {
+  text-align: left;
+  font-weight: 600;
+  padding: 7px 12px 7px 0;
+  white-space: nowrap;
+  width: 1%;
+}
+.bar-list td {
+  padding: 7px 0;
+}
+.bar-list td.advisor-num {
+  padding-left: 12px;
+  width: 1%;
+  white-space: nowrap;
+}
+.bar-list-track {
+  width: 100%;
+}
+.bar-list-track span {
+  display: block;
+  height: 12px;
+  border-radius: 0 4px 4px 0;
+  background: var(--brand-green);
+}
+.stats-profile {
+  margin-top: 0;
+}
+
+.journal-days {
+  display: grid;
+  gap: 14px;
+}
+.journal-day {
+  display: grid;
+  gap: 10px;
+}
+.journal-day-title {
+  text-transform: capitalize;
+  font-size: 14px;
+}
+.journal-day-title .admin-muted {
+  text-transform: none;
+  font-weight: 400;
+}
+.journal-day-summary {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}
+.journal-day details summary {
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--brand-green);
+}
+.journal-entries {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 12px;
+}
+.journal-comment {
+  margin: 0;
+  padding: 10px 14px;
+  border-left: 3px solid var(--brand-green);
+  background: var(--surface);
+  font-size: 13px;
+  line-height: 1.6;
+  white-space: pre-line;
+}
+.journal-comment-form textarea {
+  width: 100%;
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 10px 12px;
+  font-size: 13px;
+  font-family: inherit;
+  resize: vertical;
+}
+.journal-comment-actions {
+  margin-top: 8px;
+}
+.journal-summary li strong {
+  min-width: 36px;
+  font-variant-numeric: tabular-nums;
+}
+.activity-filters {
+  margin-bottom: 4px;
+}
+
 .workshop-calendar-event {
   display: block;
   font-size: 10px;
@@ -4332,8 +4504,12 @@ li.ranking-me {
   .challenge-banner {
     aspect-ratio: 16 / 9;
   }
-  .advisor-stat-grid-5 {
+  .advisor-stat-grid-5,
+  .stats-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+  .bar-list tbody th {
+    white-space: normal;
   }
   /* A 7-column month is unreadable at phone width; the list below the
      calendar carries the same information. The grid scrolls instead. */

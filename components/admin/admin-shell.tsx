@@ -1,6 +1,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import {
+  BarChart3,
   Coins,
   Contact,
   FileText,
@@ -15,6 +16,7 @@ import { logout } from '@/app/admin-r/(dashboard)/actions'
 
 const NAV_ITEMS = [
   { href: '/admin-r', label: 'Commandes', Icon: Truck },
+  { href: '/admin-r/statistiques', label: 'Statistiques', Icon: BarChart3 },
   { href: '/admin-r/produits', label: 'Produits', Icon: Package },
   { href: '/admin-r/bons-de-commande', label: 'Bons de commande', Icon: FileText },
   { href: '/admin-r/conseillers', label: 'Conseillers', Icon: Users },
