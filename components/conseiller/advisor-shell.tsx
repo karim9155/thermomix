@@ -1,12 +1,9 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import {
   Coins,
   Contact,
   FileText,
   LayoutDashboard,
   Link2,
-  LogOut,
   Network,
   NotebookPen,
   Presentation,
@@ -14,62 +11,55 @@ import {
   UserRound,
 } from 'lucide-react'
 import { advisorLogout } from '@/app/conseiller/actions'
+import { ConsoleShell, type ConsoleNavSection } from '@/components/console/console-shell'
 
-const NAV_ITEMS = [
-  { href: '/conseiller', label: 'Tableau de bord', Icon: LayoutDashboard },
-  { href: '/conseiller/ventes', label: 'Ventes', Icon: FileText },
-  { href: '/conseiller/clients', label: 'Clients', Icon: Contact },
-  { href: '/conseiller/ateliers', label: 'Ateliers', Icon: Presentation },
-  { href: '/conseiller/remuneration', label: 'Rémunération', Icon: Coins },
-  { href: '/conseiller/parrainage', label: 'Parrainage', Icon: Link2 },
-  { href: '/conseiller/challenges', label: 'Challenges', Icon: Trophy },
-  { href: '/conseiller/reseau', label: 'Mon réseau', Icon: Network },
-  { href: '/conseiller/journal', label: 'Journal', Icon: NotebookPen },
-  { href: '/conseiller/profil', label: 'Profil', Icon: UserRound },
+const ICON = { size: 18, 'aria-hidden': true } as const
+
+// The advisor area is a work console like /admin-r, not part of the shop,
+// so it shares the admin's shell. Grouped by what the advisor is doing:
+// selling, their network, and their own pay and records.
+const SECTIONS: ConsoleNavSection[] = [
+  {
+    items: [
+      { href: '/conseiller', label: 'Tableau de bord', icon: <LayoutDashboard {...ICON} />, exact: true },
+    ],
+  },
+  {
+    title: 'Vendre',
+    items: [
+      { href: '/conseiller/ventes', label: 'Ventes', icon: <FileText {...ICON} /> },
+      { href: '/conseiller/clients', label: 'Clients', icon: <Contact {...ICON} /> },
+      { href: '/conseiller/ateliers', label: 'Ateliers', icon: <Presentation {...ICON} /> },
+      { href: '/conseiller/parrainage', label: 'Parrainage', icon: <Link2 {...ICON} /> },
+    ],
+  },
+  {
+    title: 'Réseau',
+    items: [
+      { href: '/conseiller/reseau', label: 'Mon réseau', icon: <Network {...ICON} /> },
+      { href: '/conseiller/challenges', label: 'Challenges', icon: <Trophy {...ICON} /> },
+    ],
+  },
+  {
+    title: 'Moi',
+    items: [
+      { href: '/conseiller/remuneration', label: 'Rémunération', icon: <Coins {...ICON} /> },
+      { href: '/conseiller/journal', label: 'Journal', icon: <NotebookPen {...ICON} /> },
+      { href: '/conseiller/profil', label: 'Profil', icon: <UserRound {...ICON} /> },
+    ],
+  },
 ]
 
-/**
- * The advisor area is a work console like /admin-r, not part of the shop,
- * so it reuses the admin shell's layout and classes rather than the
- * storefront header. Later phases add their entries to NAV_ITEMS.
- */
 export function AdvisorShell({ name, children }: { name: string; children: React.ReactNode }) {
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
-        <Link href="/conseiller" className="admin-brand">
-          <Image
-            className="admin-brand-mark"
-            src="/inocasa-logo-icone.png"
-            alt=""
-            width={300}
-            height={300}
-            sizes="44px"
-            priority
-          />
-          INOCASA <small>Conseiller</small>
-        </Link>
-
-        <nav className="admin-nav">
-          {NAV_ITEMS.map(({ href, label, Icon }) => (
-            <Link key={href} href={href} className="admin-nav-link">
-              <Icon size={16} />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="admin-header-actions">
-          <span className="admin-user-email">{name}</span>
-          <form action={advisorLogout}>
-            <button type="submit" className="outline-button admin-logout">
-              <LogOut size={15} /> Déconnexion
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <main className="admin-main">{children}</main>
-    </div>
+    <ConsoleShell
+      brandLabel="Conseiller"
+      homeHref="/conseiller"
+      sections={SECTIONS}
+      userLabel={name}
+      logoutAction={advisorLogout}
+    >
+      {children}
+    </ConsoleShell>
   )
 }

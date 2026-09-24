@@ -26,8 +26,11 @@ const NOINDEX_HEADERS = { 'X-Robots-Tag': 'noindex' }
  * privileged access.
  */
 export async function GET(request: Request) {
+  // With CRON_SECRET unset, the expected header would be the literal
+  // "Bearer undefined" — which anyone can send. Refuse outright instead.
+  const secret = process.env.CRON_SECRET
   const authHeader = request.headers.get('authorization')
-  if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+  if (!secret || authHeader !== `Bearer ${secret}`) {
     return NextResponse.json(
       { ok: false, error: 'Unauthorized' },
       { status: 401, headers: NOINDEX_HEADERS },

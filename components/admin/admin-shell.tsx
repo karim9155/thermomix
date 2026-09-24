@@ -1,11 +1,8 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import {
   BarChart3,
   Coins,
   Contact,
   FileText,
-  LogOut,
   Package,
   Presentation,
   Trophy,
@@ -13,62 +10,53 @@ import {
   Users,
 } from 'lucide-react'
 import { logout } from '@/app/admin-r/(dashboard)/actions'
+import { ConsoleShell, type ConsoleNavSection } from '@/components/console/console-shell'
 
-const NAV_ITEMS = [
-  { href: '/admin-r', label: 'Commandes', Icon: Truck },
-  { href: '/admin-r/statistiques', label: 'Statistiques', Icon: BarChart3 },
-  { href: '/admin-r/produits', label: 'Produits', Icon: Package },
-  { href: '/admin-r/bons-de-commande', label: 'Bons de commande', Icon: FileText },
-  { href: '/admin-r/conseillers', label: 'Conseillers', Icon: Users },
-  { href: '/admin-r/clients', label: 'Clients', Icon: Contact },
-  { href: '/admin-r/remuneration', label: 'Rémunération', Icon: Coins },
-  { href: '/admin-r/challenges', label: 'Challenges', Icon: Trophy },
-  { href: '/admin-r/ateliers', label: 'Ateliers', Icon: Presentation },
+const ICON = { size: 18, 'aria-hidden': true } as const
+
+// Grouped by what the admin is doing: running the shop, then running the
+// advisor network. Icons are elements (not components) so they can be
+// handed to the client-side shell.
+const SECTIONS: ConsoleNavSection[] = [
+  {
+    items: [{ href: '/admin-r/statistiques', label: 'Statistiques', icon: <BarChart3 {...ICON} /> }],
+  },
+  {
+    title: 'Boutique',
+    items: [
+      {
+        href: '/admin-r',
+        label: 'Commandes',
+        icon: <Truck {...ICON} />,
+        exact: true,
+        alsoMatches: ['/admin-r/livraisons'],
+      },
+      { href: '/admin-r/produits', label: 'Produits', icon: <Package {...ICON} /> },
+    ],
+  },
+  {
+    title: 'Conseillers',
+    items: [
+      { href: '/admin-r/conseillers', label: 'Conseillers', icon: <Users {...ICON} /> },
+      { href: '/admin-r/bons-de-commande', label: 'Bons de commande', icon: <FileText {...ICON} /> },
+      { href: '/admin-r/clients', label: 'Clients', icon: <Contact {...ICON} /> },
+      { href: '/admin-r/ateliers', label: 'Ateliers', icon: <Presentation {...ICON} /> },
+      { href: '/admin-r/challenges', label: 'Challenges', icon: <Trophy {...ICON} /> },
+      { href: '/admin-r/remuneration', label: 'Rémunération', icon: <Coins {...ICON} /> },
+    ],
+  },
 ]
 
-export function AdminShell({
-  email,
-  children,
-}: {
-  email: string
-  children: React.ReactNode
-}) {
+export function AdminShell({ email, children }: { email: string; children: React.ReactNode }) {
   return (
-    <div className="admin-shell">
-      <header className="admin-header">
-        <Link href="/admin-r" className="admin-brand">
-          <Image
-            className="admin-brand-mark"
-            src="/inocasa-logo-icone.png"
-            alt=""
-            width={300}
-            height={300}
-            sizes="44px"
-            priority
-          />
-          INOCASA <small>Admin</small>
-        </Link>
-
-        <nav className="admin-nav">
-          {NAV_ITEMS.map(({ href, label, Icon }) => (
-            <Link key={href} href={href} className="admin-nav-link">
-              <Icon size={16} />
-              {label}
-            </Link>
-          ))}
-        </nav>
-
-        <div className="admin-header-actions">
-          <span className="admin-user-email">{email}</span>
-          <form action={logout}>
-            <button type="submit" className="outline-button admin-logout">
-              <LogOut size={15} /> Déconnexion
-            </button>
-          </form>
-        </div>
-      </header>
-
-      <main className="admin-main">{children}</main>
-    </div>
+    <ConsoleShell
+      brandLabel="Admin"
+      homeHref="/admin-r"
+      sections={SECTIONS}
+      userLabel={email}
+      logoutAction={logout}
+    >
+      {children}
+    </ConsoleShell>
   )
 }

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { getProductsBySkus } from '@/lib/products'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import { getClient } from '@/lib/conseiller/clients'
@@ -253,25 +254,28 @@ export async function listSales(
 ): Promise<SaleListItem[]> {
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from('orders')
-    .select(SALE_SELECT)
-    .eq('source', 'conseiller')
-    .order('created_at', { ascending: false })
+  const data = await fetchAll((from, to) => {
+    let query = supabase
+      .from('orders')
+      .select(SALE_SELECT)
+      .eq('source', 'conseiller')
+      .order('created_at', { ascending: false })
+      .order('id')
 
-  if (options.advisorId) {
-    query = query.eq('advisor_id', options.advisorId)
-  } else {
-    query = query.neq('sale_status', 'brouillon')
-  }
-  if (options.clientId) query = query.eq('client_id', options.clientId)
-  if (options.workshopId) query = query.eq('workshop_id', options.workshopId)
-
-  const { data, error } = await query
-  if (error) throw new Error(`Impossible de charger les bons de commande : ${error.message}`)
+    if (options.advisorId) {
+      query = query.eq('advisor_id', options.advisorId)
+    } else {
+      query = query.neq('sale_status', 'brouillon')
+    }
+    if (options.clientId) query = query.eq('client_id', options.clientId)
+    if (options.workshopId) query = query.eq('workshop_id', options.workshopId)
+    return query.range(from, to)
+  }).catch((error: Error) => {
+    throw new Error(`Impossible de charger les bons de commande : ${error.message}`)
+  })
 
   const today = todayInTunis()
-  return ((data ?? []) as unknown as SaleRow[]).map((row) => mapListItem(row, today))
+  return (data as unknown as SaleRow[]).map((row) => mapListItem(row, today))
 }
 
 /**
@@ -584,19 +588,12 @@ export async function invoiceSale(
 
   const today = todayInTunis()
 
-  // Schedule first, status second: if the status update loses a race the
-  // rows are removed again, and a sale is never `facture` without them.
-  await supabase.from('order_installments').delete().eq('order_id', sale.id)
-  const { error: scheduleError } = await supabase.from('order_installments').insert(
-    buildSchedule(totalDue, sale.installment_count, today).map((row) => ({
-      ...row,
-      order_id: sale.id,
-    })),
-  )
-  if (scheduleError) throw new Error(`Impossible de générer l'échéancier : ${scheduleError.message}`)
-
   const clientUserId = await clientAccountId(sale.client_id)
 
+  // Claim first, schedule second. The conditional update is the lock: of
+  // two admins invoicing at the same moment exactly one gets the row, and
+  // only that one writes the schedule. (The reverse order let the loser's
+  // clean-up delete the winner's schedule.)
   const { data, error } = await supabase
     .from('orders')
     .update({
@@ -610,9 +607,33 @@ export async function invoiceSale(
     .eq('sale_status', 'a_facturer')
     .select('id')
 
-  if (error || !data || data.length === 0) {
-    await supabase.from('order_installments').delete().eq('order_id', sale.id)
-    throw new Error(error?.message ?? ALREADY_PROCESSED)
+  if (error) throw new Error(error.message)
+  if (!data || data.length === 0) throw new Error(ALREADY_PROCESSED)
+
+  const { error: scheduleError } = await supabase.from('order_installments').insert(
+    buildSchedule(totalDue, sale.installment_count, today).map((row) => ({
+      ...row,
+      order_id: sale.id,
+    })),
+  )
+
+  if (scheduleError) {
+    // Never leave a sale invoiced without its schedule: hand it back to
+    // validation so the admin can simply try again.
+    await supabase
+      .from('orders')
+      .update({
+        sale_status: 'a_facturer',
+        invoiced_at: null,
+        delivery_fee: 0,
+        timbre_fiscal: 0,
+        // Order forms carry no account until invoiced (it's what shows
+        // them in the customer's /compte), so back to none.
+        user_id: null,
+      })
+      .eq('id', sale.id)
+      .eq('sale_status', 'facture')
+    throw new Error(`Impossible de générer l'échéancier : ${scheduleError.message}`)
   }
 
   await logActivity({

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { logActivity } from '@/lib/conseiller/activity'
 import {
   tunisLocalToIso,
@@ -43,18 +44,27 @@ const WORKSHOP_SELECT = `
 /** Sales that count for a workshop: invoiced and not cancelled. */
 const COUNTED = ['facture', 'partiellement_paye', 'paye']
 
-async function salesByWorkshop(ids: string[]) {
+/**
+ * Counted sales per workshop. Scoped by advisor or workshop rather than an
+ * `.in('workshop_id', [...])` list, which grows with history and would
+ * eventually exceed the request URL limit.
+ */
+async function salesByWorkshop(scope: { advisorId?: string; workshopId?: string }) {
   const totals = new Map<string, { count: number; total: number }>()
-  if (ids.length === 0) return totals
 
   const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('orders')
-    .select('workshop_id, total_ttc')
-    .in('workshop_id', ids)
-    .in('sale_status', COUNTED)
+  const data = await fetchAll((from, to) => {
+    let query = supabase
+      .from('orders')
+      .select('id, workshop_id, total_ttc')
+      .not('workshop_id', 'is', null)
+      .in('sale_status', COUNTED)
+    if (scope.advisorId) query = query.eq('advisor_id', scope.advisorId)
+    if (scope.workshopId) query = query.eq('workshop_id', scope.workshopId)
+    return query.order('id').range(from, to)
+  })
 
-  for (const row of data ?? []) {
+  for (const row of data) {
     const current = totals.get(row.workshop_id) ?? { count: 0, total: 0 }
     current.count += 1
     current.total += Number(row.total_ttc)
@@ -101,11 +111,13 @@ export async function listWorkshops(
   if (options.from) query = query.gte('scheduled_at', options.from)
   if (options.to) query = query.lt('scheduled_at', options.to)
 
-  const { data, error } = await query
+  const [{ data, error }, sales] = await Promise.all([
+    query,
+    salesByWorkshop({ advisorId: options.advisorId }),
+  ])
   if (error) throw new Error(error.message)
 
   const rows = (data ?? []) as unknown as WorkshopRow[]
-  const sales = await salesByWorkshop(rows.map((row) => row.id))
   return rows.map((row) => mapRow(row, sales.get(row.id)))
 }
 
@@ -122,7 +134,7 @@ export async function getWorkshop(
   if (error) throw new Error(error.message)
   if (!data) return undefined
 
-  const sales = await salesByWorkshop([id])
+  const sales = await salesByWorkshop({ workshopId: id })
   return mapRow(data as unknown as WorkshopRow, sales.get(id))
 }
 

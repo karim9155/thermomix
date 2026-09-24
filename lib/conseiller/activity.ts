@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import type { ActivityEntry } from '@/lib/conseiller/format'
 
 export type ActorRole = 'conseiller' | 'admin' | 'systeme'
@@ -67,38 +68,44 @@ export async function listActivity(
 ): Promise<ActivityEntry[]> {
   const supabase = createAdminClient()
 
-  let query = supabase
-    .from('activity_log')
-    .select('id, actor_role, advisor_id, action, details, created_at')
-    .order('created_at', { ascending: false })
-    .limit(options.limit ?? 50)
+  // Paged, so a limit above the API's 1000-row cap (the journal asks for
+  // 2000) is actually honoured rather than silently cut at 1000.
+  const data = await fetchAll(
+    (from, to) => {
+      let query = supabase
+        .from('activity_log')
+        .select('id, actor_role, advisor_id, action, details, created_at')
+        .order('created_at', { ascending: false })
+        .order('id', { ascending: false })
 
-  if (options.advisorId) {
-    query = query.eq('advisor_id', options.advisorId)
-  }
-  if (options.entity) {
-    query = query.eq('entity_type', options.entity.type).eq('entity_id', options.entity.id)
-  }
-  if (options.from) query = query.gte('created_at', options.from)
-  if (options.to) query = query.lt('created_at', options.to)
+      if (options.advisorId) {
+        query = query.eq('advisor_id', options.advisorId)
+      }
+      if (options.entity) {
+        query = query.eq('entity_type', options.entity.type).eq('entity_id', options.entity.id)
+      }
+      if (options.from) query = query.gte('created_at', options.from)
+      if (options.to) query = query.lt('created_at', options.to)
+      return query.range(from, to)
+    },
+    { max: options.limit ?? 50 },
+  )
 
-  const { data, error } = await query
-  if (error) throw new Error(error.message)
-
-  const rows = (data ?? []) as ActivityRow[]
+  const rows = data as ActivityRow[]
 
   // Names come from a second query rather than a join: advisor_id is not
   // a foreign key (the log outlives what it describes), so PostgREST has
   // no relationship to embed.
-  const ids = [...new Set(rows.map((row) => row.advisor_id).filter(Boolean))] as string[]
+  //
+  // All advisors rather than `.in('user_id', ids)`: the network is small,
+  // and a long id list in the URL can exceed the request length limit.
   const names = new Map<string, string>()
 
-  if (ids.length > 0) {
-    const { data: advisors } = await supabase
-      .from('advisors')
-      .select('user_id, prenom, nom')
-      .in('user_id', ids)
-    for (const advisor of advisors ?? []) {
+  if (rows.some((row) => row.advisor_id)) {
+    const advisors = await fetchAll((from, to) =>
+      supabase.from('advisors').select('user_id, prenom, nom').order('user_id').range(from, to),
+    )
+    for (const advisor of advisors) {
       names.set(advisor.user_id, `${advisor.prenom} ${advisor.nom}`)
     }
   }

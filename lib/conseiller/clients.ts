@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import {
   telephoneKey,
@@ -61,31 +62,53 @@ function mapRow(row: ClientRow, invoicedClientIds: Set<string>): ClientListItem 
   }
 }
 
-/** Ids of clients with at least one invoiced (not cancelled) sale. */
-async function invoicedClientIds(clientIds: string[]): Promise<Set<string>> {
-  if (clientIds.length === 0) return new Set()
-
+/**
+ * Ids of clients with at least one invoiced (not cancelled) sale — for one
+ * advisor, or one client, or everyone.
+ *
+ * Not an `.in('client_id', [...all ids])`: every id goes into the request
+ * URL, and a few hundred clients are enough to exceed the URL length limit
+ * and fail the whole page.
+ */
+async function invoicedClientIds(scope: { advisorId?: string; clientId?: string }): Promise<Set<string>> {
   const supabase = createAdminClient()
-  const { data } = await supabase
-    .from('orders')
-    .select('client_id')
-    .in('client_id', clientIds)
-    .in('sale_status', ['facture', 'partiellement_paye', 'paye'])
-
-  return new Set((data ?? []).map((row) => row.client_id as string))
+  const rows = await fetchAll((from, to) => {
+    // Scoped by the CLIENT's advisor (inner join), not the sale's: a
+    // client reassigned to this advisor keeps sales made under the
+    // previous one, and is still a client.
+    let query = supabase
+      .from('orders')
+      .select(
+        scope.advisorId
+          ? 'id, client_id, client:clients!orders_client_id_fkey!inner ( advisor_id )'
+          : 'id, client_id',
+      )
+      .not('client_id', 'is', null)
+      .in('sale_status', ['facture', 'partiellement_paye', 'paye'])
+    if (scope.advisorId) query = query.eq('client.advisor_id', scope.advisorId)
+    if (scope.clientId) query = query.eq('client_id', scope.clientId)
+    return query.order('id').range(from, to)
+  })
+  return new Set(rows.map((row) => (row as unknown as { client_id: string }).client_id))
 }
 
 export async function listClients(options: { advisorId?: string } = {}): Promise<ClientListItem[]> {
   const supabase = createAdminClient()
 
-  let query = supabase.from('clients').select(CLIENT_SELECT).order('created_at', { ascending: false })
-  if (options.advisorId) query = query.eq('advisor_id', options.advisorId)
+  const [data, invoiced] = await Promise.all([
+    fetchAll((from, to) => {
+      let query = supabase
+        .from('clients')
+        .select(CLIENT_SELECT)
+        .order('created_at', { ascending: false })
+        .order('id')
+      if (options.advisorId) query = query.eq('advisor_id', options.advisorId)
+      return query.range(from, to)
+    }),
+    invoicedClientIds({ advisorId: options.advisorId }),
+  ])
 
-  const { data, error } = await query
-  if (error) throw new Error(error.message)
-
-  const rows = (data ?? []) as unknown as ClientRow[]
-  const invoiced = await invoicedClientIds(rows.map((row) => row.id))
+  const rows = data as unknown as ClientRow[]
   return rows.map((row) => mapRow(row, invoiced))
 }
 
@@ -115,7 +138,7 @@ export async function getClient(
   if (!data) return undefined
 
   const row = data as unknown as ClientRow
-  const invoiced = await invoicedClientIds([row.id])
+  const invoiced = await invoicedClientIds({ clientId: row.id })
 
   return {
     ...mapRow(row, invoiced),

@@ -1944,6 +1944,16 @@ footer {
   border: 1px solid var(--border);
   padding: 44px;
 }
+/* The sign-in pages' logo (admin and advisor): the high-resolution
+   INOCASA mark, sized explicitly. width/height on <Image> only set the
+   aspect ratio — without this rule it rendered at its intrinsic size and,
+   having been fetched for a small slot, came out blurry. */
+.login-logo {
+  display: block;
+  width: 112px;
+  height: auto;
+  margin: -8px 0 16px -10px;
+}
 .admin-login-card h1 {
   font-size: 26px;
   margin: 0 0 24px;
@@ -1971,94 +1981,177 @@ footer {
   margin-top: 8px;
 }
 
-.admin-shell {
+/* ---------- CONSOLE SHELL (admin + conseiller) ----------
+   Sidebar from 1024px up; below that a top bar with a slide-in drawer.
+   The page gutter stays 18px on narrow screens because .admin-table-scroll
+   bleeds to the edge by exactly that much (see the 1150px block). */
+
+.console {
+  --console-sidebar: 256px;
   min-height: 100vh;
   background: var(--surface);
 }
-.admin-header {
-  height: 72px;
-  padding: 0 32px;
+.console-sidebar {
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 40;
+  width: var(--console-sidebar);
+  display: flex;
+  flex-direction: column;
   background: var(--charcoal);
   color: var(--white);
+}
+.console-sidebar-head {
   display: flex;
   align-items: center;
-  gap: 40px;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 18px 16px 14px 20px;
 }
-.admin-brand {
+.console-brand {
   display: flex;
   align-items: center;
   gap: 10px;
   font-weight: 700;
   font-size: 15px;
   color: var(--white);
-  flex-shrink: 0;
+  min-width: 0;
 }
-/* The real INOCASA mark, replacing the "IC" text placeholder. The artwork
-   already carries its own dark ground and padding, so it needs no
-   background or centring of its own — just the rounded corner. */
-.admin-brand-mark {
-  width: 44px;
-  height: 44px;
-  border-radius: 10px;
+.console-brand-mark {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
   object-fit: cover;
   flex-shrink: 0;
 }
-.admin-login-mark {
-  width: 64px;
-  height: 64px;
-  border-radius: 12px;
-  object-fit: cover;
-  display: block;
-  margin-bottom: 20px;
-}
-.admin-brand small {
+.console-brand small {
   color: #9aa3a7;
   font-weight: 500;
   font-size: 11px;
-  margin-left: 4px;
+  margin-left: 2px;
 }
-.admin-nav {
+.console-nav {
+  flex: 1;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 6px 12px 16px;
+}
+.console-nav-section + .console-nav-section {
+  margin-top: 14px;
+}
+.console-nav-title {
+  margin: 0 0 6px;
+  padding: 0 12px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #7f878b;
+}
+.console-nav ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 2px;
+}
+.console-nav-link {
   display: flex;
   align-items: center;
-  gap: 6px;
-  flex: 1;
-}
-.admin-nav-link {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 9px 16px;
-  border-radius: 999px;
+  gap: 12px;
+  min-height: 42px;
+  padding: 0 12px;
+  border-radius: 9px;
   color: #c3c8ca;
   font-size: 13px;
   font-weight: 600;
 }
-.admin-nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
+.console-nav-link svg {
+  flex-shrink: 0;
+  opacity: 0.8;
+}
+.console-nav-link:hover {
+  background: rgba(255, 255, 255, 0.07);
   color: var(--white);
 }
-.admin-header-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.console-nav-link.is-active {
+  background: rgba(0, 167, 88, 0.18);
+  color: var(--white);
+  box-shadow: inset 3px 0 0 var(--brand-green);
 }
-.admin-user-email {
-  color: #9aa3a7;
+.console-nav-link.is-active svg {
+  color: #4fd191;
+  opacity: 1;
+}
+.console-nav-link:focus-visible,
+.console-logout:focus-visible,
+.console-icon-button:focus-visible {
+  outline: 2px solid #4fd191;
+  outline-offset: 2px;
+}
+.console-sidebar-foot {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 14px 16px 18px;
+  display: grid;
+  gap: 10px;
+}
+.console-user {
   font-size: 12px;
+  color: #9aa3a7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
-.admin-logout {
-  border-color: #454a4d;
-  color: var(--white);
+.console-logout {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid #454a4d;
+  border-radius: 999px;
   background: transparent;
-  padding: 9px 16px;
+  color: var(--white);
+  font-size: 13px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
 }
-.admin-logout:hover {
+.console-logout:hover {
   background: rgba(255, 255, 255, 0.08);
 }
-.admin-main {
-  padding: 40px 32px 80px;
+.console-icon-button {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+.console-icon-button:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+/* Desktop: no top bar, no close button, no overlay. */
+.console-topbar,
+.console-close,
+.console-overlay {
+  display: none;
+}
+.console-main {
+  margin-left: var(--console-sidebar);
+  padding: 36px 36px 80px;
+  min-width: 0;
+}
+/* Pages keep their comfortable reading width on very wide screens. */
+.console-main > * {
   max-width: 1280px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .admin-page h1 {
@@ -4071,6 +4164,9 @@ li.ranking-me {
   width: 100%;
   border-collapse: collapse;
   font-size: 13px;
+  /* Cards break text anywhere (.admin-card), which let the label column
+     shrink to one letter on a phone. Labels here wrap between words only. */
+  overflow-wrap: normal;
 }
 .bar-list thead th {
   text-align: left;
@@ -4254,36 +4350,7 @@ li.ranking-me {
 
 @media (max-width: 1150px) {
   /* ---------- ADMIN ---------- */
-  /* The header was a fixed-height row that could not wrap, so the nav and
-     the email/logout group ran straight off the right edge — the page
-     scrolled to 950px inside a 320px viewport. It wraps here, with the
-     nav dropping onto its own line under the brand. */
-  .admin-header {
-    height: auto;
-    flex-wrap: wrap;
-    padding: 12px 18px;
-    gap: 10px 18px;
-  }
-  .admin-brand {
-    flex: 1 1 auto;
-    min-width: 0;
-  }
-  .admin-nav {
-    order: 3;
-    flex: 1 0 100%;
-    gap: 4px;
-  }
-  .admin-header-actions {
-    gap: 10px;
-    min-width: 0;
-  }
-  .admin-user-email {
-    max-width: 40vw;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-  .admin-main {
+  .console-main {
     padding: 28px 18px 64px;
   }
   /* The wrapper is edge-to-edge on narrow screens so a wide table can use
@@ -4463,6 +4530,69 @@ li.ranking-me {
   }
 }
 
+/* Console shell: below 1024px the sidebar becomes a drawer behind a top
+   bar. Its own breakpoint rather than 1150px: at 1024–1150 a 256px
+   sidebar still leaves the page ~800px, which every admin page handles. */
+@media (max-width: 1023px) {
+  .console-topbar {
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    height: 60px;
+    padding: 0 12px 0 6px;
+    background: var(--charcoal);
+    color: var(--white);
+  }
+  .console-topbar .console-brand {
+    font-size: 14px;
+  }
+  .console-sidebar {
+    width: min(300px, 86vw);
+    transform: translateX(-100%);
+    visibility: hidden;
+    transition:
+      transform 0.22s ease,
+      visibility 0s linear 0.22s;
+    box-shadow: 8px 0 30px rgba(0, 0, 0, 0.25);
+  }
+  .console-sidebar.is-open {
+    transform: translateX(0);
+    visibility: visible;
+    transition: transform 0.22s ease;
+  }
+  .console-close {
+    display: grid;
+  }
+  .console-overlay {
+    display: block;
+    position: fixed;
+    inset: 0;
+    z-index: 35;
+    background: rgba(20, 23, 25, 0.5);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.22s ease;
+  }
+  .console-overlay.is-open {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .console-main {
+    margin-left: 0;
+  }
+}
+
+@media (max-width: 1023px) and (prefers-reduced-motion: reduce) {
+  .console-sidebar,
+  .console-sidebar.is-open,
+  .console-overlay {
+    transition: none;
+  }
+}
+
 @media (max-width: 760px) {
   /* ---------- CONSEILLERS ---------- */
   .advisor-facts,
@@ -4508,8 +4638,17 @@ li.ranking-me {
   .stats-kpis {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
+  /* "17 400,000 TND" broke onto two lines in a half-width tile at 22px. */
+  .admin-stat-card strong {
+    font-size: 18px;
+    overflow-wrap: anywhere;
+  }
   .bar-list tbody th {
     white-space: normal;
+    width: 34%;
+  }
+  .bar-list thead th:first-child {
+    width: 34%;
   }
   /* A 7-column month is unreadable at phone width; the list below the
      calendar carries the same information. The grid scrolls instead. */

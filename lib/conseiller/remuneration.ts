@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import type {
   CommissionEntry,
@@ -144,13 +145,23 @@ export function paydayOf(month: Month): string {
  */
 export async function listPeriodSummaries(): Promise<PeriodSummary[]> {
   const supabase = createAdminClient()
-  const [periods, entries, payouts] = await Promise.all([
+  // The whole ledger: paged, it outgrows the API's 1000-row cap quickly.
+  const [periods, entryRows, payoutRows] = await Promise.all([
     loadPeriods(),
-    supabase.from('commission_entries').select('period_month, advisor_id, amount'),
-    supabase.from('commission_payouts').select('period_month, amount'),
+    fetchAll((from, to) =>
+      supabase.from('commission_entries').select('period_month, advisor_id, amount').order('id').range(from, to),
+    ),
+    fetchAll((from, to) =>
+      supabase
+        .from('commission_payouts')
+        .select('period_month, amount')
+        .order('period_month')
+        .order('advisor_id')
+        .range(from, to),
+    ),
   ])
-  if (entries.error) throw new Error(entries.error.message)
-  if (payouts.error) throw new Error(payouts.error.message)
+  const entries = { data: entryRows }
+  const payouts = { data: payoutRows }
 
   return periods.map((period) => {
     const byAdvisor = new Map<string, number>()
@@ -182,14 +193,22 @@ export async function getPeriodAdvisorTotals(month: Month): Promise<{
   const supabase = createAdminClient()
   const [period, entries, payouts, advisors] = await Promise.all([
     supabase.from('commission_periods').select('status').eq('month', month).maybeSingle(),
-    supabase.from('commission_entries').select('advisor_id, kind, amount').eq('period_month', month),
+    fetchAll((from, to) =>
+      supabase
+        .from('commission_entries')
+        .select('advisor_id, kind, amount')
+        .eq('period_month', month)
+        .order('id')
+        .range(from, to),
+    ).then((data) => ({ data })),
     supabase
       .from('commission_payouts')
       .select('advisor_id, amount, paid_at, method, reference')
       .eq('period_month', month),
-    supabase.from('advisors').select('user_id, prenom, nom, telephone'),
+    fetchAll((from, to) =>
+      supabase.from('advisors').select('user_id, prenom, nom, telephone').order('user_id').range(from, to),
+    ).then((data) => ({ data })),
   ])
-  if (entries.error) throw new Error(entries.error.message)
 
   const names = new Map((advisors.data ?? []).map((a) => [a.user_id, a]))
   const payoutBy = new Map((payouts.data ?? []).map((p) => [p.advisor_id, p]))
@@ -248,13 +267,19 @@ export async function listAdvisorMonths(advisorId: string): Promise<AdvisorMonth
   const supabase = createAdminClient()
   const [periods, entries, payouts] = await Promise.all([
     loadPeriods(),
-    supabase.from('commission_entries').select('period_month, amount').eq('advisor_id', advisorId),
+    fetchAll((from, to) =>
+      supabase
+        .from('commission_entries')
+        .select('period_month, amount')
+        .eq('advisor_id', advisorId)
+        .order('id')
+        .range(from, to),
+    ).then((data) => ({ data })),
     supabase
       .from('commission_payouts')
       .select('period_month, amount, paid_at')
       .eq('advisor_id', advisorId),
   ])
-  if (entries.error) throw new Error(entries.error.message)
 
   const totals = new Map<string, number>()
   for (const row of entries.data ?? []) {
@@ -443,12 +468,16 @@ export async function recordPayout(
     throw new Error("Seul un mois clôturé peut être versé.")
   }
 
-  const { data: rows, error: sumError } = await supabase
-    .from('commission_entries')
-    .select('amount')
-    .eq('period_month', input.month)
-    .eq('advisor_id', input.advisorId)
-  if (sumError) throw new Error(sumError.message)
+  // The amount actually paid out: paged, so it can never be short.
+  const rows = await fetchAll((from, to) =>
+    supabase
+      .from('commission_entries')
+      .select('amount')
+      .eq('period_month', input.month)
+      .eq('advisor_id', input.advisorId)
+      .order('id')
+      .range(from, to),
+  )
 
   const millimes = (rows ?? []).reduce((sum, row) => sum + Math.round(Number(row.amount) * 1000), 0)
   if (millimes <= 0) throw new Error('Rien à verser pour ce conseiller ce mois-ci.')

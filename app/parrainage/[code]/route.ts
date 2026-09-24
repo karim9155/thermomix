@@ -25,10 +25,12 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest, { params }: { params: Promise<{ code: string }> }) {
   const { code } = await params
 
-  // `vers` is user-controlled; safeNext only allows same-site paths.
-  // Its own fallback is /compte, which is not where a shopper belongs.
+  // `vers` is user-controlled: only a same-site path is accepted (the same
+  // rule as safeNext), and anything else lands on the shop — not on
+  // safeNext's own fallback, /compte, which is no place for a shopper.
   const requested = request.nextUrl.searchParams.get('vers')
-  const destination = requested ? safeNext(requested) : '/boutique'
+  const destination =
+    requested && safeNext(requested) === requested ? requested : '/boutique'
   const response = NextResponse.redirect(new URL(destination, request.url))
   response.headers.set('X-Robots-Tag', 'noindex')
 

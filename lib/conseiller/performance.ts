@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 
 // What an advisor achieved over a date range — the numbers behind grade
 // criteria (F4) and challenge rankings (H5). One definition for both, so
@@ -38,23 +39,33 @@ export async function metricsBetween(from: string, to: string): Promise<Map<stri
   const lower = startOfDay(from)
   const upper = startOfDay(dayAfter(to))
 
-  const [orders, robotsSkus, recruits] = await Promise.all([
-    supabase
-      .from('orders')
-      .select('advisor_id, source, sale_status, status, total_ttc, order_items ( sku, quantity )')
-      .not('advisor_id', 'is', null)
-      .gte('paid_at', lower)
-      .lt('paid_at', upper),
+  const [orderRows, robotsSkus, recruitRows] = await Promise.all([
+    // Paged: a year of a busy network is well past the API's 1000-row cap.
+    fetchAll((from, to) =>
+      supabase
+        .from('orders')
+        .select('id, advisor_id, source, sale_status, status, total_ttc, order_items ( sku, quantity )')
+        .not('advisor_id', 'is', null)
+        .gte('paid_at', lower)
+        .lt('paid_at', upper)
+        .order('id')
+        .range(from, to),
+    ),
     supabase.from('products').select('sku').eq('category', 'robot'),
-    supabase
-      .from('advisors')
-      .select('sponsor_id')
-      .not('sponsor_id', 'is', null)
-      .neq('status', 'suspendu')
-      .gte('activated_at', lower)
-      .lt('activated_at', upper),
+    fetchAll((from, to) =>
+      supabase
+        .from('advisors')
+        .select('user_id, sponsor_id')
+        .not('sponsor_id', 'is', null)
+        .neq('status', 'suspendu')
+        .gte('activated_at', lower)
+        .lt('activated_at', upper)
+        .order('user_id')
+        .range(from, to),
+    ),
   ])
-  if (orders.error) throw new Error(orders.error.message)
+  const orders = { data: orderRows }
+  const recruits = { data: recruitRows }
 
   const robotSku = new Set((robotsSkus.data ?? []).map((row) => row.sku))
   const result = new Map<string, Metrics>()

@@ -1,5 +1,6 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { EMPTY_METRICS, metricsBetween, type Metrics } from '@/lib/conseiller/performance'
 
 // Dashboards and statistics (domain J). Everything is computed live from
@@ -65,23 +66,31 @@ export async function getNetworkKpis(period: Period, today: string): Promise<Net
     await Promise.all([
       metricsBetween(period.from, period.to),
       supabase.from('advisors').select('status'),
-      supabase
-        .from('commission_entries')
-        .select('amount')
-        .neq('kind', 'report')
-        .gte('event_date', period.from)
-        .lte('event_date', period.to),
+      fetchAll((from, to) =>
+        supabase
+          .from('commission_entries')
+          .select('amount')
+          .neq('kind', 'report')
+          .gte('event_date', period.from)
+          .lte('event_date', period.to)
+          .order('id')
+          .range(from, to),
+      ).then((data) => ({ data })),
       supabase
         .from('orders')
         .select('id', { count: 'exact', head: true })
         .eq('sale_status', 'a_facturer'),
       // What is still owed on live sales, regardless of the period: a
       // balance is a "right now" number.
-      supabase
-        .from('order_installments')
-        .select('amount, due_date, orders!inner ( sale_status )')
-        .is('paid_at', null)
-        .in('orders.sale_status', ['facture', 'partiellement_paye']),
+      fetchAll((from, to) =>
+        supabase
+          .from('order_installments')
+          .select('amount, due_date, orders!inner ( sale_status )')
+          .is('paid_at', null)
+          .in('orders.sale_status', ['facture', 'partiellement_paye'])
+          .order('id')
+          .range(from, to),
+      ).then((data) => ({ data })),
       supabase
         .from('workshops')
         .select('id', { count: 'exact', head: true })
@@ -132,13 +141,23 @@ export async function getLeaderboard(period: Period): Promise<LeaderboardRow[]> 
   const supabase = createAdminClient()
   const [metrics, advisors, commissions] = await Promise.all([
     metricsBetween(period.from, period.to),
-    supabase.from('advisors').select('user_id, prenom, nom, region, status, grades ( name )'),
-    supabase
-      .from('commission_entries')
-      .select('advisor_id, amount')
-      .neq('kind', 'report')
-      .gte('event_date', period.from)
-      .lte('event_date', period.to),
+    fetchAll((from, to) =>
+      supabase
+        .from('advisors')
+        .select('user_id, prenom, nom, region, status, grades ( name )')
+        .order('user_id')
+        .range(from, to),
+    ).then((data) => ({ data })),
+    fetchAll((from, to) =>
+      supabase
+        .from('commission_entries')
+        .select('advisor_id, amount')
+        .neq('kind', 'report')
+        .gte('event_date', period.from)
+        .lte('event_date', period.to)
+        .order('id')
+        .range(from, to),
+    ).then((data) => ({ data })),
   ])
 
   const earned = new Map<string, number>()
@@ -207,14 +226,17 @@ export async function statsByClientProfile(
   today: string,
 ): Promise<{ byAge: ProfileRow[]; bySex: ProfileRow[]; total: number }> {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('orders')
-    .select('total_ttc, client:clients!orders_client_id_fkey ( annee_naissance, sexe )')
-    .eq('source', 'conseiller')
-    .eq('sale_status', 'paye')
-    .gte('paid_at', startOf(period.from))
-    .lt('paid_at', startOf(nextDay(period.to)))
-  if (error) throw new Error(error.message)
+  const data = await fetchAll((from, to) =>
+    supabase
+      .from('orders')
+      .select('id, total_ttc, client:clients!orders_client_id_fkey ( annee_naissance, sexe )')
+      .eq('source', 'conseiller')
+      .eq('sale_status', 'paye')
+      .gte('paid_at', startOf(period.from))
+      .lt('paid_at', startOf(nextDay(period.to)))
+      .order('id')
+      .range(from, to),
+  )
 
   const year = Number(today.slice(0, 4))
   const age = new Map<string, ProfileRow>(
@@ -265,7 +287,14 @@ export async function getAdvisorSnapshot(advisorId: string, today: string): Prom
   const [month, quarter, entries, payouts, clients, workshops, openSales] = await Promise.all([
     metricsBetween(monthStart, today),
     metricsBetween(quarterStart, today),
-    supabase.from('commission_entries').select('amount, event_date, kind').eq('advisor_id', advisorId),
+    fetchAll((from, to) =>
+      supabase
+        .from('commission_entries')
+        .select('amount, event_date, kind')
+        .eq('advisor_id', advisorId)
+        .order('id')
+        .range(from, to),
+    ).then((data) => ({ data })),
     supabase.from('commission_payouts').select('amount').eq('advisor_id', advisorId),
     supabase.from('clients').select('id', { count: 'exact', head: true }).eq('advisor_id', advisorId),
     supabase

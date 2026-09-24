@@ -24,12 +24,12 @@ export default async function ActivationPage({
     <div className="admin-login-page">
       <div className="admin-login-card">
         <Image
-          className="admin-login-mark"
-          src="/inocasa-logo-icone.png"
+          className="login-logo"
+          src="/inocasa-vertical.png"
           alt="INOCASA"
-          width={300}
-          height={300}
-          sizes="64px"
+          width={8001}
+          height={7915}
+          sizes="112px"
           priority
         />
         <p className="eyebrow">INOCASA · ESPACE CONSEILLER</p>

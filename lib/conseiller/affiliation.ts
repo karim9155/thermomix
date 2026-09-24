@@ -1,6 +1,7 @@
 import 'server-only'
 import { cookies } from 'next/headers'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import { generateAffiliateCode } from '@/lib/conseiller/accounts'
 import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
@@ -252,7 +253,15 @@ export async function getAffiliateStats(advisorId: string): Promise<AffiliateSta
       .select('id', { count: 'exact', head: true })
       .eq('advisor_id', advisorId)
       .gte('created_at', since),
-    supabase.from('affiliate_clicks').select('visitor_id').eq('advisor_id', advisorId),
+    // Clicks pile up fastest of anything: paged past the 1000-row cap.
+    fetchAll((from, to) =>
+      supabase
+        .from('affiliate_clicks')
+        .select('visitor_id')
+        .eq('advisor_id', advisorId)
+        .order('id')
+        .range(from, to),
+    ).then((data) => ({ data })),
     supabase
       .from('customer_attributions')
       .select('user_id', { count: 'exact', head: true })

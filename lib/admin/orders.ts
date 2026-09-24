@@ -8,6 +8,7 @@ import type {
 } from '@/lib/admin/order-format'
 import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT } from '@/lib/admin/order-format'
 import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
+import { fetchAll } from '@/lib/supabase/fetch-all'
 
 const INVOICE_BUCKET = 'order-invoices'
 
@@ -109,20 +110,25 @@ function mapListRow(row: any): AdminOrderListItem {
  */
 export async function listOrders(): Promise<AdminOrderListItem[]> {
   const supabase = createAdminClient()
-  const { data, error } = await supabase
-    .from('orders')
-    .select(LIST_SELECT)
-    // Advisor order forms join the delivery flow once invoiced. Before
-    // that they are drafts or awaiting validation, and live on the
-    // "Bons de commande" page instead (lib/conseiller/sales.ts).
-    .or('source.eq.web,invoiced_at.not.is.null')
-    .order('created_at', { ascending: false })
-
-  if (error) {
+  // Paged: the API returns at most 1000 rows per request and says nothing
+  // when it cuts — past 1000 orders the table and the stat cards derived
+  // from it would silently stop counting.
+  const data = await fetchAll((from, to) =>
+    supabase
+      .from('orders')
+      .select(`id, ${LIST_SELECT}`)
+      // Advisor order forms join the delivery flow once invoiced. Before
+      // that they are drafts or awaiting validation, and live on the
+      // "Bons de commande" page instead (lib/conseiller/sales.ts).
+      .or('source.eq.web,invoiced_at.not.is.null')
+      .order('created_at', { ascending: false })
+      .order('id')
+      .range(from, to),
+  ).catch((error: Error) => {
     throw new Error(`Impossible de charger les commandes : ${error.message}`)
-  }
+  })
 
-  return (data ?? []).map(mapListRow)
+  return data.map(mapListRow)
 }
 
 export async function getOrderDetail(reference: string): Promise<AdminOrderDetail | undefined> {
@@ -201,7 +207,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status, source, invoiced_at, advisor_id')
+    .select('id, delivery_status, source, invoiced_at, advisor_id, sale_status')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -222,6 +228,11 @@ export async function updateDeliveryStatus(
   }
   if (isAdvisorSale && !order.invoiced_at) {
     throw new Error("Ce bon de commande n'est pas encore facturé.")
+  }
+  // A cancelled sale is over: delivering it would take stock for a sale
+  // that no longer exists.
+  if (isAdvisorSale && order.sale_status === 'annule') {
+    throw new Error('Cette vente est annulée : sa livraison ne peut plus être modifiée.')
   }
 
   // No invoice requirement here on purpose. The admin uploads the PDF
