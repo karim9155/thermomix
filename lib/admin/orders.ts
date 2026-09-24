@@ -1,6 +1,11 @@
 import 'server-only'
 import { createAdminClient } from '@/lib/supabase/admin'
-import type { DeliveryStatus, PaymentStatus, PaymentMethod } from '@/lib/admin/order-format'
+import type {
+  DeliveryStatus,
+  OrderSource,
+  PaymentStatus,
+  PaymentMethod,
+} from '@/lib/admin/order-format'
 import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT } from '@/lib/admin/order-format'
 
 const INVOICE_BUCKET = 'order-invoices'
@@ -23,6 +28,9 @@ export type AdminOrderListItem = {
   status: PaymentStatus
   deliveryStatus: DeliveryStatus
   estimatedDelivery: string | null
+  source: OrderSource
+  /** When an advisor sale was invoiced; null for web orders. */
+  invoicedAt: string | null
 }
 
 export type AdminOrderItem = {
@@ -59,7 +67,7 @@ export type AdminOrderDetail = AdminOrderListItem & {
 }
 
 const LIST_SELECT =
-  'reference, created_at, prenom, nom, telephone, ville, total_ttc, payment_method, status, delivery_status, estimated_delivery'
+  'reference, created_at, prenom, nom, telephone, ville, total_ttc, payment_method, status, delivery_status, estimated_delivery, source, invoiced_at'
 
 function mapListRow(row: any): AdminOrderListItem {
   return {
@@ -74,6 +82,8 @@ function mapListRow(row: any): AdminOrderListItem {
     status: row.status,
     deliveryStatus: row.delivery_status,
     estimatedDelivery: row.estimated_delivery ?? null,
+    source: row.source === 'conseiller' ? 'conseiller' : 'web',
+    invoicedAt: row.invoiced_at ?? null,
   }
 }
 
@@ -94,6 +104,10 @@ export async function listOrders(): Promise<AdminOrderListItem[]> {
   const { data, error } = await supabase
     .from('orders')
     .select(LIST_SELECT)
+    // Advisor order forms join the delivery flow once invoiced. Before
+    // that they are drafts or awaiting validation, and live on the
+    // "Bons de commande" page instead (lib/conseiller/sales.ts).
+    .or('source.eq.web,invoiced_at.not.is.null')
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -179,7 +193,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status')
+    .select('id, delivery_status, source, invoiced_at')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -189,6 +203,17 @@ export async function updateDeliveryStatus(
 
   if (order.delivery_status === newStatus) {
     return
+  }
+
+  const isAdvisorSale = order.source === 'conseiller'
+
+  // An advisor sale is cancelled as a sale, not as a delivery: that path
+  // also records the reason and, from phase 3, claws back commissions.
+  if (isAdvisorSale && newStatus === 'annulee') {
+    throw new Error('Annulez cette vente depuis son bon de commande.')
+  }
+  if (isAdvisorSale && !order.invoiced_at) {
+    throw new Error("Ce bon de commande n'est pas encore facturé.")
   }
 
   // No invoice requirement here on purpose. The admin uploads the PDF
@@ -211,12 +236,20 @@ export async function updateDeliveryStatus(
   // When card payment ships, an order paid up front must NOT be reopened
   // by a later delivery change, so this will need to branch on
   // payment_method rather than applying to every order.
+  //
+  // Advisor sales are exactly that case already: they are paid by
+  // instalments recorded one by one (lib/conseiller/sales.ts), which is
+  // the only writer of their payment status. Delivery leaves it alone.
   const paymentStatus =
     newStatus === 'livree' ? 'payee' : newStatus === 'annulee' ? 'annulee' : 'en_attente'
 
   const { error: updateError } = await supabase
     .from('orders')
-    .update({ delivery_status: newStatus, status: paymentStatus })
+    .update(
+      isAdvisorSale
+        ? { delivery_status: newStatus }
+        : { delivery_status: newStatus, status: paymentStatus },
+    )
     .eq('id', order.id)
 
   if (updateError) {

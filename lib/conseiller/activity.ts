@@ -52,10 +52,15 @@ type ActivityRow = {
 
 /**
  * Newest first. With an advisorId, that advisor's feed (their own actions
- * and admin actions on them); without, the whole network's (J9).
+ * and admin actions on them); without, the whole network's (J9). With an
+ * entity, the history of one thing — an order form's timeline (D17).
  */
 export async function listActivity(
-  options: { advisorId?: string; limit?: number } = {},
+  options: {
+    advisorId?: string
+    entity?: { type: string; id: string }
+    limit?: number
+  } = {},
 ): Promise<ActivityEntry[]> {
   const supabase = createAdminClient()
 
@@ -67,6 +72,9 @@ export async function listActivity(
 
   if (options.advisorId) {
     query = query.eq('advisor_id', options.advisorId)
+  }
+  if (options.entity) {
+    query = query.eq('entity_type', options.entity.type).eq('entity_id', options.entity.id)
   }
 
   const { data, error } = await query

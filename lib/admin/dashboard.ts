@@ -30,7 +30,9 @@ export async function getDashboardStats(orders: AdminOrderListItem[]): Promise<D
   const now = new Date()
   const totalTTCThisMonth = orders
     .filter((order) => {
-      const created = new Date(order.createdAt)
+      // An advisor sale counts from its invoice, not from when the
+      // advisor started the draft.
+      const created = new Date(order.invoicedAt ?? order.createdAt)
       return created.getFullYear() === now.getFullYear() && created.getMonth() === now.getMonth()
     })
     .reduce((sum, order) => sum + order.totalTTC, 0)

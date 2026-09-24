@@ -1,10 +1,12 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LayoutDashboard, LogOut, Network, UserRound } from 'lucide-react'
+import { Contact, FileText, LayoutDashboard, LogOut, Network, UserRound } from 'lucide-react'
 import { advisorLogout } from '@/app/conseiller/actions'
 
 const NAV_ITEMS = [
   { href: '/conseiller', label: 'Tableau de bord', Icon: LayoutDashboard },
+  { href: '/conseiller/ventes', label: 'Ventes', Icon: FileText },
+  { href: '/conseiller/clients', label: 'Clients', Icon: Contact },
   { href: '/conseiller/reseau', label: 'Mon réseau', Icon: Network },
   { href: '/conseiller/profil', label: 'Profil', Icon: UserRound },
 ]

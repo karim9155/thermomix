@@ -3429,6 +3429,174 @@ footer {
   margin: 0;
 }
 
+/* ---------- Clients and order forms (phase 2) ---------- */
+
+.badge-blue {
+  background: #e3effd;
+  color: #1f5fa8;
+}
+.order-source-tag {
+  margin-left: 8px;
+  padding: 3px 8px;
+  font-size: 10px;
+}
+.advisor-badge-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.advisor-inline-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  margin-top: 16px;
+  padding: 9px 16px;
+  font-size: 12px;
+}
+.advisor-small-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 12px;
+  font-size: 12px;
+}
+.advisor-add-product {
+  margin: 0 0 18px;
+}
+.advisor-add-product select {
+  flex: 1;
+}
+
+/* Order-form lines: product, quantity stepper, line total. */
+.advisor-lines {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+}
+.advisor-lines li {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 110px;
+  align-items: center;
+  gap: 16px;
+  padding: 12px 0;
+  border-top: 1px solid var(--border);
+  font-size: 13px;
+}
+.advisor-lines li > div:first-child {
+  display: grid;
+  gap: 3px;
+}
+.advisor-lines li > strong {
+  text-align: right;
+}
+.advisor-qty {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+.advisor-qty button {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border: 0;
+  background: transparent;
+  color: var(--ink);
+  cursor: pointer;
+}
+.advisor-qty span {
+  min-width: 26px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.advisor-field-note {
+  margin: 14px 0 0;
+}
+.advisor-totals-flush {
+  margin: 0 0 16px;
+  max-width: none;
+  border-top: 0;
+  padding-top: 0;
+}
+.advisor-editor-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+.advisor-editor-actions .primary-button,
+.advisor-editor-actions .outline-button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+.advisor-confirm {
+  background: var(--surface);
+  border-radius: 12px;
+  padding: 14px 16px;
+  display: grid;
+  gap: 12px;
+}
+.advisor-confirm p {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+.advisor-block-label {
+  display: grid;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 700;
+}
+.advisor-block-label textarea,
+.advisor-cancel-form input {
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 11px 13px;
+  font-size: 13px;
+  font-family: inherit;
+  font-weight: 400;
+}
+.advisor-cancel-form {
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
+}
+.advisor-payment-form {
+  margin-top: 16px;
+  display: grid;
+  gap: 16px;
+  background: var(--surface);
+}
+.advisor-subheading-flush {
+  margin: 0;
+}
+.advisor-cell-input {
+  border: 1px solid #d7dcda;
+  border-radius: 7px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+  width: 150px;
+}
+.advisor-alert {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  background: #fdf1dc;
+  color: #7a5409;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 24px;
+  font-size: 13px;
+}
+.advisor-alert p {
+  margin: 4px 0 0;
+  line-height: 1.6;
+}
+
 /* Laptops: the full nav wants ~870px but has ~670px at 1280px. Rather
    than hand a 1280px laptop a hamburger, tighten the row until it fits —
    smaller gaps, tighter CTA padding, slightly smaller type. Everything
@@ -3739,6 +3907,18 @@ footer {
   .advisor-tree ul {
     margin-left: 6px;
     padding-left: 12px;
+  }
+  .advisor-lines li {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+  .advisor-lines li > strong {
+    grid-column: 1 / -1;
+    text-align: left;
+  }
+  .advisor-editor-actions .primary-button,
+  .advisor-editor-actions .outline-button {
+    width: 100%;
+    justify-content: center;
   }
 
   /* Header stays a single row at every width now: brand on the left, icons

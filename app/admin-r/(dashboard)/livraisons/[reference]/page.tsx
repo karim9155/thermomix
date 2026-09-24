@@ -1,6 +1,6 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Phone } from 'lucide-react'
+import { ArrowLeft, FileText, Phone } from 'lucide-react'
 import { getOrderDetail } from '@/lib/admin/orders'
 import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
@@ -65,6 +65,12 @@ export default async function LivraisonDetailPage({
       <Link href="/admin-r" className="back-link">
         <ArrowLeft size={16} /> Retour aux commandes
       </Link>
+
+      {order.source === 'conseiller' ? (
+        <Link href={`/admin-r/bons-de-commande/${order.reference}`} className="back-link">
+          <FileText size={16} /> Vente conseiller : voir le bon de commande et l&apos;échéancier
+        </Link>
+      ) : null}
 
       <div className="admin-detail-heading">
         <h1>{order.reference}</h1>

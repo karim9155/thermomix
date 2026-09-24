@@ -5,7 +5,10 @@
 
 export type DeliveryStatus = 'en_preparation' | 'en_cours_de_livraison' | 'livree' | 'annulee'
 export type PaymentStatus = 'en_attente' | 'payee' | 'annulee'
-export type PaymentMethod = 'livraison' | 'en_ligne'
+// 'comptant' and 'echelonne' are advisor sales (migration 0014): paid in
+// cash or by instalments, collected by the shop rather than at checkout.
+export type PaymentMethod = 'livraison' | 'en_ligne' | 'comptant' | 'echelonne'
+export type OrderSource = 'web' | 'conseiller'
 
 export const DELIVERY_STATUSES: DeliveryStatus[] = [
   'en_preparation',

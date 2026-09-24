@@ -44,6 +44,8 @@ export function PaymentStatusBadge({ status }: { status: PaymentStatus }) {
 const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   livraison: 'À la livraison',
   en_ligne: 'En ligne',
+  comptant: 'Comptant (conseiller)',
+  echelonne: 'Échelonné (conseiller)',
 }
 
 export function paymentMethodLabel(method: PaymentMethod): string {

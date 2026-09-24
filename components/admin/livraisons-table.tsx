@@ -120,6 +120,9 @@ export function LivraisonsTable({ orders }: { orders: AdminOrderListItem[] }) {
                   >
                     {order.reference}
                   </Link>
+                  {order.source === 'conseiller' ? (
+                    <span className="admin-badge badge-blue order-source-tag">Conseiller</span>
+                  ) : null}
                 </td>
                 <td>{dateFormatter.format(new Date(order.createdAt))}</td>
                 <td>

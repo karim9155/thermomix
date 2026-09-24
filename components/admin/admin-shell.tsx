@@ -1,12 +1,14 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { LogOut, Package, Truck, Users } from 'lucide-react'
+import { Contact, FileText, LogOut, Package, Truck, Users } from 'lucide-react'
 import { logout } from '@/app/admin-r/(dashboard)/actions'
 
 const NAV_ITEMS = [
   { href: '/admin-r', label: 'Commandes', Icon: Truck },
   { href: '/admin-r/produits', label: 'Produits', Icon: Package },
+  { href: '/admin-r/bons-de-commande', label: 'Bons de commande', Icon: FileText },
   { href: '/admin-r/conseillers', label: 'Conseillers', Icon: Users },
+  { href: '/admin-r/clients', label: 'Clients', Icon: Contact },
 ]
 
 export function AdminShell({
