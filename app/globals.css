@@ -1952,7 +1952,9 @@ footer {
   display: block;
   width: 112px;
   height: auto;
-  margin: -8px 0 16px -10px;
+  /* Centred in the card; the negative top margin trims the image's own
+     white space above the shield. */
+  margin: -8px auto 16px;
 }
 .admin-login-card h1 {
   font-size: 26px;
