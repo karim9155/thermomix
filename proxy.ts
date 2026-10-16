@@ -22,6 +22,10 @@ import { createMiddlewareClient } from '@/lib/supabase/middleware'
  * leaves alone. Next's proxy guide is explicit that proxy runs on
  * prefetches too and must not carry the whole authorization story.
  *
+ * Being optimistic is also what keeps it cheap: it reads the session from
+ * the cookie and asks the database nothing. Everything it could learn
+ * from a membership query, the guards learn anyway, one layer down.
+ *
  * /compte is enforced solely by lib/compte/guard.ts inside each route,
  * so a new route under /compte gets NO protection from this file. It must
  * call requireCustomer() (or getCustomer()) itself.
@@ -38,8 +42,8 @@ const PUBLIC_PATHS = new Set([
 ])
 
 const AREAS = [
-  { prefix: '/conseiller', table: 'advisors', login: '/conseiller/connexion' },
-  { prefix: '/admin-r', table: 'admin_users', login: '/admin-r/login' },
+  { prefix: '/conseiller', login: '/conseiller/connexion' },
+  { prefix: '/admin-r', login: '/admin-r/login' },
 ] as const
 
 export async function proxy(request: NextRequest) {
@@ -58,33 +62,33 @@ export async function proxy(request: NextRequest) {
 
   const { supabase, getResponse } = createMiddlewareClient(request)
 
-  // getUser() re-validates the JWT against Supabase Auth rather than
-  // trusting a decoded cookie — the correct check for a security boundary.
-  const {
-    data: { user },
-  } = await supabase.auth.getUser()
+  // getClaims() verifies the JWT from the cookie, without a round trip to
+  // Supabase Auth on every request the way getUser() does. That is the
+  // whole point of this layer being optimistic: it runs on EVERY request
+  // under these prefixes, prefetches included, so a sidebar that
+  // prefetches a dozen links used to fire a dozen getUser() calls plus a
+  // dozen membership queries before the visitor clicked anything.
+  //
+  // It still has to be awaited here, before any response is generated, so
+  // a token refresh can write its cookies through setAll (see
+  // @supabase/ssr's note on CookieMethodsServer).
+  const { data } = await supabase.auth.getClaims()
 
   // The equivalent redirect for /compte — bouncing to
   // /compte/connexion?next=... so a deep link survives the detour — lives
   // in requireCustomer(), which is where it always had to work anyway for
   // prefetched and directly-hit routes.
-  if (!user) {
+  if (!data?.claims) {
     return NextResponse.redirect(new URL(area.login, request.url))
   }
 
-  // Signed in is not sufficient: the account must belong to this area.
-  // Both tables have a self-read RLS policy (migrations 0004 and 0013),
-  // so the cookie client can answer this without the service role.
-  const { data: memberRow } = await supabase
-    .from(area.table)
-    .select('user_id')
-    .eq('user_id', user.id)
-    .maybeSingle()
-
-  if (!memberRow) {
-    return NextResponse.redirect(new URL(area.login, request.url))
-  }
-
+  // Whether the account actually belongs to THIS area is deliberately not
+  // asked here: it is a database query, and the authentication guide is
+  // explicit that proxy must avoid those because of prefetches. Nothing
+  // is lost — an admin opening /conseiller, or an advisor opening
+  // /admin-r, is turned away by requireAdvisorPage()/requireAdmin() in
+  // the layout, which every page, action and route handler under both
+  // prefixes already goes through, and which is the security boundary.
   return getResponse()
 }
 

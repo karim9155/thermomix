@@ -1,5 +1,6 @@
 import 'server-only'
 import { cache } from 'react'
+import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/admin-auth'
 
 export type AdminUser = {
@@ -54,3 +55,26 @@ export const requireAdmin = cache(async (): Promise<AdminUser> => {
 
   return { id: user.id, email: user.email ?? '' }
 })
+
+/**
+ * For pages and layouts under /admin-r: sends the visitor to the login
+ * page instead of rendering an error, the way requireAdvisorPage() does
+ * for /conseiller.
+ *
+ * Server Actions and route handlers keep using requireAdmin(), which
+ * throws — a redirect() thrown inside an action's try/catch would be
+ * caught and shown as an error message.
+ *
+ * This is what turns someone away who is signed in but is not an admin:
+ * a customer or an advisor who opens /admin-r. proxy.ts used to answer
+ * that with a membership query of its own, which cost every request —
+ * prefetches included — a round trip to the database. Here it costs
+ * nothing extra, because the lookup happens anyway.
+ */
+export async function requireAdminPage(): Promise<AdminUser> {
+  try {
+    return await requireAdmin()
+  } catch {
+    redirect('/admin-r/login')
+  }
+}

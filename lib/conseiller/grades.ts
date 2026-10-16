@@ -268,7 +268,7 @@ export async function getGradeProgress(advisorId: string, today: string): Promis
 
   const months = (next ?? current)?.criteria.periodMonths ?? 3
   const from = windowStart(today, months)
-  const metrics = (await metricsBetween(from, today)).get(advisorId) ?? EMPTY_METRICS
+  const metrics = (await metricsBetween(from, today, advisorId)).get(advisorId) ?? EMPTY_METRICS
 
   return { current, next, metrics, windowFrom: from }
 }

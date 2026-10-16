@@ -1,4 +1,4 @@
-import { requireAdmin } from '@/lib/admin/guard'
+import { requireAdminPage } from '@/lib/admin/guard'
 import { AdminShell } from '@/components/admin/admin-shell'
 
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,7 @@ export default async function AdminDashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const admin = await requireAdmin()
+  const admin = await requireAdminPage()
 
   return <AdminShell email={admin.email}>{children}</AdminShell>
 }
