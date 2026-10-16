@@ -33,7 +33,14 @@ export function AdvisorsTable({ advisors }: { advisors: AdvisorListItem[] }) {
     return advisors.filter((advisor) => {
       if (tab !== 'tous' && advisor.status !== tab) return false
       if (!term) return true
-      return [advisor.prenom, advisor.nom, advisor.email, advisor.telephone, advisor.region]
+      return [
+        advisor.matricule,
+        advisor.prenom,
+        advisor.nom,
+        advisor.email,
+        advisor.telephone,
+        advisor.region,
+      ]
         .join(' ')
         .toLowerCase()
         .includes(term)
@@ -72,6 +79,7 @@ export function AdvisorsTable({ advisors }: { advisors: AdvisorListItem[] }) {
           <table className="admin-table">
             <thead>
               <tr>
+                <th>Matricule</th>
                 <th>Conseiller</th>
                 <th>Téléphone</th>
                 <th>Région</th>
@@ -85,6 +93,7 @@ export function AdvisorsTable({ advisors }: { advisors: AdvisorListItem[] }) {
             <tbody>
               {visible.map((advisor) => (
                 <tr key={advisor.id}>
+                  <td>{advisor.matricule}</td>
                   <td>
                     <Link
                       href={`/admin-r/conseillers/${advisor.id}`}

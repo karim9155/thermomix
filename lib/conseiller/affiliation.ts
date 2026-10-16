@@ -5,6 +5,7 @@ import { fetchAll } from '@/lib/supabase/fetch-all'
 import { logActivity, type ActorRole } from '@/lib/conseiller/activity'
 import { generateAffiliateCode } from '@/lib/conseiller/accounts'
 import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
+import type { AffiliatedCustomerItem } from '@/lib/conseiller/format'
 
 // Affiliate links (domain I). See migration 0016 for the rules: last
 // link opened wins, attribution is permanent once tied to an account, and
@@ -300,6 +301,214 @@ export async function getAffiliateStats(advisorId: string): Promise<AffiliateSta
 }
 
 // ---------- ADMIN (I9, I10) ----------
+
+/**
+ * Every customer account attributed to an advisor — the web-side
+ * counterpart of listClients(), which only ever sees clients an advisor
+ * typed in. A customer lands here by opening an affiliate link or by
+ * entering an advisor's code at checkout; both store 'lien'.
+ *
+ * Identity is read from the customer's profile and falls back to their
+ * most recent order, because a customer attributed before they have
+ * filled anything in would otherwise be a blank row. Email only ever
+ * comes from an order: auth.users is not readable without one call per
+ * user.
+ */
+export async function listAffiliatedCustomers(
+  options: { advisorId?: string } = {},
+): Promise<AffiliatedCustomerItem[]> {
+  const supabase = createAdminClient()
+
+  const attributions = (await fetchAll((from, to) => {
+    let query = supabase
+      .from('customer_attributions')
+      .select('user_id, advisor_id, source, clicked_at, advisor:advisors!customer_attributions_advisor_id_fkey ( prenom, nom )')
+      .order('clicked_at', { ascending: false })
+      .order('user_id')
+    if (options.advisorId) query = query.eq('advisor_id', options.advisorId)
+    return query.range(from, to)
+  })) as unknown as AttributionRow[]
+
+  if (attributions.length === 0) return []
+
+  const userIds = attributions.map((row) => row.user_id)
+  const [profiles, orders] = await Promise.all([
+    profilesFor(userIds),
+    ordersFor(userIds),
+  ])
+
+  return attributions.map((row) => {
+    const profile = profiles.get(row.user_id)
+    // Newest first, so [0] is the order to fall back to.
+    const own = orders.get(row.user_id) ?? []
+    const latest = own[0]
+
+    return {
+      userId: row.user_id,
+      prenom: profile?.prenom || latest?.prenom || '',
+      nom: profile?.nom || latest?.nom || '',
+      telephone: profile?.telephone || latest?.telephone || '',
+      email: latest?.email ?? null,
+      ville: profile?.ville || latest?.ville || '',
+      gouvernorat: profile?.gouvernorat || '',
+      advisorId: row.advisor_id,
+      advisorName: row.advisor ? `${row.advisor.prenom} ${row.advisor.nom}` : '—',
+      source: row.source,
+      orders: own.length,
+      paidOrders: own.filter((order) => order.status === 'payee').length,
+      since: row.clicked_at,
+    }
+  })
+}
+
+type AttributionRow = {
+  user_id: string
+  advisor_id: string
+  source: 'lien' | 'admin'
+  clicked_at: string
+  advisor: { prenom: string; nom: string } | null
+}
+
+type ProfileRow = {
+  user_id: string
+  prenom: string
+  nom: string
+  telephone: string
+  ville: string
+  gouvernorat: string
+}
+
+type CustomerOrderRow = {
+  user_id: string
+  prenom: string
+  nom: string
+  telephone: string
+  email: string | null
+  ville: string
+  status: string
+  created_at: string
+}
+
+/**
+ * Both lookups below filter by user id in BATCHES rather than one big
+ * `.in(...)`: every id goes into the request URL, and a few hundred of
+ * them are enough to exceed the URL length limit and fail the page —
+ * the same trap documented in lib/conseiller/clients.ts.
+ */
+const ID_BATCH = 50
+
+function batches<T>(items: T[], size: number): T[][] {
+  const out: T[][] = []
+  for (let i = 0; i < items.length; i += size) out.push(items.slice(i, i + size))
+  return out
+}
+
+async function profilesFor(userIds: string[]): Promise<Map<string, ProfileRow>> {
+  const supabase = createAdminClient()
+  const map = new Map<string, ProfileRow>()
+
+  for (const batch of batches(userIds, ID_BATCH)) {
+    const rows = (await fetchAll((from, to) =>
+      supabase
+        .from('profiles')
+        .select('user_id, prenom, nom, telephone, ville, gouvernorat')
+        .in('user_id', batch)
+        .order('user_id')
+        .range(from, to),
+    )) as unknown as ProfileRow[]
+    for (const row of rows) map.set(row.user_id, row)
+  }
+
+  return map
+}
+
+/** Each customer's web orders, newest first. */
+async function ordersFor(userIds: string[]): Promise<Map<string, CustomerOrderRow[]>> {
+  const supabase = createAdminClient()
+  const map = new Map<string, CustomerOrderRow[]>()
+
+  for (const batch of batches(userIds, ID_BATCH)) {
+    const rows = (await fetchAll((from, to) =>
+      supabase
+        .from('orders')
+        .select('user_id, prenom, nom, telephone, email, ville, status, created_at')
+        .eq('source', 'web')
+        .in('user_id', batch)
+        .order('created_at', { ascending: false })
+        .order('id')
+        .range(from, to),
+    )) as unknown as CustomerOrderRow[]
+    for (const row of rows) {
+      const list = map.get(row.user_id)
+      if (list) list.push(row)
+      else map.set(row.user_id, [row])
+    }
+  }
+
+  return map
+}
+
+/**
+ * Moves a customer ACCOUNT to another advisor (the web counterpart of
+ * reassignClient). This decides where the customer's FUTURE orders go —
+ * orders already placed keep the advisor they were attributed to, and
+ * are moved one by one with reassignWebOrder, so no commission already
+ * earned is disturbed here.
+ *
+ * clicked_at is stamped to now so the rule stays "last click wins": only
+ * a link opened AFTER this change can override the admin.
+ */
+export async function reassignCustomerAttribution(
+  userId: string,
+  advisorId: string,
+  actor: Actor,
+): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: current, error } = await supabase
+    .from('customer_attributions')
+    .select('advisor_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error) throw new Error(error.message)
+  if (!current) throw new Error('Client affilié introuvable.')
+  if (current.advisor_id === advisorId) return
+
+  if (advisorId === userId) {
+    throw new Error('Un conseiller ne peut pas se voir attribuer ses propres achats.')
+  }
+
+  const { data: advisor } = await supabase
+    .from('advisors')
+    .select('status')
+    .eq('user_id', advisorId)
+    .maybeSingle()
+  if (!advisor) throw new Error('Conseiller introuvable.')
+  if (advisor.status === 'suspendu') throw new Error('Ce conseiller est suspendu.')
+
+  const { error: updateError } = await supabase
+    .from('customer_attributions')
+    .update({
+      advisor_id: advisorId,
+      source: 'admin',
+      clicked_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    })
+    .eq('user_id', userId)
+  if (updateError) throw new Error(updateError.message)
+
+  for (const id of [current.advisor_id, advisorId]) {
+    await logActivity({
+      actorId: actor.id,
+      actorRole: actor.role,
+      advisorId: id,
+      action: 'parrainage.client_reattribue',
+      entityType: 'customer',
+      entityId: userId,
+      details: { de: current.advisor_id, vers: advisorId },
+    })
+  }
+}
 
 /**
  * Attributes a web order to an advisor by hand, or detaches it (I9). The

@@ -135,12 +135,23 @@ const regionField = z.enum(REGIONS as [string, ...string[]], {
   message: 'Veuillez choisir une région.',
 })
 
+/**
+ * The advisor's matricule: exactly 8 digits, chosen by the admin and
+ * fixed for life (migration 0020). Kept as a string so a leading zero
+ * survives — it identifies an advisor, it is not a number to count with.
+ */
+export const matriculeField = z
+  .string()
+  .trim()
+  .regex(/^[0-9]{8}$/, 'Le matricule doit comporter exactement 8 chiffres.')
+
 /** Admin: create an advisor directly (A1). No sponsor = founding advisor. */
 export const createAdvisorSchema = z.object({
   prenom: nameField('Prénom'),
   nom: nameField('Nom'),
   email: z.email("L'adresse email n'est pas valide."),
   telephone: phoneField,
+  matricule: matriculeField,
   region: regionField,
   gradeId: z.uuid('Veuillez choisir un grade.'),
   sponsorId: z.uuid().optional().or(z.literal('')),
@@ -248,6 +259,32 @@ export type ClientListItem = {
   advisorId: string
   advisorName: string
   createdAt: string
+}
+
+/**
+ * A customer ACCOUNT tied to an advisor by affiliation (domain I), as
+ * opposed to a ClientListItem, which an advisor entered by hand.
+ *
+ * Keyed by user_id because there is no clients row behind it: the
+ * identity comes from the customer's profile, falling back to their
+ * latest order when the profile is still empty.
+ */
+export type AffiliatedCustomerItem = {
+  userId: string
+  prenom: string
+  nom: string
+  telephone: string
+  email: string | null
+  ville: string
+  gouvernorat: string
+  advisorId: string
+  advisorName: string
+  /** 'lien' covers both the shared link and the code typed at checkout. */
+  source: 'lien' | 'admin'
+  orders: number
+  paidOrders: number
+  /** When the winning link was opened, or when the admin set this. */
+  since: string
 }
 
 // ---------- ORDER FORMS (BONS DE COMMANDE) ----------

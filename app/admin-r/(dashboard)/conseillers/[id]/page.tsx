@@ -149,6 +149,12 @@ export default async function ConseillerDetailPage({
             <h2>Informations</h2>
             <dl className="admin-def-list advisor-facts">
               <div>
+                <dt>Matricule</dt>
+                <dd>
+                  <code className="advisor-code">{advisor.matricule}</code>
+                </dd>
+              </div>
+              <div>
                 <dt>Email</dt>
                 <dd>
                   <a href={`mailto:${advisor.email}`}>{advisor.email}</a>

@@ -15,7 +15,7 @@ import {
   updateAdvisorIdentity,
   type AccessLinkResult,
 } from '@/lib/conseiller/accounts'
-import { createAdvisorSchema, updateAdvisorSchema } from '@/lib/conseiller/format'
+import { createAdvisorSchema, matriculeField, updateAdvisorSchema } from '@/lib/conseiller/format'
 import { regenerateAffiliateCode, setAffiliateCodeActive } from '@/lib/conseiller/affiliation'
 
 export type ActionState = { error?: string; success?: boolean }
@@ -54,6 +54,7 @@ export async function createAdvisorAction(
     nom: formData.get('nom'),
     email: formData.get('email'),
     telephone: formData.get('telephone'),
+    matricule: formData.get('matricule'),
     region: formData.get('region'),
     gradeId: formData.get('gradeId'),
     sponsorId: formData.get('sponsorId') ?? '',
@@ -197,10 +198,16 @@ export async function acceptApplicationAction(
     return { error: 'Veuillez choisir un grade.' }
   }
 
+  const matricule = matriculeField.safeParse(formData.get('matricule'))
+  if (!matricule.success) {
+    return { error: matricule.error.issues[0]?.message ?? 'Matricule invalide.' }
+  }
+
   try {
     const { advisorId, ...access } = await acceptApplication(
       applicationId,
       gradeId.data,
+      matricule.data,
       await adminActor(),
     )
     revalidatePath('/admin-r/conseillers/candidatures')

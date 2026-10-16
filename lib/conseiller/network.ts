@@ -14,6 +14,8 @@ import type {
 
 export type AdvisorListItem = {
   id: string
+  /** 8 digits, admin-chosen at creation and never changed (migration 0020). */
+  matricule: string
   prenom: string
   nom: string
   email: string
@@ -31,6 +33,7 @@ export type AdvisorListItem = {
 
 type AdvisorRow = {
   user_id: string
+  matricule: string
   prenom: string
   nom: string
   email: string
@@ -45,7 +48,7 @@ type AdvisorRow = {
 }
 
 const ADVISOR_SELECT = `
-  user_id, prenom, nom, email, telephone, region, status, grade_id, sponsor_id,
+  user_id, matricule, prenom, nom, email, telephone, region, status, grade_id, sponsor_id,
   affiliate_code, created_at,
   grades ( name )
 `
@@ -89,6 +92,7 @@ export const listAdvisors = cache(async (): Promise<AdvisorListItem[]> => {
     const sponsor = row.sponsor_id ? byId.get(row.sponsor_id) : undefined
     return {
       id: row.user_id,
+      matricule: row.matricule,
       prenom: row.prenom,
       nom: row.nom,
       email: row.email,

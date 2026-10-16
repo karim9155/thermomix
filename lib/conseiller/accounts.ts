@@ -118,6 +118,8 @@ export type CreateAdvisorInput = {
   nom: string
   email: string
   telephone: string
+  /** 8 digits, chosen by the admin; unique and never changed afterwards. */
+  matricule: string
   region: string
   gradeId: string
   sponsorId: string | null
@@ -146,6 +148,19 @@ export async function createAdvisorAccount(
 
   if (existingAdvisor) {
     throw new Error('Un conseiller existe déjà avec cet email.')
+  }
+
+  // Checked before the auth user is created: a matricule already in use
+  // is the admin's most likely mistake, and catching it here means no
+  // login gets created and deleted again just to report it.
+  const { data: existingMatricule } = await supabase
+    .from('advisors')
+    .select('user_id')
+    .eq('matricule', input.matricule)
+    .maybeSingle()
+
+  if (existingMatricule) {
+    throw new Error('Ce matricule est déjà attribué à un autre conseiller.')
   }
 
   const { data: existingUserId, error: lookupError } = await supabase.rpc(
@@ -182,6 +197,7 @@ export async function createAdvisorAccount(
       prenom: input.prenom,
       nom: input.nom,
       telephone: input.telephone,
+      matricule: input.matricule,
       region: input.region,
       grade_id: input.gradeId,
       sponsor_id: input.sponsorId,
@@ -193,6 +209,11 @@ export async function createAdvisorAccount(
       inserted = true
     } else if (error.code === '23505' && error.message.includes('affiliate_code')) {
       lastError = error.message
+    } else if (error.code === '23505' && error.message.includes('matricule')) {
+      // Taken between the check above and here. Retrying can't help —
+      // the admin has to pick another number.
+      lastError = 'Ce matricule est déjà attribué à un autre conseiller.'
+      break
     } else {
       lastError = error.message
       break
@@ -539,6 +560,7 @@ async function getPendingApplication(applicationId: string) {
 export async function acceptApplication(
   applicationId: string,
   gradeId: string,
+  matricule: string,
   actor: Actor,
 ): Promise<{ advisorId: string } & AccessLinkResult> {
   const application = await getPendingApplication(applicationId)
@@ -549,6 +571,7 @@ export async function acceptApplication(
       nom: application.nom,
       email: application.email,
       telephone: application.telephone,
+      matricule,
       region: application.region,
       gradeId,
       sponsorId: application.sponsor_id,

@@ -45,6 +45,15 @@ export function ApplicationDecision({
             </option>
           ))}
         </select>
+        <input
+          name="matricule"
+          required
+          inputMode="numeric"
+          pattern="[0-9]{8}"
+          maxLength={8}
+          placeholder="Matricule (8 chiffres)"
+          title="8 chiffres"
+        />
         <button type="submit" className="primary-button" disabled={accepting}>
           {accepting ? 'Création…' : 'Créer le compte'}
         </button>

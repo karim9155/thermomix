@@ -58,6 +58,23 @@ export function AdvisorCreateForm({
           <input type="tel" name="telephone" required placeholder="+216 XX XXX XXX" />
         </label>
         <label>
+          Matricule
+          {/*
+            inputMode numeric rather than type="number": this is an
+            identifier, so the spinner and scroll-to-change of a number
+            field are wrong, and a leading zero must survive.
+          */}
+          <input
+            name="matricule"
+            required
+            inputMode="numeric"
+            pattern="[0-9]{8}"
+            maxLength={8}
+            placeholder="8 chiffres"
+            title="8 chiffres"
+          />
+        </label>
+        <label>
           Région
           <select name="region" required defaultValue="">
             <option value="" disabled>
