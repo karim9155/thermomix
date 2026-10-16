@@ -4,11 +4,16 @@ import { ArrowLeft, FileText, Phone } from 'lucide-react'
 import { getOrderDetail } from '@/lib/admin/orders'
 import { PaymentStatusBadge, paymentMethodLabel } from '@/components/admin/badges'
 import { DeliveryStatusControl } from '@/components/admin/delivery-status-control'
+import { PaymentStatusControl } from '@/components/admin/payment-status-control'
 import { EstimatedDeliveryControl } from '@/components/admin/estimated-delivery-control'
 import { InvoiceUploadControl } from '@/components/admin/invoice-upload-control'
 import { OrderAdvisorControl } from '@/components/admin/order-advisor-control'
 import { listAdvisors } from '@/lib/conseiller/network'
-import { parseEstimatedDeliveryEvent, formatEstimatedDelivery } from '@/lib/admin/order-format'
+import {
+  parseEstimatedDeliveryEvent,
+  parsePaymentEvent,
+  formatEstimatedDelivery,
+} from '@/lib/admin/order-format'
 import { formatPrice, formatPriceHT } from '@/lib/product-format'
 
 export async function generateMetadata({ params }: { params: Promise<{ reference: string }> }) {
@@ -43,6 +48,11 @@ function historyLabel(fromStatus: string | null, toStatus: string): string {
     return toEstimate === ''
       ? 'Délai estimé retiré'
       : `Délai estimé : ${toEstimate}`
+  }
+
+  const toPayment = parsePaymentEvent(toStatus)
+  if (toPayment !== null) {
+    return toPayment === 'payee' ? 'Paiement : Payée' : 'Paiement : Non payée'
   }
 
   const to = HISTORY_LABELS[toStatus] ?? toStatus
@@ -89,6 +99,9 @@ export default async function LivraisonDetailPage({
         <h1>{order.reference}</h1>
         <div className="admin-detail-controls">
           <DeliveryStatusControl reference={order.reference} currentStatus={order.deliveryStatus} />
+          {order.source === 'web' ? (
+            <PaymentStatusControl reference={order.reference} currentStatus={order.status} />
+          ) : null}
           <EstimatedDeliveryControl
             reference={order.reference}
             currentValue={order.estimatedDelivery}

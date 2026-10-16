@@ -74,7 +74,7 @@ export default async function ParrainagePage() {
       <section className="admin-section">
         <h2>Commandes en ligne attribuées</h2>
         <p className="admin-muted advisor-help">
-          Votre prime est acquise quand la commande est livrée et payée ; elle apparaît alors dans
+          Votre prime est acquise quand la boutique confirme le paiement de la commande ; elle apparaît alors dans
           « Rémunération ».
         </p>
         {stats.orders.length === 0 ? (

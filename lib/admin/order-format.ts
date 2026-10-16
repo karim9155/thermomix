@@ -35,6 +35,18 @@ export function parseEstimatedDeliveryEvent(status: string): string | null {
 }
 
 /**
+ * Same idea for a payment-status change set by hand on a web order:
+ * `${PAYMENT_EVENT}:<PaymentStatus>`.
+ */
+export const PAYMENT_EVENT = 'paiement'
+
+export function parsePaymentEvent(status: string): PaymentStatus | null {
+  return status.startsWith(`${PAYMENT_EVENT}:`)
+    ? (status.slice(PAYMENT_EVENT.length + 1) as PaymentStatus)
+    : null
+}
+
+/**
  * Renders a delivery estimate for display.
  *
  * The column is free text on purpose (see migration 0005) — an admin may

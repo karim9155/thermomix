@@ -38,6 +38,7 @@ function sumMetrics(all: Iterable<Metrics>): Metrics {
     total.sales += m.sales
     total.robots += m.robots
     total.revenue += m.revenue
+    total.revenueHT += m.revenueHT
     total.recruits += m.recruits
   }
   return total
@@ -285,8 +286,8 @@ export async function getAdvisorSnapshot(advisorId: string, today: string): Prom
   })()
 
   const [month, quarter, entries, payouts, clients, workshops, openSales] = await Promise.all([
-    metricsBetween(monthStart, today),
-    metricsBetween(quarterStart, today),
+    metricsBetween(monthStart, today, advisorId),
+    metricsBetween(quarterStart, today, advisorId),
     fetchAll((from, to) =>
       supabase
         .from('commission_entries')

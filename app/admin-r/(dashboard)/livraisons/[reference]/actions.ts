@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/admin/guard'
 import {
   updateDeliveryStatus,
   updateEstimatedDelivery,
+  updatePaymentStatus,
   uploadOrderInvoice,
   type DeliveryStatus,
 } from '@/lib/admin/orders'
@@ -27,8 +28,31 @@ export async function updateDeliveryStatusAction(
 
   revalidatePath(`/admin-r/livraisons/${reference}`)
   revalidatePath('/admin-r')
-  // Delivering an affiliated web order can earn (or reverse) a commission.
+  // Cancelling a paid affiliated web order reverses its commission.
   revalidatePath('/admin-r/remuneration')
+  revalidatePath('/conseiller/remuneration')
+
+  return { success: true }
+}
+
+export type UpdatePaymentStatusState = { error?: string; success?: boolean }
+
+export async function updatePaymentStatusAction(
+  reference: string,
+  paid: boolean,
+): Promise<UpdatePaymentStatusState> {
+  try {
+    const admin = await requireAdmin()
+    await updatePaymentStatus(reference, paid, admin.id)
+  } catch (error) {
+    return { error: error instanceof Error ? error.message : 'Une erreur est survenue.' }
+  }
+
+  revalidatePath(`/admin-r/livraisons/${reference}`)
+  revalidatePath('/admin-r')
+  // Paying an affiliated web order earns (or reverses) a commission.
+  revalidatePath('/admin-r/remuneration')
+  revalidatePath('/conseiller')
   revalidatePath('/conseiller/remuneration')
 
   return { success: true }

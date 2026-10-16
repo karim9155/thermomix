@@ -6,7 +6,7 @@ import type {
   PaymentStatus,
   PaymentMethod,
 } from '@/lib/admin/order-format'
-import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT } from '@/lib/admin/order-format'
+import { DELIVERY_STATUSES, ESTIMATED_DELIVERY_EVENT, PAYMENT_EVENT } from '@/lib/admin/order-format'
 import { reconcileSaleCommission } from '@/lib/conseiller/remuneration'
 import { fetchAll } from '@/lib/supabase/fetch-all'
 
@@ -207,7 +207,7 @@ export async function updateDeliveryStatus(
 
   const { data: order, error: fetchError } = await supabase
     .from('orders')
-    .select('id, delivery_status, source, invoiced_at, advisor_id, sale_status')
+    .select('id, delivery_status, status, source, invoiced_at, advisor_id, sale_status')
     .eq('reference', reference)
     .maybeSingle()
 
@@ -245,35 +245,28 @@ export async function updateDeliveryStatus(
   // invoice uploaded early stays invisible until the order is delivered,
   // and one uploaded late appears the moment it lands.
 
-  // Payment status is derived from delivery, not set by hand. Cash on
-  // delivery is the only method that ships today, so the money arrives
-  // exactly when the order is handed over: 'livree' means paid, 'annulee'
-  // means it never will be. Without this, every order sat at 'en_attente'
-  // forever and the admin's payment column was meaningless — there is no
-  // other writer for that column now that the provider webhook is gone.
+  // Delivery no longer implies payment: a delivered web order stays
+  // unpaid until the admin confirms the money came in (updatePaymentStatus
+  // below), and that is what releases an advisor's commission. The only
+  // link left is cancellation — a cancelled order will never be paid, and
+  // un-cancelling it puts it back to unpaid.
   //
-  // When card payment ships, an order paid up front must NOT be reopened
-  // by a later delivery change, so this will need to branch on
-  // payment_method rather than applying to every order.
-  //
-  // Advisor sales are exactly that case already: they are paid by
-  // instalments recorded one by one (lib/conseiller/sales.ts), which is
-  // the only writer of their payment status. Delivery leaves it alone.
-  const paymentStatus =
-    newStatus === 'livree' ? 'payee' : newStatus === 'annulee' ? 'annulee' : 'en_attente'
+  // Advisor sales are paid by instalments recorded one by one
+  // (lib/conseiller/sales.ts), the only writer of their payment status.
+  // Delivery leaves it alone.
+  const paymentUpdate =
+    newStatus === 'annulee'
+      ? { status: 'annulee', paid_at: null }
+      : order.delivery_status === 'annulee'
+        ? { status: 'en_attente', paid_at: null }
+        : {}
 
   const { error: updateError } = await supabase
     .from('orders')
     .update(
       isAdvisorSale
         ? { delivery_status: newStatus }
-        : {
-            delivery_status: newStatus,
-            status: paymentStatus,
-            // The date the commission engine reads for an affiliated
-            // web order: paid when delivered (cash on delivery).
-            paid_at: paymentStatus === 'payee' ? new Date().toISOString() : null,
-          },
+        : { delivery_status: newStatus, ...paymentUpdate },
     )
     .eq('id', order.id)
 
@@ -301,9 +294,69 @@ export async function updateDeliveryStatus(
     await decrementStockForOrder(order.id)
   }
 
-  // A web order that came through an advisor's link earns them their
-  // commission once paid — and loses it if delivery is reversed.
+  // Cancelling a paid web order takes back the advisor's commission.
   if (!isAdvisorSale && order.advisor_id) {
+    await reconcileSaleCommission(order.id, adminUserId)
+  }
+}
+
+/**
+ * Marks a web order paid or unpaid, by hand. Paid is what earns the
+ * advisor behind an affiliated order their commission (dated by paid_at);
+ * going back to unpaid takes it back.
+ *
+ * Advisor sales are refused: their payment status is derived from the
+ * instalment schedule on the order form.
+ */
+export async function updatePaymentStatus(
+  reference: string,
+  paid: boolean,
+  adminUserId: string,
+): Promise<void> {
+  const supabase = createAdminClient()
+
+  const { data: order, error: fetchError } = await supabase
+    .from('orders')
+    .select('id, status, delivery_status, source, advisor_id')
+    .eq('reference', reference)
+    .maybeSingle()
+
+  if (fetchError || !order) {
+    throw new Error('Commande introuvable.')
+  }
+  if (order.source === 'conseiller') {
+    throw new Error("Le paiement d'une vente conseiller se gère depuis l'échéancier du bon de commande.")
+  }
+  if (order.delivery_status === 'annulee') {
+    throw new Error('Cette commande est annulée.')
+  }
+
+  const newStatus: PaymentStatus = paid ? 'payee' : 'en_attente'
+  if (order.status === newStatus) {
+    return
+  }
+
+  const { error: updateError } = await supabase
+    .from('orders')
+    .update({ status: newStatus, paid_at: paid ? new Date().toISOString() : null })
+    .eq('id', order.id)
+
+  if (updateError) {
+    throw new Error(`Impossible de mettre à jour le paiement : ${updateError.message}`)
+  }
+
+  const { error: historyError } = await supabase.from('order_status_history').insert({
+    order_id: order.id,
+    from_status: `${PAYMENT_EVENT}:${order.status}`,
+    to_status: `${PAYMENT_EVENT}:${newStatus}`,
+    changed_by: adminUserId,
+  })
+
+  if (historyError) {
+    throw new Error(`Impossible d'enregistrer l'historique : ${historyError.message}`)
+  }
+
+  if (order.advisor_id) {
     await reconcileSaleCommission(order.id, adminUserId)
   }
 }

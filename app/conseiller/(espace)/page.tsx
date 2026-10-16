@@ -39,8 +39,8 @@ export default async function ConseillerDashboardPage() {
       <div className="admin-stat-grid advisor-stat-grid-4">
         <div className="admin-stat-card">
           <Wallet size={20} />
-          <strong>{formatAmount(snapshot.month.revenue)}</strong>
-          <span>Chiffre d&apos;affaires ce mois</span>
+          <strong>{formatAmount(snapshot.month.revenueHT)}</strong>
+          <span>Chiffre d&apos;affaires hors taxes ce mois</span>
         </div>
         <div className="admin-stat-card">
           <ShoppingBag size={20} />
